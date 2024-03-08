@@ -20,8 +20,22 @@ patches:
         path: "/spec/orgId"
         value: "tromsfylke.no"
       - op: replace
-        path: "/spec/env/1/value"
+        path: "/spec/url/basePath"
+        value: "/beta/tromsfylke-no"
+      - op: replace
+        path: "/spec/ingress/basePath"
+        value: "/beta/tromsfylke-no/api/intern/arkiv"
+      - op: replace
+        path: "/spec/env/3/value"
         value: "https://beta.felleskomponent.no"
+      - op: replace
+        path: "/spec/env/4/value"
+        value: |
+          {
+            "tromsfylke.no":["https://role-catalog.vigoiks.no/vigo/flyt/user"],
+            "vigo.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"],
+            "novari.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"]
+          }
     target:
       kind: Application
       name: fint-flyt-archive-gateway

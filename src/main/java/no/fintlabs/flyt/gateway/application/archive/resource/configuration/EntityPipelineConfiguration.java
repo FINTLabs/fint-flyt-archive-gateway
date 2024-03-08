@@ -9,6 +9,8 @@ public class EntityPipelineConfiguration {
     private String resourceReference;
     private String kafkaTopic;
     private String fintEndpoint;
-    private String selfLinkKeyFilter;
+    private String kafkaLinkKeyFilter;
+    private String endpointClassPath;
+    private String classPath;
     private SubEntityPipelineConfiguration subEntityPipelineConfiguration;
 }

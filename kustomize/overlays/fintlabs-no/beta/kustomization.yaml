@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: fintlabs-no
 
 resources:
-  - flais.yaml
+  - ../../../base
 
 commonLabels:
   fintlabs.no/org-id: fintlabs.no
@@ -20,8 +20,34 @@ patches:
         path: "/spec/orgId"
         value: "fintlabs.no"
       - op: replace
-        path: "/spec/env/1/value"
+        path: "/spec/url/basePath"
+        value: "/beta/fintlabs-no"
+      - op: replace
+        path: "/spec/ingress/basePath"
+        value: "/beta/fintlabs-no/api/intern/arkiv"
+      - op: replace
+        path: "/spec/env/3/value"
         value: "https://beta.felleskomponent.no"
+      - op: replace
+        path: "/spec/env/4/value"
+        value: |
+          {
+            "fintlabs.no":["https://role-catalog.vigoiks.no/vigo/flyt/user"],
+            "vigo.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"],
+            "novari.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"]
+          }
     target:
       kind: Application
       name: fint-flyt-archive-gateway
+
+  - patch: |-
+      - op: replace
+        path: "/metadata/labels/app.kubernetes.io~1instance"
+        value: "fint-flyt-archive-fint-client_fintlabs_no"
+      - op: replace
+        path: "/spec/orgId"
+        value: "fintlabs.no"
+    target:
+      kind: FintClient
+      name: fint-flyt-archive-fint-client
+

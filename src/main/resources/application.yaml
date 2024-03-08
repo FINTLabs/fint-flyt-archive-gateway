@@ -11,33 +11,57 @@ fint:
             pull:
               initial-delay-ms: 5000
               fixed-delay-ms: 900000
+            base-path: no.fint.model.resource
             entity-pipelines:
-              - resource-reference: arkiv.noark.administrativenhet
-              - resource-reference: arkiv.noark.klassifikasjonssystem
+              - resource-reference: AdministrativEnhetResource
+                class-path: arkiv.noark
+              - resource-reference: KlassifikasjonssystemResource
+                class-path: arkiv.noark
                 sub-entity-pipeline-configuration:
                   reference: klasse
                   key-suffix-filter: klasseId
-              - resource-reference: arkiv.kodeverk.rolle
-              - resource-reference: arkiv.kodeverk.partrolle
-              - resource-reference: arkiv.kodeverk.korrespondanseparttype
-              - resource-reference: arkiv.kodeverk.saksstatus
-              - resource-reference: arkiv.noark.arkivdel
-              - resource-reference: arkiv.kodeverk.skjermingshjemmel
-              - resource-reference: arkiv.kodeverk.tilgangsrestriksjon
-              - resource-reference: arkiv.kodeverk.klassifikasjonstype
-              - resource-reference: arkiv.kodeverk.dokumentstatus
-              - resource-reference: arkiv.kodeverk.dokumenttype
-              - resource-reference: arkiv.kodeverk.journalposttype
-              - resource-reference: arkiv.kodeverk.journalstatus
-              - resource-reference: arkiv.kodeverk.variantformat
-              - resource-reference: arkiv.kodeverk.format
-              - resource-reference: arkiv.kodeverk.saksmappetype
-              - resource-reference: arkiv.kodeverk.tilknyttetregistreringsom
-              - resource-reference: arkiv.noark.arkivressurs
-              - resource-reference: administrasjon.personal.personalressurs
-                self-link-key-filter: ansattnummer
-              - resource-reference: administrasjon.personal.person
-                self-link-key-filter: fodselsnummer
+              - resource-reference: RolleResource
+                class-path: arkiv.kodeverk
+              - resource-reference: PartRolleResource
+                class-path: arkiv.kodeverk
+              - resource-reference: KorrespondansepartTypeResource
+                class-path: arkiv.kodeverk
+              - resource-reference: SaksstatusResource
+                class-path: arkiv.kodeverk
+              - resource-reference: ArkivdelResource
+                class-path: arkiv.noark
+              - resource-reference: SkjermingshjemmelResource
+                class-path: arkiv.kodeverk
+              - resource-reference: TilgangsrestriksjonResource
+                class-path: arkiv.kodeverk
+              - resource-reference: KlassifikasjonstypeResource
+                class-path: arkiv.kodeverk
+              - resource-reference: DokumentStatusResource
+                class-path: arkiv.kodeverk
+              - resource-reference: DokumentTypeResource
+                class-path: arkiv.kodeverk
+              - resource-reference: JournalpostTypeResource
+                class-path: arkiv.kodeverk
+              - resource-reference: JournalStatusResource
+                class-path: arkiv.kodeverk
+              - resource-reference: VariantformatResource
+                class-path: arkiv.kodeverk
+              - resource-reference: FormatResource
+                class-path: arkiv.kodeverk
+              - resource-reference: SaksmappetypeResource
+                class-path: arkiv.kodeverk
+              - resource-reference: TilknyttetRegistreringSomResource
+                class-path: arkiv.kodeverk
+              - resource-reference: ArkivressursResource
+                class-path: arkiv.noark
+              - resource-reference: PersonalressursResource
+                class-path: administrasjon.personal
+                kafka-link-key-filter: ansattnummer
+              - resource-reference: PersonResource
+                endpoint-class-path: administrasjon.personal
+                class-path: felles
+                kafka-link-key-filter: fodselsnummer
+
   cache:
     defaultCacheEntryTimeToLiveMillis: 518400000
     defaultCacheHeapSize: 1000000
@@ -46,11 +70,12 @@ server:
 spring:
   profiles:
     include:
+      - fint-client
+      - fint-oauth2-idp
+      - flyt-file-client
       - flyt-kafka
       - flyt-logging
-      - fint-oauth2-idp
-      - fint-client
-      - flyt-file-client
+      - flyt-resource-server
 logging:
   level:
     no.fintlabs.cache.ehcache.FintEhCacheEventLogger: WARN

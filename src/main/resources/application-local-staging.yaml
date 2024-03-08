@@ -11,7 +11,12 @@ fint:
               base-url: https://beta.felleskomponent.no
               authorization:
                 enable: true
-
+    resource-server:
+      security:
+        api:
+          internal:
+            enabled: true
+            authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"https://role-catalog.vigoiks.no/vigo/flyt/developer\"]}"
   kafka:
     default-replicas: 1
 spring:

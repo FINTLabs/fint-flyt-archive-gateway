@@ -15,6 +15,8 @@ public class EntityPipeline {
     private String fintEndpoint;
     @Getter
     private String selfLinkKeyFilter;
+    @Getter
+    private String fullClassName;
 
     private SubEntityPipeline subEntityPipeline;
 

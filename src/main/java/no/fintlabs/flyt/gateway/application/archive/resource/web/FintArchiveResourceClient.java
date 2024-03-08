@@ -2,13 +2,9 @@ package no.fintlabs.flyt.gateway.application.archive.resource.web;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.DokumentfilResource;
 import no.fint.model.resource.arkiv.noark.SakResource;
 import no.fint.model.resource.arkiv.noark.SakResources;
 import no.fintlabs.flyt.gateway.application.archive.resource.model.ObjectResources;
-import org.springframework.http.InvalidMediaTypeException;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -39,22 +35,6 @@ public class FintArchiveResourceClient {
 
     public void resetLastUpdatedTimestamps() {
         this.sinceTimestamp.clear();
-    }
-
-    public Mono<DokumentfilResource> getFile(Link link) {
-        return fintWebClient
-                .get()
-                .uri(URI.create(link.getHref()))
-                .retrieve()
-                .bodyToMono(DokumentfilResource.class);
-    }
-
-    private MediaType getMediaType(String mediaType) {
-        try {
-            return MediaType.parseMediaType(mediaType);
-        } catch (InvalidMediaTypeException e) {
-            return MediaType.APPLICATION_OCTET_STREAM;
-        }
     }
 
     public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
@@ -91,14 +71,7 @@ public class FintArchiveResourceClient {
                 );
     }
 
-    public Mono<Object> getResource(String endpoint) {
-        return fintWebClient.get()
-                .uri(endpoint)
-                .retrieve()
-                .bodyToMono(Object.class);
-    }
-
-    public <T> Mono<T> getResource(String endpoint, Class<T> clazz) {
+    public <T> Mono<T> getResources(String endpoint, Class<T> clazz) {
         return fintWebClient.get()
                 .uri(endpoint)
                 .retrieve()
