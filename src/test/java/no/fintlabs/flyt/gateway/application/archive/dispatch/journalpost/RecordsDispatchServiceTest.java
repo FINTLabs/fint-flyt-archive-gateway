@@ -1,4 +1,4 @@
-package no.fintlabs.dispatch.journalpost;
+package no.fintlabs.flyt.gateway.application.archive.dispatch.journalpost;
 
 import no.fintlabs.flyt.gateway.application.archive.dispatch.DispatchMessageFormattingService;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.journalpost.RecordDispatchService;

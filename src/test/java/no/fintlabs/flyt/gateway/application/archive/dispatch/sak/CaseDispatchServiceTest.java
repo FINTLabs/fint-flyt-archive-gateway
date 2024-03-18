@@ -1,4 +1,4 @@
-package no.fintlabs.dispatch.sak;
+package no.fintlabs.flyt.gateway.application.archive.dispatch.sak;
 
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.noark.SakResource;

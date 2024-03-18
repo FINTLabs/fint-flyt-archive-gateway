@@ -1,4 +1,4 @@
-package no.fintlabs.mapping;
+package no.fintlabs.flyt.gateway.application.archive.dispatch.mapping;
 
 import no.fint.model.resource.arkiv.noark.KorrespondansepartResource;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.AdresseMappingService;

@@ -24,20 +24,22 @@ public class CaseSearchParametersService {
     private final FintCache<String, AdministrativEnhetResource> administrativEnhetResourceCache;
     private final FintCache<String, TilgangsrestriksjonResource> tilgangsrestriksjonResourceCache;
     private final FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache;
-    private final FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache;
+    private final KlasseringSearchParametersService klasseringSearchParametersService;
+
 
     public CaseSearchParametersService(
             FintCache<String, ArkivdelResource> arkivdelResourceCache,
             FintCache<String, AdministrativEnhetResource> administrativEnhetResourceCache,
             FintCache<String, TilgangsrestriksjonResource> tilgangsrestriksjonResourceCache,
             FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache,
-            FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache
+            FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache,
+            KlasseringSearchParametersService klasseringSearchParametersService
     ) {
         this.arkivdelResourceCache = arkivdelResourceCache;
         this.administrativEnhetResourceCache = administrativEnhetResourceCache;
         this.tilgangsrestriksjonResourceCache = tilgangsrestriksjonResourceCache;
         this.saksmappetypeResourceCache = saksmappetypeResourceCache;
-        this.klassifikasjonssystemResourceCache = klassifikasjonssystemResourceCache;
+        this.klasseringSearchParametersService = klasseringSearchParametersService;
     }
 
     public String createFilterQueryParamValue(SakDto sakDto, CaseSearchParametersDto caseSearchParametersDto) {
@@ -86,30 +88,7 @@ public class CaseSearchParametersService {
                     .map(Integer::parseInt)
                     .ifPresent(rekkefolge -> {
 
-                        Optional<KlasseDto> klasseDto = sakDto.getKlasse()
-                                .map(klasseDtos -> klasseDtos.get(rekkefolge - 1));
 
-                        if (caseSearchParametersDto.getKlasseringKlassifikasjonssystem()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlassifikasjonssystem)
-                                    .map(klassifikasjonssystemResourceCache::get)
-                                    .map(KlassifikasjonssystemResource::getSystemId)
-                                    .map(Identifikator::getIdentifikatorverdi)
-                                    .map(value -> createFilterLine(
-                                            createKlasseringPrefix(rekkefolge) + "ordning",
-                                            value
-                                    ))
-                                    .ifPresent(filterJoiner::add);
-                        }
-                        if (caseSearchParametersDto.getKlasseringKlasseId()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlasseId)
-                                    .map(klasseId -> createFilterLine(
-                                            createKlasseringPrefix(rekkefolge) + "verdi",
-                                            klasseId
-                                    ))
-                                    .ifPresent(filterJoiner::add);
-                        }
                     });
         }
         return filterJoiner.toString();
@@ -119,14 +98,6 @@ public class CaseSearchParametersService {
         return name + " eq '" + value + "'";
     }
 
-    private String createKlasseringPrefix(int rekkefolge) {
-        String klassifikasjonName = switch (rekkefolge) {
-            case 1 -> "primar";
-            case 2 -> "sekundar";
-            case 3 -> "tertiar";
-            default -> throw new IllegalArgumentException("Rekkefolge must be 1, 2 or 3");
-        };
-        return "klassifikasjon/" + klassifikasjonName + "/";
-    }
+
 
 }

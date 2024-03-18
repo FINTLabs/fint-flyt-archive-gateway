@@ -1,4 +1,4 @@
-package no.fintlabs.dispatch.file;
+package no.fintlabs.flyt.gateway.application.archive.dispatch.file;
 
 import lombok.AllArgsConstructor;
 import no.fint.model.resource.Link;

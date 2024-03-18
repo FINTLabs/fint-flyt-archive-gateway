@@ -1,4 +1,4 @@
-package no.fintlabs.dispatch;
+package no.fintlabs.flyt.gateway.application.archive.dispatch;
 
 import no.fintlabs.flyt.gateway.application.archive.dispatch.DispatchMessageFormattingService;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.DispatchResult;

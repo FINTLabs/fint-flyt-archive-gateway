@@ -1,4 +1,4 @@
-package no.fintlabs.dispatch.journalpost;
+package no.fintlabs.flyt.gateway.application.archive.dispatch.journalpost;
 
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;

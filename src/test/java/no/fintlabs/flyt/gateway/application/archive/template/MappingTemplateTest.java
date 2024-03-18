@@ -1,4 +1,4 @@
-package no.fintlabs.configuration;
+package no.fintlabs.flyt.gateway.application.archive.template;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import no.fintlabs.flyt.gateway.application.archive.template.*;
