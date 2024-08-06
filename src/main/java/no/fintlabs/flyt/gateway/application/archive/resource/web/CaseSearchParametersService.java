@@ -14,7 +14,6 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakD
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SkjermingDto;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.StringJoiner;
 
 @Service
@@ -86,12 +85,22 @@ public class CaseSearchParametersService {
                     .map(Integer::parseInt)
                     .ifPresent(rekkefolge -> {
 
-                        Optional<KlasseDto> klasseDto = sakDto.getKlasse()
-                                .map(klasseDtos -> klasseDtos.get(rekkefolge - 1));
+                        KlasseDto klasseDtoMatchingRekkefolge = sakDto.getKlasse()
+                                .flatMap(
+                                        klasseDtos -> klasseDtos.stream()
+                                                .filter(
+                                                        klasseDto -> klasseDto.getRekkefolge()
+                                                                .map(rekkefolge::equals)
+                                                                .orElse(false)
+                                                )
+                                                .findFirst()
+                                )
+                                .orElseThrow(IllegalStateException::new);
+
+                        //TODO: handle exception. map to caseSearchResult?
 
                         if (caseSearchParametersDto.getKlasseringKlassifikasjonssystem()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlassifikasjonssystem)
+                            klasseDtoMatchingRekkefolge.getKlassifikasjonssystem()
                                     .map(klassifikasjonssystemResourceCache::get)
                                     .map(KlassifikasjonssystemResource::getSystemId)
                                     .map(Identifikator::getIdentifikatorverdi)
@@ -102,8 +111,7 @@ public class CaseSearchParametersService {
                                     .ifPresent(filterJoiner::add);
                         }
                         if (caseSearchParametersDto.getKlasseringKlasseId()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlasseId)
+                            klasseDtoMatchingRekkefolge.getKlasseId()
                                     .map(klasseId -> createFilterLine(
                                             createKlasseringPrefix(rekkefolge) + "verdi",
                                             klasseId

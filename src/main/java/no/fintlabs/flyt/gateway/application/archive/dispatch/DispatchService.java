@@ -31,24 +31,24 @@ public class DispatchService {
     }
 
     public Mono<DispatchResult> process(InstanceFlowHeaders instanceFlowHeaders, @Valid ArchiveInstance archiveInstance) {
-        log.info("Dispatching instance with headers=" + instanceFlowHeaders);
+        log.info("Dispatching instance with headers={}", instanceFlowHeaders);
         return (switch (archiveInstance.getType()) {
             case NEW -> processNew(archiveInstance);
             case BY_ID -> processById(archiveInstance);
             case BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance);
         })
                 .doOnNext(dispatchResult -> logDispatchResult(instanceFlowHeaders, dispatchResult))
-                .doOnError(e -> log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders, e))
+                .doOnError(e -> log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, e))
                 .onErrorReturn(RuntimeException.class, DispatchResult.failed());
     }
 
     private void logDispatchResult(InstanceFlowHeaders instanceFlowHeaders, DispatchResult dispatchResult) {
         if (dispatchResult.getStatus() == DispatchStatus.ACCEPTED) {
-            log.info("Successfully dispatched instance with headers=" + instanceFlowHeaders);
+            log.info("Successfully dispatched instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.DECLINED) {
-            log.info("Dispatch was declined for instance with headers=" + instanceFlowHeaders);
+            log.info("Dispatch was declined for instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.FAILED) {
-            log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders);
+            log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders);
         }
     }
 
