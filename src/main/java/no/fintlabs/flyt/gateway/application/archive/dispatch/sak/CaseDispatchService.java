@@ -2,12 +2,12 @@ package no.fintlabs.flyt.gateway.application.archive.dispatch.sak;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.arkiv.noark.SakResource;
-import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.SakMappingService;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.ArchiveInstance;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -49,15 +49,19 @@ public class CaseDispatchService {
                 ).onErrorResume(e -> {
                     log.error("Failed to post case", e);
                     return Mono.just(CaseDispatchResult.failed());
-                }).doOnNext(result -> log.info("Dispatch result: " + result.toString()));
+                }).doOnNext(result -> log.info("Dispatch result: {}", result.toString()));
     }
 
     public Mono<List<SakResource>> findCasesBySearch(ArchiveInstance archiveInstance) {
-        String caseFilter = caseSearchParametersService.createFilterQueryParamValue(
-                archiveInstance.getNewCase(),
-                archiveInstance.getCaseSearchParameters()
-        );
-        return fintArchiveResourceClient.findCasesWithFilter(caseFilter);
+        try {
+            String caseFilter = caseSearchParametersService.createFilterQueryParamValue(
+                    archiveInstance.getNewCase(),
+                    archiveInstance.getCaseSearchParameters()
+            );
+            return fintArchiveResourceClient.findCasesWithFilter(caseFilter);
+        } catch (Exception e) {
+            return Mono.error(e);
+        }
     }
 
 }

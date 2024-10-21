@@ -7,12 +7,14 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.Arch
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.JournalpostDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.CaseDispatchService;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
+import no.fintlabs.flyt.gateway.application.archive.kafka.error.InstanceDispatchingErrorProducerService;
 import no.fintlabs.flyt.kafka.headers.InstanceFlowHeaders;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -22,33 +24,48 @@ public class DispatchService {
 
     private final CaseDispatchService caseDispatchService;
     private final RecordsProcessingService recordsProcessingService;
+    private final InstanceDispatchingErrorProducerService instanceDispatchingErrorProducerService;
 
     public DispatchService(
             CaseDispatchService caseDispatchService,
-            RecordsProcessingService recordsProcessingService) {
+            RecordsProcessingService recordsProcessingService,
+            InstanceDispatchingErrorProducerService instanceDispatchingErrorProducerService
+    ) {
         this.caseDispatchService = caseDispatchService;
         this.recordsProcessingService = recordsProcessingService;
+        this.instanceDispatchingErrorProducerService = instanceDispatchingErrorProducerService;
     }
 
     public Mono<DispatchResult> process(InstanceFlowHeaders instanceFlowHeaders, @Valid ArchiveInstance archiveInstance) {
-        log.info("Dispatching instance with headers=" + instanceFlowHeaders);
+        log.info("Dispatching instance with headers={}", instanceFlowHeaders);
         return (switch (archiveInstance.getType()) {
             case NEW -> processNew(archiveInstance);
             case BY_ID -> processById(archiveInstance);
             case BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance);
         })
                 .doOnNext(dispatchResult -> logDispatchResult(instanceFlowHeaders, dispatchResult))
-                .doOnError(e -> log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders, e))
+                .onErrorResume(e -> {
+                    if (e instanceof IllegalStateException) {
+                        return handleDispatchError(instanceFlowHeaders, e, "IllegalStateException encountered during dispatch", instanceDispatchingErrorProducerService);
+                    } else if (e instanceof IllegalArgumentException) {
+                        return handleDispatchError(instanceFlowHeaders, e, "IllegalArgumentException encountered during dispatch", instanceDispatchingErrorProducerService);
+                    } else if (e instanceof NullPointerException) {
+                        return handleDispatchError(instanceFlowHeaders, e, "NullPointerException encountered during dispatch", instanceDispatchingErrorProducerService);
+                    } else {
+                        return handleDispatchError(instanceFlowHeaders, e, "Unexpected exception encountered during dispatch", instanceDispatchingErrorProducerService);
+                    }
+                })
+                .doOnError(e -> log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, e))
                 .onErrorReturn(RuntimeException.class, DispatchResult.failed());
     }
 
     private void logDispatchResult(InstanceFlowHeaders instanceFlowHeaders, DispatchResult dispatchResult) {
         if (dispatchResult.getStatus() == DispatchStatus.ACCEPTED) {
-            log.info("Successfully dispatched instance with headers=" + instanceFlowHeaders);
+            log.info("Successfully dispatched instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.DECLINED) {
-            log.info("Dispatch was declined for instance with headers=" + instanceFlowHeaders);
+            log.info("Dispatch was declined for instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.FAILED) {
-            log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders);
+            log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders);
         }
     }
 
@@ -119,6 +136,24 @@ public class DispatchService {
                             );
                         }
                 );
+    }
+
+    private Mono<DispatchResult> handleDispatchError(
+            InstanceFlowHeaders instanceFlowHeaders,
+            Throwable e,
+            String logMessage,
+            InstanceDispatchingErrorProducerService instanceDispatchingErrorProducerService
+    ) {
+        String errorMessage = (e != null && e.getMessage() != null) ? e.getMessage() : "test";
+
+        log.error("{}: {}", logMessage, errorMessage, e);
+
+        instanceDispatchingErrorProducerService.publishGeneralSystemErrorEvent(
+                instanceFlowHeaders,
+                "An error occurred during dispatch: " + errorMessage
+        );
+
+        return Mono.error(Objects.requireNonNullElseGet(e, () -> new IllegalStateException("An unknown error occurred during dispatch")));
     }
 
 }

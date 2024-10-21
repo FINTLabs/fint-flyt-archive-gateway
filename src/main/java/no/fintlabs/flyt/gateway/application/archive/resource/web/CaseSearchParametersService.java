@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.resource.web;
 
+import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.basisklasser.Begrep;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
@@ -14,10 +15,10 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakD
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SkjermingDto;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.StringJoiner;
 
 @Service
+@Slf4j
 public class CaseSearchParametersService {
 
     private final FintCache<String, ArkivdelResource> arkivdelResourceCache;
@@ -86,12 +87,25 @@ public class CaseSearchParametersService {
                     .map(Integer::parseInt)
                     .ifPresent(rekkefolge -> {
 
-                        Optional<KlasseDto> klasseDto = sakDto.getKlasse()
-                                .map(klasseDtos -> klasseDtos.get(rekkefolge - 1));
+                        KlasseDto klasseDtoMatchingRekkefolge = sakDto.getKlasse()
+                                .flatMap(
+                                        klasseDtos -> klasseDtos.stream()
+                                                .filter(
+                                                        klasseDto -> klasseDto.getRekkefolge()
+                                                                .map(rekkefolge::equals)
+                                                                .orElse(false)
+                                                )
+                                                .findFirst()
+                                )
+                                .orElseThrow(IllegalStateException::new);
+
+                        klasseDtoMatchingRekkefolge.getRekkefolge().ifPresent(rf -> log.debug("KlasseDto rekkefolge: {}", rf));
+                        log.debug("Søkeparametere rekkefølge: {}", rekkefolge);
+
+                        //TODO: handle exception. map to caseSearchResult?
 
                         if (caseSearchParametersDto.getKlasseringKlassifikasjonssystem()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlassifikasjonssystem)
+                            klasseDtoMatchingRekkefolge.getKlassifikasjonssystem()
                                     .map(klassifikasjonssystemResourceCache::get)
                                     .map(KlassifikasjonssystemResource::getSystemId)
                                     .map(Identifikator::getIdentifikatorverdi)
@@ -102,8 +116,7 @@ public class CaseSearchParametersService {
                                     .ifPresent(filterJoiner::add);
                         }
                         if (caseSearchParametersDto.getKlasseringKlasseId()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlasseId)
+                            klasseDtoMatchingRekkefolge.getKlasseId()
                                     .map(klasseId -> createFilterLine(
                                             createKlasseringPrefix(rekkefolge) + "verdi",
                                             klasseId
