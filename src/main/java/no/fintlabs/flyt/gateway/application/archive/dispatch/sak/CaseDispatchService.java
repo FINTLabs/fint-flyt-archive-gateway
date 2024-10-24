@@ -1,19 +1,21 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.sak;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.noark.SakResource;
-import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.SakMappingService;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.ArchiveInstance;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseSearchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.exceptions.KlasseOrderOutOfBoundsException;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -49,15 +51,32 @@ public class CaseDispatchService {
                 ).onErrorResume(e -> {
                     log.error("Failed to post case", e);
                     return Mono.just(CaseDispatchResult.failed());
-                }).doOnNext(result -> log.info("Dispatch result: " + result.toString()));
+                }).doOnNext(result -> log.info("Dispatch result: {}", result.toString()));
     }
 
-    public Mono<List<SakResource>> findCasesBySearch(ArchiveInstance archiveInstance) {
-        String caseFilter = caseSearchParametersService.createFilterQueryParamValue(
-                archiveInstance.getNewCase(),
-                archiveInstance.getCaseSearchParameters()
-        );
-        return fintArchiveResourceClient.findCasesWithFilter(caseFilter);
+    public Mono<CaseSearchResult> findCasesBySearch(ArchiveInstance archiveInstance) {
+
+        try {
+            String caseFilter = caseSearchParametersService.createFilterQueryParamValue(
+                    archiveInstance.getNewCase(),
+                    archiveInstance.getCaseSearchParameters()
+            );
+            return fintArchiveResourceClient.findCasesWithFilter(caseFilter)
+                    .map(sakResources -> sakResources.stream()
+                            .map(SakResource::getMappeId)
+                            .map(Identifikator::getIdentifikatorverdi)
+                            .toList()
+                    )
+                    .map(CaseSearchResult::accepted)
+                    .onErrorResume(Exception.class, e ->
+                            Mono.just(CaseSearchResult.failed())
+                    );
+        } catch (SearchKlasseOrderNotFoundInCaseException | KlasseOrderOutOfBoundsException e) {
+            return Mono.just(CaseSearchResult.declined(e.getMessage()));
+        } catch (Exception e) {
+            return Mono.just(CaseSearchResult.failed());
+        }
+
     }
 
 }

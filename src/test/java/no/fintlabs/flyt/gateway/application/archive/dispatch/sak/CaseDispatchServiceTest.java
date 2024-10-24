@@ -7,6 +7,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.Arch
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.CaseSearchParametersDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseSearchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
@@ -106,7 +107,7 @@ class CaseDispatchServiceTest {
     }
 
     @Test
-    public void findCasesBySearchShouldCreateFilterWithCaseAndSearchParametersAndCallFindCasesWithFilter() {
+    public void findCasesBySearchShouldCreateFilterWithCaseAndSearchParametersAndCallFindSingleCaseWithFilter() {
         ArchiveInstance archiveInstance = mock(ArchiveInstance.class);
 
         SakDto sakDto = mock(SakDto.class);
@@ -123,10 +124,15 @@ class CaseDispatchServiceTest {
         SakResource sakResource = mock(SakResource.class);
         doReturn(Mono.just(List.of(sakResource))).when(fintArchiveResourceClient).findCasesWithFilter("test case filter");
 
+        Identifikator identifikator = mock(Identifikator.class);
+        doReturn(identifikator).when(sakResource).getMappeId();
+
+        doReturn("caseId1").when(identifikator).getIdentifikatorverdi();
+
         StepVerifier.create(
                         caseDispatchService.findCasesBySearch(archiveInstance)
                 )
-                .expectNext(List.of(sakResource))
+                .expectNext(CaseSearchResult.accepted(List.of("caseId1")))
                 .verifyComplete();
 
         verify(caseSearchParametersService, times(1)).createFilterQueryParamValue(sakDto, caseSearchParametersDto);

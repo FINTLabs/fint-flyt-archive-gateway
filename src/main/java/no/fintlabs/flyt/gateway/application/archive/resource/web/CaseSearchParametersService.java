@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.resource.web;
 
+import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.basisklasser.Begrep;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
@@ -12,12 +13,16 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.Case
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.KlasseDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SkjermingDto;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.exceptions.KlasseOrderOutOfBoundsException;
+import no.fintlabs.flyt.gateway.application.archive.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 
 @Service
+@Slf4j
 public class CaseSearchParametersService {
 
     private final FintCache<String, ArkivdelResource> arkivdelResourceCache;
@@ -86,12 +91,33 @@ public class CaseSearchParametersService {
                     .map(Integer::parseInt)
                     .ifPresent(rekkefolge -> {
 
-                        Optional<KlasseDto> klasseDto = sakDto.getKlasse()
-                                .map(klasseDtos -> klasseDtos.get(rekkefolge - 1));
+                        KlasseDto klasseDtoMatchingRekkefolge = sakDto.getKlasse()
+                                .flatMap(
+                                        klasseDtos -> klasseDtos.stream()
+                                                .filter(
+                                                        klasseDto -> klasseDto.getRekkefolge()
+                                                                .map(rekkefolge::equals)
+                                                                .orElse(false)
+                                                )
+                                                .findFirst()
+                                )
+                                .orElseThrow(() -> new SearchKlasseOrderNotFoundInCaseException(
+                                        sakDto
+                                                .getKlasse()
+                                                .map(klasseDtos -> klasseDtos.stream()
+                                                        .map(KlasseDto::getRekkefolge)
+                                                        .filter(Optional::isPresent)
+                                                        .map(Optional::get)
+                                                        .toList()
+                                                )
+                                                .orElse(List.of()), rekkefolge)
+                                );
+
+                        klasseDtoMatchingRekkefolge.getRekkefolge().ifPresent(rf -> log.debug("KlasseDto rekkefolge: {}", rf));
+                        log.debug("Søkeparametere rekkefølge: {}", rekkefolge);
 
                         if (caseSearchParametersDto.getKlasseringKlassifikasjonssystem()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlassifikasjonssystem)
+                            klasseDtoMatchingRekkefolge.getKlassifikasjonssystem()
                                     .map(klassifikasjonssystemResourceCache::get)
                                     .map(KlassifikasjonssystemResource::getSystemId)
                                     .map(Identifikator::getIdentifikatorverdi)
@@ -102,8 +128,7 @@ public class CaseSearchParametersService {
                                     .ifPresent(filterJoiner::add);
                         }
                         if (caseSearchParametersDto.getKlasseringKlasseId()) {
-                            klasseDto
-                                    .flatMap(KlasseDto::getKlasseId)
+                            klasseDtoMatchingRekkefolge.getKlasseId()
                                     .map(klasseId -> createFilterLine(
                                             createKlasseringPrefix(rekkefolge) + "verdi",
                                             klasseId
@@ -124,7 +149,7 @@ public class CaseSearchParametersService {
             case 1 -> "primar";
             case 2 -> "sekundar";
             case 3 -> "tertiar";
-            default -> throw new IllegalArgumentException("Rekkefolge must be 1, 2 or 3");
+            default -> throw new KlasseOrderOutOfBoundsException("Rekkefolge must be 1, 2 or 3");
         };
         return "klassifikasjon/" + klassifikasjonName + "/";
     }

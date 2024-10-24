@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,30 +24,30 @@ public class DispatchService {
 
     public DispatchService(
             CaseDispatchService caseDispatchService,
-            RecordsProcessingService recordsProcessingService) {
+            RecordsProcessingService recordsProcessingService
+    ) {
         this.caseDispatchService = caseDispatchService;
         this.recordsProcessingService = recordsProcessingService;
     }
 
     public Mono<DispatchResult> process(InstanceFlowHeaders instanceFlowHeaders, @Valid ArchiveInstance archiveInstance) {
-        log.info("Dispatching instance with headers=" + instanceFlowHeaders);
+        log.info("Dispatching instance with headers={}", instanceFlowHeaders);
         return (switch (archiveInstance.getType()) {
             case NEW -> processNew(archiveInstance);
             case BY_ID -> processById(archiveInstance);
             case BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance);
         })
                 .doOnNext(dispatchResult -> logDispatchResult(instanceFlowHeaders, dispatchResult))
-                .doOnError(e -> log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders, e))
-                .onErrorReturn(RuntimeException.class, DispatchResult.failed());
+                .doOnError(e -> log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, e));
     }
 
     private void logDispatchResult(InstanceFlowHeaders instanceFlowHeaders, DispatchResult dispatchResult) {
         if (dispatchResult.getStatus() == DispatchStatus.ACCEPTED) {
-            log.info("Successfully dispatched instance with headers=" + instanceFlowHeaders);
+            log.info("Successfully dispatched instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.DECLINED) {
-            log.info("Dispatch was declined for instance with headers=" + instanceFlowHeaders);
+            log.info("Dispatch was declined for instance with headers={}", instanceFlowHeaders);
         } else if (dispatchResult.getStatus() == DispatchStatus.FAILED) {
-            log.error("Failed to dispatch instance with headers=" + instanceFlowHeaders);
+            log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders);
         }
     }
 
@@ -84,41 +83,40 @@ public class DispatchService {
     private Mono<DispatchResult> processBySearchOrNew(ArchiveInstance archiveInstance) {
         Optional<List<JournalpostDto>> journalpostDtosOptional = archiveInstance.getNewCase().getJournalpost();
         return caseDispatchService.findCasesBySearch(archiveInstance)
-                .flatMap(cases -> {
-                            if (cases.size() > 1) {
-                                String caseIds = cases.stream()
-                                        .map(sakResource -> sakResource.getMappeId().getIdentifikatorverdi())
-                                        .collect(Collectors.joining(", "));
+                .flatMap(caseSearchResult -> switch (caseSearchResult.getStatus()) {
+                            case ACCEPTED -> {
+                                if (caseSearchResult.getArchiveCaseIds().size() > 1) {
+                                    String caseIds = String.join(", ", caseSearchResult.getArchiveCaseIds());
 
-                                return Mono.just(DispatchResult.declined("Found multiple cases: " + caseIds));
+                                    yield Mono.just(DispatchResult.declined("Found multiple cases: " + caseIds));
+                                } else {
+                                    yield (
+                                            caseSearchResult.getArchiveCaseIds().size() == 1
+                                                    ? Mono.just(new CaseInfo(
+                                                    false,
+                                                    caseSearchResult.getArchiveCaseIds().get(0)))
+                                                    : caseDispatchService.dispatch(archiveInstance.getNewCase())
+                                                    .map(CaseDispatchResult::getArchiveCaseId)
+                                                    .map(caseId -> new CaseInfo(true, caseId))
+                                    ).flatMap(caseInfo ->
+                                            journalpostDtosOptional
+                                                    .filter(journalpostDtos -> !journalpostDtos.isEmpty())
+                                                    .map(
+                                                            journalpostDtos -> recordsProcessingService.processRecords(
+                                                                    caseInfo.getCaseId(),
+                                                                    caseInfo.isNewCase(),
+                                                                    journalpostDtos
+                                                            )
+                                                    ).orElse(Mono.just(
+                                                            DispatchResult.accepted(caseInfo.getCaseId())
+                                                    ))
+                                    );
+                                }
+
                             }
-
-                            return (
-                                    cases.size() == 1
-
-                                            ? Mono.just(new CaseInfo(
-                                            false,
-                                            cases.get(0).getMappeId().getIdentifikatorverdi()))
-
-                                            : caseDispatchService.dispatch(archiveInstance.getNewCase())
-                                            .map(CaseDispatchResult::getArchiveCaseId)
-                                            .map(caseId -> new CaseInfo(true, caseId))
-
-                            ).flatMap(caseInfo ->
-                                    journalpostDtosOptional
-                                            .filter(journalpostDtos -> !journalpostDtos.isEmpty())
-                                            .map(
-                                                    journalpostDtos -> recordsProcessingService.processRecords(
-                                                            caseInfo.getCaseId(),
-                                                            caseInfo.isNewCase(),
-                                                            journalpostDtos
-                                                    )
-                                            ).orElse(Mono.just(
-                                                    DispatchResult.accepted(caseInfo.getCaseId())
-                                            ))
-                            );
+                            case DECLINED -> Mono.just(DispatchResult.declined(caseSearchResult.getErrorMessage()));
+                            case FAILED -> Mono.just(DispatchResult.failed());
                         }
                 );
     }
-
 }
