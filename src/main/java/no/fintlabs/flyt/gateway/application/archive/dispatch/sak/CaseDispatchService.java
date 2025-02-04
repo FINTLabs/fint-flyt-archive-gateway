@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.sak;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.noark.SakResource;
@@ -48,14 +49,18 @@ public class CaseDispatchService {
                             log.info("Post request for case was declined with message='{}'", e.getResponseBodyAsString());
                             return Mono.just(CaseDispatchResult.declined(e.getResponseBodyAsString()));
                         }
-                ).onErrorResume(e -> {
+                ).onErrorResume(ReadTimeoutException.class, e -> {
+                    log.error("Case dispatch timed out");
+                    return Mono.just(CaseDispatchResult.timedOut());
+                })
+                .onErrorResume(e -> {
                     log.error("Failed to post case", e);
                     return Mono.just(CaseDispatchResult.failed());
                 }).doOnNext(result -> log.info("Dispatch result: {}", result.toString()));
     }
 
     public Mono<CaseSearchResult> findCasesBySearch(ArchiveInstance archiveInstance) {
-
+        log.info("Searching for cases");
         try {
             String caseFilter = caseSearchParametersService.createFilterQueryParamValue(
                     archiveInstance.getNewCase(),
@@ -68,9 +73,14 @@ public class CaseDispatchService {
                             .toList()
                     )
                     .map(CaseSearchResult::accepted)
-                    .onErrorResume(Exception.class, e ->
-                            Mono.just(CaseSearchResult.failed())
-                    );
+                    .onErrorResume(ReadTimeoutException.class, e -> {
+                        log.error("Case search timed out");
+                        return Mono.just(CaseSearchResult.timedOut());
+                    })
+                    .onErrorResume(Exception.class, e -> {
+                        log.error("Case search failed", e);
+                        return Mono.just(CaseSearchResult.failed());
+                    }).doOnNext(result -> log.info("Search result: {}", result.toString()));
         } catch (SearchKlasseOrderNotFoundInCaseException | KlasseOrderOutOfBoundsException e) {
             return Mono.just(CaseSearchResult.declined(e.getMessage()));
         } catch (Exception e) {

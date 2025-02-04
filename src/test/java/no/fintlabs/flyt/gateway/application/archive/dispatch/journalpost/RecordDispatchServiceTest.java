@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.journalpost;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.FilesDispatchService;
@@ -197,7 +198,22 @@ class RecordDispatchServiceTest {
     }
 
     @Test
-    public void givenExceptionOtherThanWebclientResponseExceptionFromArchiveClientPostRecordShouldReturnFailedResultWithoutErrorMessage() {
+    public void givenReadTimeoutExceptionFromArchiveClientPostRecordShouldReturnFailedTimedOutResult() {
+        JournalpostDto journalpostDto = mock(JournalpostDto.class);
+
+        JournalpostResource journalpostResource = mock(JournalpostResource.class);
+        doReturn(journalpostResource).when(journalpostMappingService).toJournalpostResource(any(), any());
+
+        doReturn(Mono.error(new ReadTimeoutException())).when(fintArchiveDispatchClient).postRecord(any(), any());
+
+        StepVerifier
+                .create(recordDispatchService.dispatch("testCaseId", journalpostDto))
+                .expectNext(RecordDispatchResult.timedOut())
+                .verifyComplete();
+    }
+
+    @Test
+    public void givenExceptionOtherThanWebclientResponseExceptionAndReadTimeoutExceptionFromArchiveClientPostRecordShouldReturnFailedResultWithoutErrorMessage() {
         JournalpostDto journalpostDto = mock(JournalpostDto.class);
 
         JournalpostResource journalpostResource = mock(JournalpostResource.class);

@@ -43,14 +43,14 @@ class ArkivressursDisplayNameMapperTest {
 
     private ArkivressursResource setupMocksForPersonnavn(Personnavn personnavn) {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
-        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("testPersonalressursLink1")));
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("a/b/c/testPersonalressursLink1")));
 
         PersonalressursResource personalressursResource = mock(PersonalressursResource.class);
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenReturn(personalressursResource);
-        when(personalressursResource.getPerson()).thenReturn(List.of(Link.with("testPersonLink1")));
+        when(personalressursResourceCache.get("a/b/c/testPersonalressursLink1")).thenReturn(personalressursResource);
+        when(personalressursResource.getPerson()).thenReturn(List.of(Link.with("a/b/c/testPersonLink1")));
 
         PersonResource personResource = mock(PersonResource.class);
-        when(personResourceCache.get("testPersonLink1")).thenReturn(personResource);
+        when(personResourceCache.get("a/b/c/testPersonLink1")).thenReturn(personResource);
 
         when(personResource.getNavn()).thenReturn(personnavn);
 
@@ -60,10 +60,10 @@ class ArkivressursDisplayNameMapperTest {
 
     private ArkivressursResource setupMocksForPersonBrukernavn() {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
-        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("testPersonalressursLink1")));
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("a/b/c/testPersonalressursLink1")));
 
         PersonalressursResource personalressursResource = mock(PersonalressursResource.class);
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenReturn(personalressursResource);
+        when(personalressursResourceCache.getOptional("a/b/c/testPersonalressursLink1")).thenReturn(Optional.of(personalressursResource));
 
         Identifikator identifikator = new Identifikator();
         identifikator.setIdentifikatorverdi("12345");
@@ -131,12 +131,12 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    public void findPersonNavn_givenNoMatchingPersonalressursInCache_shouldReturnEmpty() {
+    public void givenNoMatchingPersonalressursInCache_whenFindPersonNavn_shouldReturnEmpty() {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
-        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("testPersonalressursLink1")));
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("a/b/c/testPersonalressursLink1")));
 
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenThrow(
-                new NoSuchCacheEntryException("testPersonalressursLink1")
+        when(personalressursResourceCache.get("a/b/c/testPersonalressursLink1")).thenThrow(
+                new NoSuchCacheEntryException("a/b/c/testPersonalressursLink1")
         );
 
         Optional<String> personNavn = arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource);
@@ -145,16 +145,16 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    public void findPersonNavn_givenNoMatchingPersonInCache_shouldReturnEmpty() {
+    public void givenNoMatchingPersonInCache_whenFindPersonNavn_shouldReturnEmpty() {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
-        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("testPersonalressursLink1")));
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("a/b/c/testPersonalressursLink1")));
 
         PersonalressursResource personalressursResource = mock(PersonalressursResource.class);
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenReturn(personalressursResource);
-        when(personalressursResource.getPerson()).thenReturn(List.of(Link.with("testPersonLink1")));
+        when(personalressursResourceCache.get("a/b/c/testPersonalressursLink1")).thenReturn(personalressursResource);
+        when(personalressursResource.getPerson()).thenReturn(List.of(Link.with("a/b/c/testPersonLink1")));
 
-        when(personResourceCache.get("testPersonLink1")).thenThrow(
-                new NoSuchCacheEntryException("testPersonLink1")
+        when(personResourceCache.get("a/b/c/testPersonLink1")).thenThrow(
+                new NoSuchCacheEntryException("a/b/c/testPersonLink1")
         );
 
         Optional<String> personNavn = arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource);
@@ -163,23 +163,23 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    public void findPersonNavn_shouldUseFirstLinksToGetFromCache() {
+    public void whenFindPersonNavn_shouldUseFirstLinksToGetFromCache() {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
         when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(
-                Link.with("testPersonalressursLink1"),
-                Link.with("testPersonalressursLink2"),
-                Link.with("testPersonalressursLink3")
+                Link.with("a/b/c/testPersonalressursLink1"),
+                Link.with("a/b/c/testPersonalressursLink2"),
+                Link.with("a/b/c/testPersonalressursLink3")
         ));
 
         PersonalressursResource personalressursResource = mock(PersonalressursResource.class);
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenReturn(personalressursResource);
+        when(personalressursResourceCache.get("a/b/c/testPersonalressursLink1")).thenReturn(personalressursResource);
         when(personalressursResource.getPerson()).thenReturn(List.of(
-                Link.with("testPersonLink1"),
-                Link.with("testPersonLink2"),
-                Link.with("testPersonLink3")
+                Link.with("a/b/c/testPersonLink1"),
+                Link.with("a/b/c/testPersonLink2"),
+                Link.with("a/b/c/testPersonLink3")
         ));
         PersonResource personResource = mock(PersonResource.class);
-        when(personResourceCache.get("testPersonLink1")).thenReturn(personResource);
+        when(personResourceCache.get("a/b/c/testPersonLink1")).thenReturn(personResource);
 
         Personnavn personnavn = mock(Personnavn.class);
         when(personnavn.getFornavn()).thenReturn(null);
@@ -189,15 +189,15 @@ class ArkivressursDisplayNameMapperTest {
 
         arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource);
 
-        verify(personalressursResourceCache, times(1)).get("testPersonalressursLink1");
+        verify(personalressursResourceCache, times(1)).get("a/b/c/testPersonalressursLink1");
         verifyNoMoreInteractions(personalressursResourceCache);
 
-        verify(personResourceCache, times(1)).get("testPersonLink1");
+        verify(personResourceCache, times(1)).get("a/b/c/testPersonLink1");
         verifyNoMoreInteractions(personResourceCache);
     }
 
     @Test
-    public void getPersonalressursBrukernavn_shouldReturnIdentifikator() {
+    public void givenMatchingPersonalressursInCache_getPersonalressursBrukernavn_shouldReturnIdentifikator() {
         ArkivressursResource arkivressursResource = setupMocksForPersonBrukernavn();
 
         Optional<String> personBrukernavn = arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource);
@@ -207,17 +207,31 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    public void getPersonalressursBrukernavn_shouldReturnEmpty() {
+    public void givenNoMatchingPersonalressursInCache_getPersonalressursBrukernavn_shouldReturnLastPartOfPath() {
         ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
-        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("testPersonalressursLink1")));
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of(Link.with("a/b/c/testPersonalressursLink1")));
 
-        when(personalressursResourceCache.get("testPersonalressursLink1")).thenThrow(
-                new NoSuchCacheEntryException("testPersonalressursLink1")
-        );
-
+        when(personalressursResourceCache.getOptional("a/b/c/testPersonalressursLink1")).thenReturn(Optional.empty());
         Optional<String> personBrukernavn = arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource);
 
-        assertThat(personBrukernavn).isEmpty();
+        assertThat(personBrukernavn).isPresent();
+        assertThat(personBrukernavn).contains("testPersonalressursLink1");
+    }
+
+    @Test
+    public void givenNoPersonalressursHrefInArkivressurs_whenFindPersonNavn_shouldReturnOptionalEmpty() {
+        ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of());
+        Optional<String> personNavn = arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource);
+        assertThat(personNavn).isEmpty();
+    }
+
+    @Test
+    public void givenNoPersonalressursHrefInArkivressurs_whenFindPersonalressursBrukernavn_shouldReturnOptionalEmpty() {
+        ArkivressursResource arkivressursResource = mock(ArkivressursResource.class);
+        when(arkivressursResource.getPersonalressurs()).thenReturn(List.of());
+        Optional<String> personalressursBrukernavn = arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource);
+        assertThat(personalressursBrukernavn).isEmpty();
     }
 
 }

@@ -20,7 +20,6 @@ public class ValuePredicate {
     @Pattern(regexp = "[^.]*")
     private final String key;
 
-    // TODO eivindmorch 22/03/2023 : At least one of the following
     private final Boolean defined;
 
     private final String value;

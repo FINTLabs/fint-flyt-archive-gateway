@@ -21,6 +21,11 @@ public class CaseDispatchResult {
         return new CaseDispatchResult(DispatchStatus.FAILED, null, null);
     }
 
+    public static CaseDispatchResult timedOut() {
+        return new CaseDispatchResult(DispatchStatus.FAILED, null,
+                "Case dispatch timed out. No response from destination.");
+    }
+
     private final DispatchStatus status;
     private final String archiveCaseId;
     private final String errorMessage;

@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.file;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.AllArgsConstructor;
 import no.fint.model.resource.Link;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDispatchResult;
@@ -101,7 +102,25 @@ class FileDispatchServiceTest {
     }
 
     @Test
-    public void givenSuccessFromGetFileAndErrorOtherThanWebClientResponseExceptionFromPostFileShouldReturnFailedResult() {
+    public void givenSuccessFromGetFileAndReadTimeoutExceptionFromDispatchClientShouldReturnFailedTimedOutResult() {
+        FileMock fileMock = mockFile();
+        doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);
+        doReturn(Mono.error(new ReadTimeoutException())).when(fintArchiveDispatchClient).postFile(fileMock.file);
+
+        StepVerifier
+                .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
+                .expectNext(FileDispatchResult.timedOut(fileMock.fileId))
+                .verifyComplete();
+
+        verify(fileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(fileClient);
+
+        verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
+        verifyNoMoreInteractions(fintArchiveDispatchClient);
+    }
+
+    @Test
+    public void givenSuccessFromGetFileAndErrorOtherThanWebClientResponseExceptionAndReadTimeoutExceptionFromPostFileShouldReturnFailedResult() {
         FileMock fileMock = mockFile();
 
         doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);

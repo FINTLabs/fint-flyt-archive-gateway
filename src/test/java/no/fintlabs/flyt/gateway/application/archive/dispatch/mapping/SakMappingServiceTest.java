@@ -1,9 +1,11 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.mapping;
 
 import no.fint.model.resource.Link;
+import no.fint.model.resource.arkiv.noark.KlasseResource;
 import no.fint.model.resource.arkiv.noark.PartResource;
 import no.fint.model.resource.arkiv.noark.SakResource;
 import no.fint.model.resource.arkiv.noark.SkjermingResource;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.KlasseDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.PartDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SkjermingDto;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -32,12 +35,19 @@ class SakMappingServiceTest {
         sakMappingService = new SakMappingService(skjermingMappingService, klasseMappingService, partMappingService);
     }
 
-    // TODO: 18/08/2023 add part + more assertions
     @Test
     void shouldMapToSakResource() {
-        when(skjermingMappingService.toSkjermingResource(any(SkjermingDto.class))).thenReturn(new SkjermingResource());
-        when(klasseMappingService.toKlasse(anyList())).thenReturn(List.of());
-        when(partMappingService.toPartResource(any(PartDto.class))).thenReturn(new PartResource());
+        SkjermingDto skjermingDto = mock(SkjermingDto.class);
+        SkjermingResource skjermingResource = mock(SkjermingResource.class);
+        when(skjermingMappingService.toSkjermingResource(skjermingDto)).thenReturn(skjermingResource);
+
+        KlasseDto klasseDto = mock(KlasseDto.class);
+        KlasseResource klasseResource = mock(KlasseResource.class);
+        when(klasseMappingService.toKlasse(List.of(klasseDto))).thenReturn(List.of(klasseResource));
+
+        PartDto partDto = mock(PartDto.class);
+        PartResource partResource = mock(PartResource.class);
+        when(partMappingService.toPartResource(partDto)).thenReturn(partResource);
 
         SakDto nySakDto = SakDto
                 .builder()
@@ -48,22 +58,12 @@ class SakMappingServiceTest {
                 .administrativEnhet("testAdministrativEnhet")
                 .saksansvarlig("testSaksansvarlig")
                 .arkivdel("testArkivdel")
-//                .part(
-//                        List.of(
-//                                PartDto.builder()
-//                                        .partNavn("testNavn")
-//                                        .partRolle("testRolle")
-//                                        .kontaktperson("testPerson")
-//                                        .adresse(AdresseDto.builder().adresselinje(new ArrayList<>()).postnummer("1234").poststed("testSted").build())
-//                                        .kontaktinformasjon(KontaktinformasjonDto.builder().epostadresse("test@test.com").telefonnummer("1234567890").mobiltelefonnummer("0987654321").build())
-//                                        .build()
-//                        )
-//                )
+                .skjerming(skjermingDto)
+                .klasse(List.of(klasseDto))
+                .part(List.of(partDto))
                 .build();
 
-
         SakResource sakResource = sakMappingService.toSakResource(nySakDto);
-
 
         assertEquals("testTittel", sakResource.getTittel());
         assertEquals("testOffentligTittel", sakResource.getOffentligTittel());
@@ -75,6 +75,18 @@ class SakMappingServiceTest {
         assertEquals("testAdministrativEnhet", getLinkURL(resourceLinks, "administrativEnhet"));
         assertEquals("testSaksansvarlig", getLinkURL(resourceLinks, "saksansvarlig"));
         assertEquals("testArkivdel", getLinkURL(resourceLinks, "arkivdel"));
+        assertThat(sakResource.getSkjerming()).isEqualTo(skjermingResource);
+        assertThat(sakResource.getKlasse()).containsOnly(klasseResource);
+        assertThat(sakResource.getPart()).containsOnly(partResource);
+
+        verify(skjermingMappingService, times(1)).toSkjermingResource(skjermingDto);
+        verifyNoMoreInteractions(skjermingMappingService);
+
+        verify(klasseMappingService, times(1)).toKlasse(List.of(klasseDto));
+        verifyNoMoreInteractions(klasseMappingService);
+
+        verify(partMappingService, times(1)).toPartResource(partDto);
+        verifyNoMoreInteractions(partMappingService);
     }
 
     @Test

@@ -1,6 +1,7 @@
 package no.fintlabs.flyt.gateway.application.archive.resource.kodeverk;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.felles.kompleksedatatyper.Personnavn;
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.arkiv.noark.ArkivressursResource;
@@ -70,9 +71,12 @@ public class ArkivressursDisplayNameMapper {
 
     private String getPersonalressursBrukernavn(ArkivressursResource arkivressursResource) {
         String personalressursResourceHref = this.getPersonalressursResourceHref(arkivressursResource);
-        PersonalressursResource personalressursResource = personalressursResourceCache.get(personalressursResourceHref);
-
-        return personalressursResource.getBrukernavn().getIdentifikatorverdi();
+        return personalressursResourceCache.getOptional(personalressursResourceHref)
+                .map(PersonalressursResource::getBrukernavn)
+                .map(Identifikator::getIdentifikatorverdi)
+                .orElse(personalressursResourceHref.substring(
+                        personalressursResourceHref.lastIndexOf('/') + 1
+                ));
     }
 
     private String getPersonalressursResourceHref(ArkivressursResource arkivressursResource) {

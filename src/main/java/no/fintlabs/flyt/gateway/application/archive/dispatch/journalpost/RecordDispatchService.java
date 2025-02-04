@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.journalpost;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;
@@ -50,7 +51,7 @@ public class RecordDispatchService {
                     case DECLINED -> Mono.just(
                             RecordDispatchResult.declined(
                                     "Dokumentobjekt declined by destination with message='" +
-                                            filesDispatchResult.getErrorMessage() + "'"
+                                    filesDispatchResult.getErrorMessage() + "'"
                             )
                     );
                     case FAILED -> Mono.just(
@@ -81,16 +82,17 @@ public class RecordDispatchService {
         return fintArchiveDispatchClient.postRecord(caseId, journalpostResource)
                 .map(JournalpostResource::getJournalPostnummer)
                 .map(RecordDispatchResult::accepted)
-                .onErrorResume(
-                        WebClientResponseException.class,
+                .onErrorResume(WebClientResponseException.class,
                         e -> Mono.just(RecordDispatchResult.declined(e.getResponseBodyAsString()))
                 )
-                .onErrorResume(
-                        e -> {
-                            log.error("Failed to post record", e);
-                            return Mono.just(RecordDispatchResult.failed(null));
-                        }
-                );
+                .onErrorResume(ReadTimeoutException.class, e -> {
+                    log.error("Record dispatch timed out");
+                    return Mono.just(RecordDispatchResult.timedOut());
+                })
+                .onErrorResume(e -> {
+                    log.error("Failed to post record", e);
+                    return Mono.just(RecordDispatchResult.failed(null));
+                });
     }
 
 }

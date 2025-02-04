@@ -80,8 +80,10 @@ public class DispatchService {
                                     yield Mono.just(DispatchResult.declined("Found multiple cases: " + caseIds));
                                 } else {
                                     if (caseSearchResult.getArchiveCaseIds().isEmpty()) {
+                                        log.info("Found no cases");
                                         yield processNew(archiveInstance);
                                     } else {
+                                        log.info("Found case with id='" + caseSearchResult.getArchiveCaseIds().get(0) + "'");
                                         yield journalpostDtosOptional
                                                 .filter(journalpostDtos -> !journalpostDtos.isEmpty())
                                                 .map(

@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -24,7 +24,6 @@ class DokumentObjektMappingServiceTest {
         mappingService = new DokumentObjektMappingService();
     }
 
-    // TODO: 11/08/2023 need more assertions 
     @Test
     void testToDokumentobjektResource() {
         UUID fileId = UUID.randomUUID();
@@ -41,12 +40,11 @@ class DokumentObjektMappingServiceTest {
         fileIdMap.put(fileId, fileLink);
 
         DokumentobjektResource resource = mappingService.toDokumentobjektResource(dto, fileIdMap);
-        System.out.println(resource.getVariantFormat());
-        assertNotNull(resource);
-//        assertTrue(resource.getVariantFormat().contains(fileLink));
-//        assertTrue(resource.getFilformat().contains(fileLink));
-        assertEquals("testFormat", resource.getFormat());
-        assertTrue(resource.getReferanseDokumentfil().contains(fileLink));
+        assertThat(resource).isNotNull();
+        assertThat(resource.getVariantFormat()).containsOnly(Link.with("testVariantFormat"));
+        assertThat(resource.getFilformat()).containsOnly(Link.with("testFilFormat"));
+        assertThat(resource.getFormat()).isEqualTo("testFormat");
+        assertThat(resource.getReferanseDokumentfil()).contains(fileLink);
     }
 
     @Test
@@ -67,7 +65,7 @@ class DokumentObjektMappingServiceTest {
 
         List<DokumentobjektResource> resources = mappingService.toDokumentobjektResource(Arrays.asList(dto1, dto2), fileIdMap);
 
-        assertNotNull(resources);
-        assertEquals(2, resources.size());
+        assertThat(resources).isNotNull();
+        assertThat(resources.size()).isEqualTo(2);
     }
 }

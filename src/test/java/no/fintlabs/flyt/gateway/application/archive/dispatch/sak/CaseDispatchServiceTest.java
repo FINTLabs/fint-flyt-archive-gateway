@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.sak;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.noark.SakResource;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.SakMappingService;
@@ -89,7 +90,28 @@ class CaseDispatchServiceTest {
     }
 
     @Test
-    public void givenExceptionOtherThanWebclientResponseExceptionFromPostCaseShouldReturnFailedResult() {
+    public void givenReadTimeoutExceptionFromPostCaseShouldReturnFailedTimedOutResult() {
+        SakDto sakDto = mock(SakDto.class);
+        SakResource sakResource = mock(SakResource.class);
+        doReturn(sakResource).when(sakMappingService).toSakResource(sakDto);
+
+        doReturn(Mono.error(new ReadTimeoutException())).when(fintArchiveDispatchClient).postCase(sakResource);
+
+        StepVerifier.create(
+                        caseDispatchService.dispatch(sakDto)
+                )
+                .expectNext(CaseDispatchResult.timedOut())
+                .verifyComplete();
+
+        verify(sakMappingService, times(1)).toSakResource(sakDto);
+        verifyNoMoreInteractions(sakMappingService);
+
+        verify(fintArchiveDispatchClient, times(1)).postCase(sakResource);
+        verifyNoMoreInteractions(fintArchiveDispatchClient);
+    }
+
+    @Test
+    public void givenExceptionOtherThanWebclientResponseExceptionAndReadTimeoutExceptionFromPostCaseShouldReturnFailedResult() {
         SakDto sakDto = mock(SakDto.class);
         SakResource sakResource = mock(SakResource.class);
         doReturn(sakResource).when(sakMappingService).toSakResource(sakDto);

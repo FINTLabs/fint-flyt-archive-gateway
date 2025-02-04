@@ -4,6 +4,12 @@ fint:
     gateway:
       application:
         archive:
+          client:
+            fint-archive:
+              created-location-polling:
+                attempts: 10
+                min-delay-millis: 1000
+                max-delay-millis: 300000
           resource:
             refresh:
               interval-ms: 518400000

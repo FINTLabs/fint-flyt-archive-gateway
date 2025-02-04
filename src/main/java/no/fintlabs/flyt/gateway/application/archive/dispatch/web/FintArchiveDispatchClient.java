@@ -8,14 +8,15 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.File;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.JournalpostWrapper;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.retry.Repeat;
 
 import java.net.URI;
 import java.time.Duration;
@@ -25,13 +26,22 @@ import java.util.Comparator;
 @Service
 public class FintArchiveDispatchClient {
 
+    private final Integer createdLocationPollTimes;
+    private final Long createdLocationPollMinDelayMillis;
+    private final Long createdLocationPollMaxDelayMillis;
     private final WebClient fintWebClient;
     private final FintArchiveResourceClient fintArchiveResourceClient;
 
     public FintArchiveDispatchClient(
+            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.attempts}") Integer createdLocationPollAttempts,
+            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.min-delay-millis}") Long createdLocationPollMinDelayMillis,
+            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.max-delay-millis}") Long createdLocationPollMaxDelayMillis,
             @Qualifier("fintWebClient") WebClient fintWebClient,
             FintArchiveResourceClient fintArchiveResourceClient
     ) {
+        this.createdLocationPollTimes = createdLocationPollAttempts;
+        this.createdLocationPollMinDelayMillis = createdLocationPollMinDelayMillis;
+        this.createdLocationPollMaxDelayMillis = createdLocationPollMaxDelayMillis;
         this.fintWebClient = fintWebClient;
         this.fintArchiveResourceClient = fintArchiveResourceClient;
     }
@@ -115,7 +125,7 @@ public class FintArchiveDispatchClient {
                 .toBodilessEntity()
                 .handle((entity, sink) -> {
                             if (HttpStatus.ACCEPTED.equals(entity.getStatusCode())
-                                    && entity.getHeaders().getLocation() != null) {
+                                && entity.getHeaders().getLocation() != null) {
                                 sink.next(entity.getHeaders().getLocation());
                             } else {
                                 sink.error(new RuntimeException("Expected 202 Accepted response with redirect header"));
@@ -124,16 +134,24 @@ public class FintArchiveDispatchClient {
                 );
     }
 
-    private Mono<URI> pollForCreatedLocation(URI statusUri) {
-        return fintWebClient
-                .get()
-                .uri(statusUri)
-                .retrieve()
-                .toBodilessEntity()
+    protected Mono<URI> pollForCreatedLocation(URI statusUri) {
+        return Mono.defer(() -> fintWebClient
+                        .get()
+                        .uri(statusUri)
+                        .retrieve()
+                        .toBodilessEntity()
+                )
                 .filter(entity -> HttpStatus.CREATED.equals(entity.getStatusCode()) && entity.getHeaders().getLocation() != null)
                 .mapNotNull(entity -> entity.getHeaders().getLocation())
-                .repeatWhenEmpty(10, longFlux -> Flux.interval(Duration.ofSeconds(1)))
-                .switchIfEmpty(Mono.error(new RuntimeException("Reached max number of retries for polling for 201 Created location header")));
+                .repeatWhenEmpty(
+                        Repeat
+                                .times(createdLocationPollTimes - 1)
+                                .exponentialBackoff(
+                                        Duration.ofMillis(createdLocationPollMinDelayMillis),
+                                        Duration.ofMillis(createdLocationPollMaxDelayMillis)
+                                )
+                )
+                .switchIfEmpty(Mono.error(new RuntimeException("Reached max number of retries for polling created location from destination")));
     }
 
 }

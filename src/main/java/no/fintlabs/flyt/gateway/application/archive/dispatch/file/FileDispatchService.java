@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.file;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
@@ -29,11 +30,13 @@ public class FileDispatchService {
                                 .onErrorResume(WebClientResponseException.class, e -> Mono.just(
                                         FileDispatchResult.declined(fileId, e.getResponseBodyAsString())
                                 ))
+                                .onErrorResume(ReadTimeoutException.class, e -> {
+                                    log.error("File dispatch timed out");
+                                    return Mono.just(FileDispatchResult.timedOut(fileId));
+                                })
                                 .onErrorResume(e -> {
                                     log.error("File dispatch failed");
-                                    return Mono.just(
-                                            FileDispatchResult.failed(fileId)
-                                    );
+                                    return Mono.just(FileDispatchResult.failed(fileId));
                                 })
                         ).onErrorResume(e -> {
                             log.error("File could not be retrieved");

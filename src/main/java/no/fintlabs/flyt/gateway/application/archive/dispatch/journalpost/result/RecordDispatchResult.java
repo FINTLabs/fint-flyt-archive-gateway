@@ -21,6 +21,12 @@ public class RecordDispatchResult {
         return new RecordDispatchResult(DispatchStatus.FAILED, null, errorMessage);
     }
 
+    public static RecordDispatchResult timedOut() {
+        return new RecordDispatchResult(DispatchStatus.FAILED, null,
+                "Record dispatch timed out. No response from destination."
+        );
+    }
+
     private final DispatchStatus status;
     private final Long journalpostId;
     private final String errorMessage;

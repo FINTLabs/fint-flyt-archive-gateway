@@ -32,6 +32,12 @@ public class FileDispatchResult {
         return new FileDispatchResult(DispatchStatus.FAILED, fileId, null, null);
     }
 
+    public static FileDispatchResult timedOut(UUID fileId) {
+        return new FileDispatchResult(DispatchStatus.FAILED, fileId, null,
+                "File dispatch timed out. No response from destination."
+        );
+    }
+
     private final DispatchStatus status;
     private final UUID fileId;
     private final Link archiveFileLink;

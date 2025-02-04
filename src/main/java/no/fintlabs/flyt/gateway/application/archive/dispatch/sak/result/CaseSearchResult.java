@@ -24,6 +24,12 @@ public class CaseSearchResult {
         return new CaseSearchResult(DispatchStatus.FAILED, null, null);
     }
 
+    public static CaseSearchResult timedOut() {
+        return new CaseSearchResult(DispatchStatus.FAILED, null,
+                "Case search timed out. No response from destination."
+        );
+    }
+
     private final DispatchStatus status;
     private final List<String> archiveCaseIds;
     private final String errorMessage;
