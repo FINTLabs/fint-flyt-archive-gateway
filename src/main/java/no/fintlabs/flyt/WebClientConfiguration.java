@@ -18,7 +18,7 @@ public class WebClientConfiguration {
 
         ConnectionProvider connectionProvider = ConnectionProvider.builder("myConnectionProvider")
                 // Max number of connections in the pool
-                .maxConnections(200)
+                .maxConnections(500)
                 .maxLifeTime(Duration.ofMinutes(30))
                 .maxIdleTime(Duration.ofMinutes(2))
                 // How many pending requests can wait for a connection

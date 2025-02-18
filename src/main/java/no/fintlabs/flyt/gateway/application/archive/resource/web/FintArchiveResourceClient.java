@@ -108,7 +108,7 @@ public class FintArchiveResourceClient {
         log.info("Starting scheduled findCasesWithFilter with filter: {}", testCaseFilter);
 
 
-        Flux.range(1, 200)
+        Flux.range(1, 500)
                 .concatMap(i -> {
                     long startTime = System.currentTimeMillis();
                     log.info("Request {} starting", i);
@@ -126,7 +126,7 @@ public class FintArchiveResourceClient {
                 .doOnComplete(() -> log.info("Scheduled sequential batch completed"))
                 .subscribe();
 
-        Flux.range(1, 200)
+        Flux.range(1, 500)
                 .parallel()
                 .runOn(Schedulers.parallel())
                 .flatMap(i -> {
