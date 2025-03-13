@@ -15,23 +15,15 @@ public class WebClientConfiguration {
 
     @Bean
     public ClientHttpConnector clientHttpConnector() {
-
-        ConnectionProvider connectionProvider = ConnectionProvider.builder("myConnectionProvider")
-                // Max number of connections in the pool
-                .maxConnections(500)
-                .maxLifeTime(Duration.ofMinutes(30))
-                .maxIdleTime(Duration.ofMinutes(2))
-                // How many pending requests can wait for a connection
-//                .pendingAcquireMaxCount(1000)
-                // How long to wait for a connection before timing out
-//                .pendingAcquireTimeout(Duration.ofSeconds(45))
-                .build();
-
-        HttpClient httpClient = HttpClient.create(connectionProvider)
+        return new ReactorClientHttpConnector(HttpClient.create(
+                        ConnectionProvider
+                                .builder("laidback")
+                                .maxLifeTime(Duration.ofMinutes(30))
+                                .maxIdleTime(Duration.ofMinutes(5))
+                                .build())
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120000)
-                .responseTimeout(Duration.ofSeconds(130));
-
-        return new ReactorClientHttpConnector(httpClient);
+                .responseTimeout(Duration.ofSeconds(310))
+        );
     }
 
 }
