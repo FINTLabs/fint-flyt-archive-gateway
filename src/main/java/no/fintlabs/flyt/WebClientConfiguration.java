@@ -19,10 +19,10 @@ public class WebClientConfiguration {
                         ConnectionProvider
                                 .builder("laidback")
                                 .maxLifeTime(Duration.ofMinutes(30))
-                                .maxIdleTime(Duration.ofMinutes(2))
+                                .maxIdleTime(Duration.ofMinutes(5))
                                 .build())
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 120000)
-                .responseTimeout(Duration.ofSeconds(130))
+                .responseTimeout(Duration.ofSeconds(310))
         );
     }
 
