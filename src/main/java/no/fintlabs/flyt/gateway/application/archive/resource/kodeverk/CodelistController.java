@@ -43,6 +43,7 @@ public class CodelistController {
     private final FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache;
     private final FintCache<String, VariantformatResource> variantformatResourceCache;
     private final FintCache<String, FormatResource> formatResourceCache;
+    private final FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache;
     private final ArkivressursDisplayNameMapper arkivressursDisplayNameMapper;
 
     public CodelistController(
@@ -62,7 +63,7 @@ public class CodelistController {
             FintCache<String, JournalpostTypeResource> journalpostTypeResourceCache,
             FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache,
             FintCache<String, VariantformatResource> variantformatResourceCache,
-            FintCache<String, FormatResource> formatResourceCache,
+            FintCache<String, FormatResource> formatResourceCache, FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache,
             ArkivressursDisplayNameMapper arkivressursDisplayNameMapper
     ) {
         this.administrativEnhetResourceCache = administrativEnhetResourceCache;
@@ -82,6 +83,7 @@ public class CodelistController {
         this.saksmappetypeResourceCache = saksmappetypeResourceCache;
         this.variantformatResourceCache = variantformatResourceCache;
         this.formatResourceCache = formatResourceCache;
+        this.tilgangsgruppeResourceCache = tilgangsgruppeResourceCache;
         this.arkivressursDisplayNameMapper = arkivressursDisplayNameMapper;
     }
 
@@ -234,6 +236,11 @@ public class CodelistController {
     @GetMapping("format")
     public ResponseEntity<Collection<ResourceReference>> getFormat() {
         return getBegrepResourceReferences(formatResourceCache);
+    }
+
+    @GetMapping("tilgangsgruppe")
+    public ResponseEntity<Collection<ResourceReference>> getTilgangsgruppe() {
+        return getBegrepResourceReferences(tilgangsgruppeResourceCache);
     }
 
     private <R extends Begrep & FintLinks> ResponseEntity<Collection<ResourceReference>> getBegrepResourceReferences(FintCache<String, R> resouceCache) {

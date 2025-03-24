@@ -2,7 +2,10 @@ package no.fintlabs.flyt.gateway.application.archive.resource.kodeverk;
 
 import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fint.model.resource.arkiv.kodeverk.*;
-import no.fint.model.resource.arkiv.noark.*;
+import no.fint.model.resource.arkiv.noark.AdministrativEnhetResource;
+import no.fint.model.resource.arkiv.noark.ArkivdelResource;
+import no.fint.model.resource.arkiv.noark.ArkivressursResource;
+import no.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource;
 import no.fint.model.resource.felles.PersonResource;
 import no.fintlabs.cache.FintCache;
 import no.fintlabs.cache.FintCacheManager;
@@ -103,6 +106,11 @@ public class ResourceCacheConfiguration {
     @Bean
     FintCache<String, FormatResource> formatResourceCache() {
         return createCache(FormatResource.class);
+    }
+
+    @Bean
+    FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache() {
+        return createCache(TilgangsgruppeResource.class);
     }
 
     @Bean
