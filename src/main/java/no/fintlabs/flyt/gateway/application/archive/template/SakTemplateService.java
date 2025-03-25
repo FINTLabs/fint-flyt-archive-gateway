@@ -131,6 +131,22 @@ public class SakTemplateService {
                                 ))
                                 .build()
                 )
+                .addTemplate(
+                        ElementConfig
+                                .builder()
+                                .key("tilgangsgruppe")
+                                .displayName("Tilgangsgruppe")
+                                .description("Tilgangsgruppe gir mulighet for å skjerme innhold internt for andre brukere. " +
+                                        "(OBS! Dette feltet gjelder kun for p360 arkivsystem)")
+                                .build(),
+                        SelectableValueTemplate
+                                .builder()
+                                .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
+                                .selectablesSources(List.of(
+                                        UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsgruppe").build()
+                                ))
+                                .build()
+                )
                 .addCollectionTemplate(
                         ElementConfig
                                 .builder()
