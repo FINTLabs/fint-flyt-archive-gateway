@@ -63,7 +63,8 @@ public class CodelistController {
             FintCache<String, JournalpostTypeResource> journalpostTypeResourceCache,
             FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache,
             FintCache<String, VariantformatResource> variantformatResourceCache,
-            FintCache<String, FormatResource> formatResourceCache, FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache,
+            FintCache<String, FormatResource> formatResourceCache,
+            FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache,
             ArkivressursDisplayNameMapper arkivressursDisplayNameMapper
     ) {
         this.administrativEnhetResourceCache = administrativEnhetResourceCache;
