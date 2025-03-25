@@ -35,6 +35,7 @@ public class SakMappingService {
         sakDto.getOffentligTittel().ifPresent(sakResource::setOffentligTittel);
         sakDto.getSaksmappetype().map(Link::with).ifPresent(sakResource::addSaksmappetype);
         sakDto.getSaksstatus().map(Link::with).ifPresent(sakResource::addSaksstatus);
+        sakDto.getTilgangsgruppe().map(Link::with).ifPresent(sakResource::addTilgangsgruppe);
         sakDto.getJournalenhet().map(Link::with).ifPresent(sakResource::addJournalenhet);
         sakDto.getAdministrativEnhet().map(Link::with).ifPresent(sakResource::addAdministrativEnhet);
         sakDto.getSaksansvarlig().map(Link::with).ifPresent(sakResource::addSaksansvarlig);

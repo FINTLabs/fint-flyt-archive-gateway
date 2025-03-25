@@ -19,6 +19,7 @@ public class SakDto {
     private final String saksansvarlig;
     private final String arkivdel;
     private final String saksstatus;
+    private final String tilgangsgruppe;
     private final List<@NotNull @Valid PartDto> part;
     private final @Valid SkjermingDto skjerming;
     private final List<@NotNull @Valid KlasseDto> klasse;
@@ -38,6 +39,10 @@ public class SakDto {
 
     public Optional<String> getSaksstatus() {
         return Optional.ofNullable(saksstatus);
+    }
+
+    public Optional<String> getTilgangsgruppe() {
+        return Optional.ofNullable(tilgangsgruppe);
     }
 
     public Optional<String> getJournalenhet() {

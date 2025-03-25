@@ -17,6 +17,7 @@ public class JournalpostDto {
     private final String administrativEnhet;
     private final String saksbehandler;
     private final String journalstatus;
+    private final String tilgangsgruppe;
     private final @Valid SkjermingDto skjerming;
     private final Collection<@NotNull @Valid KorrespondansepartDto> korrespondansepart;
     private final Collection<@NotNull @Valid DokumentbeskrivelseDto> dokumentbeskrivelse;
@@ -31,6 +32,10 @@ public class JournalpostDto {
 
     public Optional<String> getJournalstatus() {
         return Optional.ofNullable(journalstatus);
+    }
+
+    public Optional<String> getTilgangsgruppe() {
+        return Optional.ofNullable(tilgangsgruppe);
     }
 
     public Optional<String> getSaksbehandler() {

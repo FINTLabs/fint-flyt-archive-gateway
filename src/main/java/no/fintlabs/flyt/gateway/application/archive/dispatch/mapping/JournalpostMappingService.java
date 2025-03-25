@@ -34,6 +34,7 @@ public class JournalpostMappingService {
         journalpostDto.getTittel().ifPresent(journalpostResource::setTittel);
         journalpostDto.getOffentligTittel().ifPresent(journalpostResource::setOffentligTittel);
         journalpostDto.getJournalstatus().map(Link::with).ifPresent(journalpostResource::addJournalstatus);
+        journalpostDto.getTilgangsgruppe().map(Link::with).ifPresent(journalpostResource::addTilgangsgruppe);
         journalpostDto.getSaksbehandler().map(Link::with).ifPresent(journalpostResource::addSaksbehandler);
         journalpostDto.getJournalposttype().map(Link::with).ifPresent(journalpostResource::addJournalposttype);
         journalpostDto.getAdministrativEnhet().map(Link::with).ifPresent(journalpostResource::addAdministrativEnhet);

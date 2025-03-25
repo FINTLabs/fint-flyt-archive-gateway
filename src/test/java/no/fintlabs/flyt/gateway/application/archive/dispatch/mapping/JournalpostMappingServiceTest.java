@@ -88,6 +88,7 @@ public class JournalpostMappingServiceTest {
                 .administrativEnhet("Administrativ enhet")
                 .saksbehandler("Saksbehandler")
                 .journalstatus("Journalstatus")
+                .tilgangsgruppe("Tilgangsgruppe")
                 .skjerming(skjermingDto)
                 .korrespondansepart(Collections.singletonList(korrespondansepartDto))
                 .dokumentbeskrivelse(Collections.singletonList(dokumentbeskrivelseDto))
@@ -102,6 +103,7 @@ public class JournalpostMappingServiceTest {
         assertEquals("Administrativ enhet", mappedResource.getAdministrativEnhet().iterator().next().getHref());
         assertEquals("Saksbehandler", mappedResource.getSaksbehandler().iterator().next().getHref());
         assertEquals("Journalstatus", mappedResource.getJournalstatus().iterator().next().getHref());
+        assertEquals("Tilgangsgruppe", mappedResource.getTilgangsgruppe().iterator().next().getHref());
 
         assertTrue(mappedResource.getSkjerming().getTilgangsrestriksjon().stream().anyMatch(link -> "Tilgangsrestriksjon".equals(link.getHref())));
         assertTrue(mappedResource.getSkjerming().getSkjermingshjemmel().stream().anyMatch(link -> "Skjermingshjemmel".equals(link.getHref())));

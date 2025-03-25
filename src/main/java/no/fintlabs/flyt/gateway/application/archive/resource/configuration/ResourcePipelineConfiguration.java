@@ -191,6 +191,18 @@ public class ResourcePipelineConfiguration {
     }
 
     @Bean
+    public ResourcePipeline<TilgangsgruppeResource> tilgangsgruppeResourcePipeline(
+            FintCache<String, TilgangsgruppeResource> tilgangsgruppeResourceCache
+    ) {
+        return fintLinksResourcePipelineFactory.createResourcePipeLine(
+                TilgangsgruppeResource.class,
+                tilgangsgruppeResourceCache,
+                List.of("arkiv", "kodeverk", "tilgangsgruppe"),
+                true
+        );
+    }
+
+    @Bean
     public ResourcePipeline<SaksmappetypeResource> saksmappetypeResourcePipeline(
             FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache
     ) {
