@@ -10,12 +10,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 @Slf4j
 public class FileDispatchService {
 
     private final FintArchiveDispatchClient fintArchiveDispatchClient;
     private final FileClient fileClient;
+
+    private final Map<UUID, Mono<FileDispatchResult>> dispatchCache = new ConcurrentHashMap<>();
 
     public FileDispatchService(FintArchiveDispatchClient fintArchiveDispatchClient, FileClient fileClient) {
         this.fintArchiveDispatchClient = fintArchiveDispatchClient;
@@ -24,28 +30,32 @@ public class FileDispatchService {
 
     public Mono<FileDispatchResult> dispatch(DokumentobjektDto dokumentobjektDto) {
         log.info("Dispatching file");
-        return dokumentobjektDto.getFileId().map(fileId -> fileClient.getFile(fileId)
-                        .flatMap(file -> fintArchiveDispatchClient.postFile(file)
-                                .map(link -> FileDispatchResult.accepted(fileId, link))
-                                .onErrorResume(WebClientResponseException.class, e -> Mono.just(
-                                        FileDispatchResult.declined(fileId, e.getResponseBodyAsString())
-                                ))
-                                .onErrorResume(ReadTimeoutException.class, e -> {
-                                    log.error("File dispatch timed out");
-                                    return Mono.just(FileDispatchResult.timedOut(fileId));
+        return dokumentobjektDto.getFileId()
+                .map(fileId -> dispatchCache.computeIfAbsent(fileId, id ->
+                        fileClient.getFile(fileId)
+                                .flatMap(file -> fintArchiveDispatchClient.postFile(file)
+                                        .map(link -> FileDispatchResult.accepted(fileId, link))
+                                        .onErrorResume(WebClientResponseException.class, e -> Mono.just(
+                                                FileDispatchResult.declined(fileId, e.getResponseBodyAsString())
+                                        ))
+                                        .onErrorResume(ReadTimeoutException.class, e -> {
+                                            log.error("File dispatch timed out");
+                                            return Mono.just(FileDispatchResult.timedOut(fileId));
+                                        })
+                                        .onErrorResume(e -> {
+                                            log.error("File dispatch failed");
+                                            return Mono.just(FileDispatchResult.failed(fileId));
+                                        })
+                                ).onErrorResume(e -> {
+                                    log.error("File could not be retrieved");
+                                    return Mono.just(
+                                            FileDispatchResult.couldNotBeRetrieved(fileId)
+                                    );
                                 })
-                                .onErrorResume(e -> {
-                                    log.error("File dispatch failed");
-                                    return Mono.just(FileDispatchResult.failed(fileId));
-                                })
-                        ).onErrorResume(e -> {
-                            log.error("File could not be retrieved");
-                            return Mono.just(
-                                    FileDispatchResult.couldNotBeRetrieved(fileId)
-                            );
-                        })
-                ).orElse(Mono.just(FileDispatchResult.noFileId()))
-                .doOnNext(result -> log.info("Dispatch result=" + result.toString()));
+                                .cache()
+                ))
+                .orElse(Mono.just(FileDispatchResult.noFileId()))
+                .doOnNext(result -> log.info("Dispatch result={}", result.toString()));
     }
 
 }

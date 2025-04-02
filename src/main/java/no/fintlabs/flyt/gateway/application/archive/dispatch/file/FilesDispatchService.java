@@ -55,10 +55,9 @@ public class FilesDispatchService {
                                 lastResult.getErrorMessage()
                         );
                         case FAILED -> FilesDispatchResult.failed();
-
                     };
 
-                }).doOnNext(result -> log.info("Dispatch result=" + result.toString()));
+                }).doOnNext(result -> log.info("Dispatch result={}", result.toString()));
     }
 
 }
