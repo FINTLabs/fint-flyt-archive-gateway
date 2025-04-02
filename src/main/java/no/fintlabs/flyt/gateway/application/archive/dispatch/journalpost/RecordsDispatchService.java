@@ -69,7 +69,7 @@ public class RecordsDispatchService {
                                         "possible journalposts with unknown ids"
                                 )
                         )
-                ).doOnNext(result -> log.info("Dispatch result=" + result.toString()));
+                ).doOnNext(result -> log.info("Dispatch result={}", result.toString()));
 
     }
 

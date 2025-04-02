@@ -57,7 +57,7 @@ public class RecordDispatchService {
                     case FAILED -> Mono.just(
                             RecordDispatchResult.failed("Dokumentobjekt dispatch failed")
                     );
-                }).doOnNext(result -> log.info("Dispatch result=" + result.toString()));
+                }).doOnNext(result -> log.info("Dispatch result={}", result.toString()));
     }
 
     private List<DokumentobjektDto> getDokumentObjektDtos(Collection<DokumentbeskrivelseDto> dokumentbeskrivelseDtos) {

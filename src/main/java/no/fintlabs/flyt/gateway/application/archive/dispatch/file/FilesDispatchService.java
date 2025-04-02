@@ -48,7 +48,8 @@ public class FilesDispatchService {
                                         .stream()
                                         .collect(toMap(
                                                 FileDispatchResult::getFileId,
-                                                FileDispatchResult::getArchiveFileLink
+                                                FileDispatchResult::getArchiveFileLink,
+                                                (existing, replacement) -> existing
                                         ))
                         );
                         case DECLINED -> FilesDispatchResult.declined(
