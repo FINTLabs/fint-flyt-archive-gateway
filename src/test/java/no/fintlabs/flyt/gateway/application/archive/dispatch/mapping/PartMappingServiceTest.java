@@ -45,6 +45,8 @@ public class PartMappingServiceTest {
                 .partNavn("Test Navn")
                 .partRolle("Test Rolle")
                 .kontaktperson("Test Person")
+                .fodselsnummer("123456789")
+                .organisasjonsnummer("987654321")
                 .adresse(AdresseDto.builder().adresselinje(new ArrayList<>()).postnummer("1234").poststed("Test Sted").build())
                 .kontaktinformasjon(KontaktinformasjonDto.builder().epostadresse("test@test.com").telefonnummer("1234567890").mobiltelefonnummer("0987654321").build())
                 .build();
@@ -60,9 +62,11 @@ public class PartMappingServiceTest {
         PartResource partResource = partMappingService.toPartResource(partDto);
 
         assertEquals("Test Navn", partResource.getPartNavn());
-        assertEquals(kontaktinformasjon, partResource.getKontaktinformasjon());
-        assertEquals(adresseResource, partResource.getAdresse());
-        assertEquals("Test Person", partResource.getKontaktperson());
         assertEquals("Test Rolle", partResource.getPartRolle().get(0).getHref());
+        assertEquals("Test Person", partResource.getKontaktperson());
+        assertEquals("123456789", partResource.getFodselsnummer());
+        assertEquals("987654321", partResource.getOrganisasjonsnummer());
+        assertEquals(adresseResource, partResource.getAdresse());
+        assertEquals(kontaktinformasjon, partResource.getKontaktinformasjon());
     }
 }

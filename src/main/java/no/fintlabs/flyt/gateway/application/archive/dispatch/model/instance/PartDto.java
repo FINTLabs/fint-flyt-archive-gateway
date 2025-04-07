@@ -12,6 +12,8 @@ public class PartDto {
     private final String partNavn;
     private final String partRolle;
     private final String kontaktperson;
+    private final String organisasjonsnummer;
+    private final String fodselsnummer;
     private final @Valid AdresseDto adresse;
     private final @Valid KontaktinformasjonDto kontaktinformasjon;
 
@@ -26,6 +28,11 @@ public class PartDto {
     public Optional<String> getKontaktperson() {
         return Optional.ofNullable(kontaktperson);
     }
+
+    public Optional<String> getOrganisasjonsnummer() { return Optional.ofNullable(organisasjonsnummer); }
+
+    public Optional<String> getFodselsnummer() { return Optional.ofNullable(fodselsnummer); }
+
 
     public Optional<AdresseDto> getAdresse() {
         return Optional.ofNullable(adresse);

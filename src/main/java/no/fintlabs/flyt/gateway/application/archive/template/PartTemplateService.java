@@ -64,6 +64,30 @@ public class PartTemplateService {
                 .addTemplate(
                         ElementConfig
                                 .builder()
+                                .key("organisasjonsnummer")
+                                .displayName("Organisasjonsnummer")
+                                .description("Organisasjonsnummer")
+                                .build(),
+                        ValueTemplate
+                                .builder()
+                                .type(ValueTemplate.Type.DYNAMIC_STRING)
+                                .build()
+                )
+                .addTemplate(
+                        ElementConfig
+                                .builder()
+                                .key("fodselsnummer")
+                                .displayName("Fødselsnummer")
+                                .description("Fødselsnummer")
+                                .build(),
+                        ValueTemplate
+                                .builder()
+                                .type(ValueTemplate.Type.DYNAMIC_STRING)
+                                .build()
+                )
+                .addTemplate(
+                        ElementConfig
+                                .builder()
                                 .key("adresse")
                                 .displayName("Adresse")
                                 .description("Adresse")
