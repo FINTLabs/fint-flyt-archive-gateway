@@ -27,6 +27,9 @@ public class PartMappingService {
         partDto.getPartNavn().ifPresent(partResource::setPartNavn);
         partDto.getPartRolle().map(Link::with).ifPresent(partResource::addPartRolle);
         partDto.getKontaktperson().ifPresent(partResource::setKontaktperson);
+        partDto.getOrganisasjonsnummer().ifPresent(partResource::setOrganisasjonsnummer);
+        partDto.getFodselsnummer().ifPresent(partResource::setFodselsnummer);
+        partDto.getKontaktperson().ifPresent(partResource::setKontaktperson);
         partDto.getAdresse()
                 .map(adresseMappingService::toAdresseResource)
                 .ifPresent(partResource::setAdresse);
