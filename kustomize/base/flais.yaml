@@ -12,6 +12,11 @@ metadata:
     fintlabs.no/team: flyt
     fintlabs.no/org-id: fintlabs.no
 spec:
+  observability:
+    metrics:
+      enabled: true
+      port: "8080"
+      path: /actuator/prometheus
   port: 8080
   imagePullPolicy: Always
   orgId: fintlabs.no
