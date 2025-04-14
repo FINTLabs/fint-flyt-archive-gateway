@@ -5,8 +5,10 @@ namespace: vlfk-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: vlfk.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_vlfk_no
+      fintlabs.no/org-id: vlfk.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "vlfk.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/vlfk-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/vlfk-no"
       - op: replace
         path: "/spec/ingress/basePath"

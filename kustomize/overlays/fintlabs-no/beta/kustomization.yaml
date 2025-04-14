@@ -5,8 +5,10 @@ namespace: fintlabs-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: fintlabs.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_fintlabs_no
+      fintlabs.no/org-id: fintlabs.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "fintlabs.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/beta/fintlabs-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/beta/fintlabs-no"
       - op: replace
         path: "/spec/ingress/basePath"

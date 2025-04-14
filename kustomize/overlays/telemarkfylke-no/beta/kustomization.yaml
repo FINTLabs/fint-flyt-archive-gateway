@@ -5,8 +5,10 @@ namespace: telemarkfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: telemarkfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_telemarkfylke_no
+      fintlabs.no/org-id: telemarkfylke.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "telemarkfylke.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/beta/telemarkfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/beta/telemarkfylke-no"
       - op: replace
         path: "/spec/ingress/basePath"

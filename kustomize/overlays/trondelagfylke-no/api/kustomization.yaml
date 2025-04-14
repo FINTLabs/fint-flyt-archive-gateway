@@ -5,8 +5,10 @@ namespace: trondelagfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: trondelagfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_trondelagfylke_no
+      fintlabs.no/org-id: trondelagfylke.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "trondelagfylke.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/trondelagfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/trondelagfylke-no"
       - op: replace
         path: "/spec/ingress/basePath"

@@ -5,8 +5,10 @@ namespace: rogfk-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: rogfk.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_rogfk_no
+      fintlabs.no/org-id: rogfk.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "rogfk.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/beta/rogfk-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/beta/rogfk-no"
       - op: replace
         path: "/spec/ingress/basePath"

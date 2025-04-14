@@ -5,8 +5,10 @@ namespace: agderfk-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: agderfk.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_agderfk_no
+      fintlabs.no/org-id: agderfk.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "agderfk.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/agderfk-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/agderfk-no"
       - op: replace
         path: "/spec/ingress/basePath"

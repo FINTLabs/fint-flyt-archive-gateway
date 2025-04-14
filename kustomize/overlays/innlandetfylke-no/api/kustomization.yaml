@@ -5,8 +5,10 @@ namespace: innlandetfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: innlandetfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_innlandetfylke_no
+      fintlabs.no/org-id: innlandetfylke.no
 
 patches:
   - patch: |-
@@ -21,6 +23,9 @@ patches:
         value: "innlandetfylke.no"
       - op: replace
         path: "/spec/url/basePath"
+        value: "/innlandetfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
         value: "/innlandetfylke-no"
       - op: replace
         path: "/spec/ingress/basePath"
