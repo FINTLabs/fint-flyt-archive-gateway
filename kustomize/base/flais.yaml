@@ -12,11 +12,6 @@ metadata:
     fintlabs.no/team: flyt
     fintlabs.no/org-id: fintlabs.no
 spec:
-  observability:
-    metrics:
-      enabled: true
-      port: "8080"
-      path: /actuator/prometheus
   port: 8080
   imagePullPolicy: Always
   orgId: fintlabs.no
@@ -65,3 +60,12 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  observability:
+    metrics:
+      enabled: true
+      port: "8080"
+      path: /actuator/prometheus
+  prometheus:
+    enabled: true
+    port: "8080"
+    path: /actuator/prometheus
