@@ -26,7 +26,7 @@ patches:
         value: "/beta/vestfoldfylke-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/beta/vestfoldfylke-no"
+        value: "/beta/vestfoldfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/vestfoldfylke-no/api/intern/arkiv"

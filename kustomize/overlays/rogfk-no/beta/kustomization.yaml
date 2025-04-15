@@ -26,7 +26,7 @@ patches:
         value: "/beta/rogfk-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/beta/rogfk-no"
+        value: "/beta/rogfk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/rogfk-no/api/intern/arkiv"

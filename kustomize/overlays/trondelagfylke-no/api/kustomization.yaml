@@ -26,7 +26,7 @@ patches:
         value: "/trondelagfylke-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/trondelagfylke-no"
+        value: "/trondelagfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/trondelagfylke-no/api/intern/arkiv"

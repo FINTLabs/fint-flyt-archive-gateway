@@ -26,7 +26,7 @@ patches:
         value: "/mrfylke-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/mrfylke-no"
+        value: "/mrfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/mrfylke-no/api/intern/arkiv"

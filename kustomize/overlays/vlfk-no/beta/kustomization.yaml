@@ -26,7 +26,7 @@ patches:
         value: "/beta/vlfk-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/beta/vlfk-no"
+        value: "/beta/vlfk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/vlfk-no/api/intern/arkiv"

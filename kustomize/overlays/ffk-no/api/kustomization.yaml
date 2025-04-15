@@ -26,7 +26,7 @@ patches:
         value: "/ffk-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/ffk-no"
+        value: "/ffk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/ffk-no/api/intern/arkiv"

@@ -26,7 +26,7 @@ patches:
         value: "/beta/telemarkfylke-no"
       - op: replace
         path: "/spec/observability/metrics/path"
-        value: "/beta/telemarkfylke-no"
+        value: "/beta/telemarkfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/telemarkfylke-no/api/intern/arkiv"
