@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.web;
 
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;
@@ -134,6 +135,7 @@ public class FintArchiveDispatchClient {
                 );
     }
 
+    @Timed(value = "pollForCreatedLocation")
     protected Mono<URI> pollForCreatedLocation(URI statusUri) {
         return Mono.defer(() -> fintWebClient
                         .get()
