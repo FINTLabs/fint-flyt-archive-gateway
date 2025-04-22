@@ -1,6 +1,8 @@
 package no.fintlabs.flyt.gateway.application.archive.resource.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.AbstractCollectionResources;
@@ -27,26 +29,46 @@ public class FintArchiveResourceClient {
 
     private final ObjectMapper objectMapper;
 
-    public FintArchiveResourceClient(WebClient fintWebClient) {
+    private final Timer lastUpdatedTimer;
+    private final Timer findCasesTimer;
+    private final MeterRegistry meterRegistry;
+
+    public FintArchiveResourceClient(
+            WebClient fintWebClient,
+            MeterRegistry meterRegistry
+    ) {
         this.fintWebClient = fintWebClient;
         this.objectMapper = new ObjectMapper();
+        this.meterRegistry = meterRegistry;
+
+        this.lastUpdatedTimer = Timer.builder("fint.flyt.gateway.archive.resource.getResourcesLastUpdated")
+                .description("Time to fetch and map last-updated resources")
+                .register(meterRegistry);
+
+        this.findCasesTimer = Timer.builder("fint.flyt.gateway.archive.resource.findCasesWithFilter")
+                .description("Time to fetch cases with filter")
+                .register(meterRegistry);
     }
 
     public <T> Mono<List<T>> getResourcesLastUpdated(String urlResourcePath, Class<T> resourceClass) {
+        Timer.Sample sample = Timer.start(meterRegistry);
         return fintWebClient.get()
                 .uri(urlResourcePath.concat("/last-updated"))
                 .retrieve()
                 .bodyToMono(LastUpdated.class)
                 .flatMap(lastUpdated -> fintWebClient.get()
-                        .uri(urlResourcePath, uriBuilder -> uriBuilder.queryParam("sinceTimeStamp", sinceTimestamp.getOrDefault(urlResourcePath, 0L)).build())
+                        .uri(urlResourcePath, uriBuilder ->
+                                uriBuilder.queryParam("sinceTimeStamp",
+                                        sinceTimestamp.getOrDefault(urlResourcePath, 0L)).build())
                         .retrieve()
                         .bodyToMono(new ParameterizedTypeReference<ResourceCollection>() {
                         })
                         .flatMapIterable(AbstractCollectionResources::getContent)
                         .map(resource -> objectMapper.convertValue(resource, resourceClass))
                         .collectList()
-                        .doOnNext(it -> sinceTimestamp.put(urlResourcePath, lastUpdated.getLastUpdated()))
-                );
+                        .doOnNext(list -> sinceTimestamp.put(urlResourcePath, lastUpdated.getLastUpdated()))
+                )
+                .doFinally(signal -> sample.stop(lastUpdatedTimer));
     }
 
     public void resetLastUpdatedTimestamps() {
@@ -54,6 +76,7 @@ public class FintArchiveResourceClient {
     }
 
     public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
+        Timer.Sample sample = Timer.start(meterRegistry);
         return fintWebClient
                 .get()
                 .uri(uriBuilder -> uriBuilder
@@ -71,7 +94,8 @@ public class FintArchiveResourceClient {
                     } else {
                         log.error(e.toString());
                     }
-                });
+                })
+                .doFinally(signal -> sample.stop(findCasesTimer));
     }
 
     public <T> Mono<T> getResources(String endpoint, Class<T> clazz) {
