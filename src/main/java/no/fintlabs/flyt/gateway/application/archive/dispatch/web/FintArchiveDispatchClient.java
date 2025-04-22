@@ -34,7 +34,10 @@ public class FintArchiveDispatchClient {
     private final WebClient fintWebClient;
     private final FintArchiveResourceClient fintArchiveResourceClient;
 
-    private final Timer timer;
+    private final Timer postFileTimer;
+    private final Timer postCaseTimer;
+    private final Timer postRecordTimer;
+    private final Timer pollForCreationTimer;
     private final MeterRegistry meterRegistry;
 
     public FintArchiveDispatchClient(
@@ -51,30 +54,37 @@ public class FintArchiveDispatchClient {
         this.fintWebClient = fintWebClient;
         this.fintArchiveResourceClient = fintArchiveResourceClient;
         this.meterRegistry = meterRegistry;
-        this.timer = Timer.builder("fint.flyt.gateway.archive.dispatch.pollForCreationTimer").description("timing poll for creation").register(meterRegistry);
+        this.postFileTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postFile").description("Timing postFile").register(meterRegistry);
+        this.postCaseTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postCase").description("Timing postCase").register(meterRegistry);
+        this.postRecordTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postRecord").description("Timing postRecord").register(meterRegistry);
+        this.pollForCreationTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.pollForCreatedLocation").description("Timing poll for created location").register(meterRegistry);
     }
 
     public Mono<Link> postFile(File file) {
-        log.info("Posting file");
-        return pollForCreatedLocation(
-                fintWebClient
-                        .post()
-                        .uri("/arkiv/noark/dokumentfil")
-                        .contentType(getMediaType(file.getType()))
-                        .bodyValue(file.getContents())
-                        .header("Content-Disposition", "attachment; filename=" + file.getName())
-                        .retrieve()
-        )
-                .map(URI::toString)
-                .map(Link::with)
-                .doOnNext(uri -> log.info("Successfully posted file with name={} on uri={}", file.getName(), uri))
-                .doOnError(e -> {
-                    if (e instanceof WebClientResponseException) {
-                        log.error(e + " body=" + ((WebClientResponseException) e).getResponseBodyAsString());
-                    } else {
-                        log.error(e.toString());
-                    }
-                });
+        return Mono.defer(() -> {
+            Timer.Sample sample = Timer.start(meterRegistry);
+            log.info("Posting file");
+            return pollForCreatedLocation(
+                    fintWebClient
+                            .post()
+                            .uri("/arkiv/noark/dokumentfil")
+                            .contentType(getMediaType(file.getType()))
+                            .bodyValue(file.getContents())
+                            .header("Content-Disposition", "attachment; filename=" + file.getName())
+                            .retrieve()
+            )
+                    .map(URI::toString)
+                    .map(Link::with)
+                    .doOnNext(uri -> log.info("Successfully posted file name={} uri={}", file.getName(), uri))
+                    .doOnError(e -> {
+                        if (e instanceof WebClientResponseException ex) {
+                            log.error(ex + " body=" + ex.getResponseBodyAsString());
+                        } else {
+                            log.error(e.toString());
+                        }
+                    })
+                    .doFinally(sig -> sample.stop(postFileTimer));
+        });
     }
 
     private MediaType getMediaType(String mediaType) {
@@ -86,27 +96,36 @@ public class FintArchiveDispatchClient {
     }
 
     public Mono<SakResource> postCase(SakResource sakResource) {
-        return pollForCaseResult(
-                fintWebClient
-                        .post()
-                        .uri("/arkiv/noark/sak")
-                        .bodyValue(sakResource)
-                        .retrieve()
-        );
+        return Mono.defer(() -> {
+            Timer.Sample sample = Timer.start(meterRegistry);
+            return pollForCaseResult(
+                    fintWebClient
+                            .post()
+                            .uri("/arkiv/noark/sak")
+                            .bodyValue(sakResource)
+                            .retrieve()
+            )
+                    .doFinally(sig -> sample.stop(postCaseTimer));
+        });
     }
 
     public Mono<JournalpostResource> postRecord(String caseId, JournalpostResource journalpostResource) {
-        return pollForCaseResult(
-                fintWebClient
-                        .put()
-                        .uri("/arkiv/noark/sak/mappeid/" + caseId)
-                        .bodyValue(new JournalpostWrapper(journalpostResource))
-                        .retrieve()
-        ).map(sakResource -> sakResource.getJournalpost()
-                .stream()
-                .max(Comparator.comparing(JournalpostResource::getJournalPostnummer))
-                .orElseThrow()
-        );
+        return Mono.defer(() -> {
+            Timer.Sample sample = Timer.start(meterRegistry);
+            return pollForCaseResult(
+                    fintWebClient
+                            .put()
+                            .uri("/arkiv/noark/sak/mappeid/" + caseId)
+                            .bodyValue(new JournalpostWrapper(journalpostResource))
+                            .retrieve()
+            )
+                    .map(sak -> sak.getJournalpost()
+                            .stream()
+                            .max(Comparator.comparing(JournalpostResource::getJournalPostnummer))
+                            .orElseThrow()
+                    )
+                    .doFinally(sig -> sample.stop(postRecordTimer));
+        });
     }
 
     private Mono<SakResource> pollForCaseResult(WebClient.ResponseSpec responseSpec) {
@@ -150,7 +169,7 @@ public class FintArchiveDispatchClient {
                                     .uri(statusUri)
                                     .retrieve()
                                     .toBodilessEntity()
-                                    .doFinally(entity -> sample.stop(timer));
+                                    .doFinally(entity -> sample.stop(pollForCreationTimer));
                         }
                 )
                 .filter(entity -> HttpStatus.CREATED.equals(entity.getStatusCode()) && entity.getHeaders().getLocation() != null)
