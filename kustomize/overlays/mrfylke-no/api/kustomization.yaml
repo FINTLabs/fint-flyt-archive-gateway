@@ -5,8 +5,10 @@ namespace: mrfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: mrfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_mrfylke_no
+      fintlabs.no/org-id: mrfylke.no
 
 patches:
   - patch: |-
@@ -22,6 +24,9 @@ patches:
       - op: replace
         path: "/spec/url/basePath"
         value: "/mrfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/mrfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/mrfylke-no/api/intern/arkiv"

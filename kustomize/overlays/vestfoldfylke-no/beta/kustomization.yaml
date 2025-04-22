@@ -5,8 +5,10 @@ namespace: vestfoldfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: vestfoldfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_vestfoldfylke_no
+      fintlabs.no/org-id: vestfoldfylke.no
 
 patches:
   - patch: |-
@@ -22,6 +24,9 @@ patches:
       - op: replace
         path: "/spec/url/basePath"
         value: "/beta/vestfoldfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/beta/vestfoldfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/vestfoldfylke-no/api/intern/arkiv"

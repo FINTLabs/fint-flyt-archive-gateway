@@ -1,5 +1,7 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.web;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;
@@ -32,18 +34,24 @@ public class FintArchiveDispatchClient {
     private final WebClient fintWebClient;
     private final FintArchiveResourceClient fintArchiveResourceClient;
 
+    private final Timer timer;
+    private final MeterRegistry meterRegistry;
+
     public FintArchiveDispatchClient(
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.attempts}") Integer createdLocationPollAttempts,
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.min-delay-millis}") Long createdLocationPollMinDelayMillis,
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.max-delay-millis}") Long createdLocationPollMaxDelayMillis,
             @Qualifier("fintWebClient") WebClient fintWebClient,
-            FintArchiveResourceClient fintArchiveResourceClient
+            FintArchiveResourceClient fintArchiveResourceClient,
+            MeterRegistry meterRegistry
     ) {
         this.createdLocationPollTimes = createdLocationPollAttempts;
         this.createdLocationPollMinDelayMillis = createdLocationPollMinDelayMillis;
         this.createdLocationPollMaxDelayMillis = createdLocationPollMaxDelayMillis;
         this.fintWebClient = fintWebClient;
         this.fintArchiveResourceClient = fintArchiveResourceClient;
+        this.meterRegistry = meterRegistry;
+        this.timer = Timer.builder("fint.flyt.gateway.archive.dispatch.pollForCreationTimer").description("timing poll for creation").register(meterRegistry);
     }
 
     public Mono<Link> postFile(File file) {
@@ -125,7 +133,7 @@ public class FintArchiveDispatchClient {
                 .toBodilessEntity()
                 .handle((entity, sink) -> {
                             if (HttpStatus.ACCEPTED.equals(entity.getStatusCode())
-                                && entity.getHeaders().getLocation() != null) {
+                                    && entity.getHeaders().getLocation() != null) {
                                 sink.next(entity.getHeaders().getLocation());
                             } else {
                                 sink.error(new RuntimeException("Expected 202 Accepted response with redirect header"));
@@ -135,11 +143,15 @@ public class FintArchiveDispatchClient {
     }
 
     protected Mono<URI> pollForCreatedLocation(URI statusUri) {
-        return Mono.defer(() -> fintWebClient
-                        .get()
-                        .uri(statusUri)
-                        .retrieve()
-                        .toBodilessEntity()
+        return Mono.defer(() -> {
+                            Timer.Sample sample = Timer.start(meterRegistry);
+                            return fintWebClient
+                                    .get()
+                                    .uri(statusUri)
+                                    .retrieve()
+                                    .toBodilessEntity()
+                                    .doFinally(entity -> sample.stop(timer));
+                        }
                 )
                 .filter(entity -> HttpStatus.CREATED.equals(entity.getStatusCode()) && entity.getHeaders().getLocation() != null)
                 .mapNotNull(entity -> entity.getHeaders().getLocation())

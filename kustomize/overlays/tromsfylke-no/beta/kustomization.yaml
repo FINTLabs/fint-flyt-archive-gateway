@@ -5,8 +5,10 @@ namespace: tromsfylke-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: tromsfylke.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_tromsfylke_no
+      fintlabs.no/org-id: tromsfylke.no
 
 patches:
   - patch: |-
@@ -22,6 +24,9 @@ patches:
       - op: replace
         path: "/spec/url/basePath"
         value: "/beta/tromsfylke-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/beta/tromsfylke-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/tromsfylke-no/api/intern/arkiv"

@@ -5,8 +5,10 @@ namespace: ofk-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: ofk.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_ofk_no
+      fintlabs.no/org-id: ofk.no
 
 patches:
   - patch: |-
@@ -22,6 +24,9 @@ patches:
       - op: replace
         path: "/spec/url/basePath"
         value: "/ofk-no"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/ofk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/ofk-no/api/intern/arkiv"

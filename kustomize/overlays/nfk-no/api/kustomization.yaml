@@ -5,8 +5,10 @@ namespace: nfk-no
 resources:
   - ../../../base
 
-commonLabels:
-  fintlabs.no/org-id: nfk.no
+labels:
+  - pairs:
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_nfk_no
+      fintlabs.no/org-id: nfk.no
 
 patches:
   - patch: |-
@@ -22,6 +24,9 @@ patches:
       - op: replace
         path: "/spec/url/basePath"
         value: "/nfk-no"
+      - op: replace
+        path: "/spec/url/basePath"
+        value: "/nfk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/nfk-no/api/intern/arkiv"
