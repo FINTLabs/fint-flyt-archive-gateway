@@ -4,3 +4,4 @@ resources:
   - flais.yaml
   - fint-client.yaml
   - oauth2-file-client.yaml
+  - onepassword.yaml
