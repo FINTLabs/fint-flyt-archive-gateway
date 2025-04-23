@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.Link;
 import no.fint.model.resource.arkiv.noark.JournalpostResource;
 import no.fint.model.resource.arkiv.noark.SakResource;
+import no.fintlabs.flyt.gateway.application.archive.WebUtilErrorHandler;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.File;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.JournalpostWrapper;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
@@ -16,7 +17,6 @@ import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.retry.Repeat;
 
@@ -40,13 +40,16 @@ public class FintArchiveDispatchClient {
     private final Timer pollForCreationTimer;
     private final MeterRegistry meterRegistry;
 
+    private final WebUtilErrorHandler webUtilErrorHandler;
+
     public FintArchiveDispatchClient(
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.attempts}") Integer createdLocationPollAttempts,
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.min-delay-millis}") Long createdLocationPollMinDelayMillis,
             @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.max-delay-millis}") Long createdLocationPollMaxDelayMillis,
             @Qualifier("fintWebClient") WebClient fintWebClient,
             FintArchiveResourceClient fintArchiveResourceClient,
-            MeterRegistry meterRegistry
+            MeterRegistry meterRegistry,
+            WebUtilErrorHandler webUtilErrorHandler
     ) {
         this.createdLocationPollTimes = createdLocationPollAttempts;
         this.createdLocationPollMinDelayMillis = createdLocationPollMinDelayMillis;
@@ -58,6 +61,7 @@ public class FintArchiveDispatchClient {
         this.postCaseTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postCase").description("Timing postCase").register(meterRegistry);
         this.postRecordTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postRecord").description("Timing postRecord").register(meterRegistry);
         this.pollForCreationTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.pollForCreatedLocation").description("Timing poll for created location").register(meterRegistry);
+        this.webUtilErrorHandler = webUtilErrorHandler;
     }
 
     public Mono<Link> postFile(File file) {
@@ -76,13 +80,7 @@ public class FintArchiveDispatchClient {
                     .map(URI::toString)
                     .map(Link::with)
                     .doOnNext(uri -> log.info("Successfully posted file name={} uri={}", file.getName(), uri))
-                    .doOnError(e -> {
-                        if (e instanceof WebClientResponseException ex) {
-                            log.error(ex + " body=" + ex.getResponseBodyAsString());
-                        } else {
-                            log.error(e.toString());
-                        }
-                    })
+                    .doOnError(webUtilErrorHandler::logAndSendError)
                     .doFinally(sig -> sample.stop(postFileTimer));
         });
     }
@@ -105,6 +103,7 @@ public class FintArchiveDispatchClient {
                             .bodyValue(sakResource)
                             .retrieve()
             )
+                    .doOnError(webUtilErrorHandler::logAndSendError)
                     .doFinally(sig -> sample.stop(postCaseTimer));
         });
     }
@@ -131,14 +130,7 @@ public class FintArchiveDispatchClient {
     private Mono<SakResource> pollForCaseResult(WebClient.ResponseSpec responseSpec) {
         return pollForCreatedLocation(responseSpec)
                 .flatMap(fintArchiveResourceClient::getCase)
-                .doOnError(e -> {
-                    if (e instanceof WebClientResponseException) {
-                        log.error(e + " body=" + ((WebClientResponseException) e).getResponseBodyAsString());
-                    } else {
-                        log.error(e.toString());
-                    }
-                });
-
+                .doOnError(webUtilErrorHandler::logAndSendError);
     }
 
     private Mono<URI> pollForCreatedLocation(WebClient.ResponseSpec responseSpec) {
@@ -169,6 +161,7 @@ public class FintArchiveDispatchClient {
                                     .uri(statusUri)
                                     .retrieve()
                                     .toBodilessEntity()
+                                    .doOnError(webUtilErrorHandler::logAndSendError)
                                     .doFinally(entity -> sample.stop(pollForCreationTimer));
                         }
                 )
@@ -184,5 +177,4 @@ public class FintArchiveDispatchClient {
                 )
                 .switchIfEmpty(Mono.error(new RuntimeException("Reached max number of retries for polling created location from destination")));
     }
-
 }

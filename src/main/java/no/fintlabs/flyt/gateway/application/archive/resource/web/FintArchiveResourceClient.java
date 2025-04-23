@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.model.resource.AbstractCollectionResources;
 import no.fint.model.resource.arkiv.noark.SakResource;
 import no.fint.model.resource.arkiv.noark.SakResources;
+import no.fintlabs.flyt.gateway.application.archive.WebUtilErrorHandler;
 import no.fintlabs.flyt.gateway.application.archive.resource.model.ResourceCollection;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
@@ -33,11 +34,15 @@ public class FintArchiveResourceClient {
     private final Timer findCasesTimer;
     private final MeterRegistry meterRegistry;
 
+    private final WebUtilErrorHandler webUtilErrorHandler;
+
     public FintArchiveResourceClient(
             WebClient fintWebClient,
-            MeterRegistry meterRegistry
+            MeterRegistry meterRegistry,
+            WebUtilErrorHandler webUtilErrorHandler
     ) {
         this.fintWebClient = fintWebClient;
+        this.webUtilErrorHandler = webUtilErrorHandler;
         this.objectMapper = new ObjectMapper();
         this.meterRegistry = meterRegistry;
 
@@ -68,6 +73,7 @@ public class FintArchiveResourceClient {
                         .collectList()
                         .doOnNext(list -> sinceTimestamp.put(urlResourcePath, lastUpdated.getLastUpdated()))
                 )
+                .doOnError(webUtilErrorHandler::logAndSendError)
                 .doFinally(signal -> sample.stop(lastUpdatedTimer));
     }
 
@@ -88,13 +94,7 @@ public class FintArchiveResourceClient {
                 .bodyToMono(SakResources.class)
                 .map(SakResources::getContent)
                 .onErrorReturn(WebClientResponseException.NotFound.class, List.of())
-                .doOnError(e -> {
-                    if (e instanceof WebClientResponseException) {
-                        log.error("{} body={}", e, ((WebClientResponseException) e).getResponseBodyAsString());
-                    } else {
-                        log.error(e.toString());
-                    }
-                })
+                .doOnError(webUtilErrorHandler::logAndSendError)
                 .doFinally(signal -> sample.stop(findCasesTimer));
     }
 
