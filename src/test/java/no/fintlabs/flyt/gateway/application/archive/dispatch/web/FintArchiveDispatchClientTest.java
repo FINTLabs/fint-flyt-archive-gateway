@@ -2,6 +2,7 @@ package no.fintlabs.flyt.gateway.application.archive.dispatch.web;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import no.fintlabs.flyt.gateway.application.archive.WebUtilErrorHandler;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,19 +24,22 @@ class FintArchiveDispatchClientTest {
     FintArchiveResourceClient fintArchiveResourceClient;
     FintArchiveDispatchClient fintArchiveDispatchClient;
     MeterRegistry meterRegistry;
+    WebUtilErrorHandler webUtilErrorHandler;
 
     @BeforeEach
     public void setup() {
         fintWebClient = mock(WebClient.class);
         fintArchiveResourceClient = mock(FintArchiveResourceClient.class);
         meterRegistry = new SimpleMeterRegistry();
+        webUtilErrorHandler = mock(WebUtilErrorHandler.class);
         fintArchiveDispatchClient = new FintArchiveDispatchClient(
                 4,
                 100L,
                 250L,
                 fintWebClient,
                 fintArchiveResourceClient,
-                meterRegistry
+                meterRegistry,
+                webUtilErrorHandler
         );
     }
 

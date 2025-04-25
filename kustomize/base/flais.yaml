@@ -43,6 +43,8 @@ spec:
         {
           "fintlabs.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"]
         }
+  onePassword:
+    itemPath: path
   envFrom:
     - secretRef:
         name: fint-flyt-archive-fint-client
