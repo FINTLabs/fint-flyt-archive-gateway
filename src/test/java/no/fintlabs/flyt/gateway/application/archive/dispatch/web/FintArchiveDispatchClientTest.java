@@ -18,6 +18,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import static org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
 
+// TODO 25/04/2025 eivindmorch: Fix tests
 class FintArchiveDispatchClientTest {
 
     WebClient fintWebClient;
@@ -33,9 +34,16 @@ class FintArchiveDispatchClientTest {
         meterRegistry = new SimpleMeterRegistry();
         webUtilErrorHandler = mock(WebUtilErrorHandler.class);
         fintArchiveDispatchClient = new FintArchiveDispatchClient(
-                4,
-                100L,
-                250L,
+                FintArchiveDispatchClientConfigurationProperties
+                        .builder()
+                        .postFileTimeoutMillis(130000L)
+                        .postRecordTimeoutMillis(130000L)
+                        .postCaseTimeoutMillis(130000L)
+                        .getStatusTimeoutMillis(130000L)
+                        .createdLocationPollBackoffMinDelayMillis(100L)
+                        .createdLocationPollBackoffMaxDelayMillis(250L)
+                        .createdLocationPollTotalTimeoutMillis(2000L)
+                        .build(),
                 fintWebClient,
                 fintArchiveResourceClient,
                 meterRegistry,

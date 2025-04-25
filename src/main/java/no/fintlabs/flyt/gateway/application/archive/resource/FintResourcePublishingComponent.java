@@ -1,8 +1,8 @@
 package no.fintlabs.flyt.gateway.application.archive.resource;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcesConfiguration;
 import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePipeline;
+import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePublishingConfiguration;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import no.fintlabs.kafka.entity.EntityProducer;
 import no.fintlabs.kafka.entity.EntityProducerFactory;
@@ -27,7 +27,7 @@ public class FintResourcePublishingComponent {
 
     public FintResourcePublishingComponent(
             EntityTopicService entityTopicService,
-            ResourcesConfiguration resourcesConfiguration,
+            ResourcePublishingConfiguration resourcePublishingConfiguration,
             EntityProducerFactory entityProducerFactory,
             FintArchiveResourceClient fintArchiveResourceClient,
             List<ResourcePipeline<?>> resourcePipelines
@@ -36,7 +36,7 @@ public class FintResourcePublishingComponent {
         this.entityProducer = entityProducerFactory.createProducer(Object.class);
         this.fintArchiveResourceClient = fintArchiveResourceClient;
         this.resourcePipelines = resourcePipelines;
-        this.ensureTopics(resourcePipelines, resourcesConfiguration.getRefresh().getTopicRetentionTimeMs());
+        this.ensureTopics(resourcePipelines, resourcePublishingConfiguration.getRefresh().getTopicRetentionTimeMs());
     }
 
     private void ensureTopics(List<ResourcePipeline<?>> resourcePipelines, long topicRetentionTime) {
@@ -122,6 +122,5 @@ public class FintResourcePublishingComponent {
             return Collections.emptyList();
         }
     }
-
 
 }

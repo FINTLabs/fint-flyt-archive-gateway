@@ -43,7 +43,7 @@ public class CaseRequestConfiguration {
                     try {
                         return ReplyProducerRecord.<SakResource>builder()
                                 .value(fintArchiveResourceClient
-                                        .getResources("/arkiv/noark/sak/mappeid/" + consumerRecord.value(), SakResource.class)
+                                        .getResource("/arkiv/noark/sak/mappeid/" + consumerRecord.value(), SakResource.class)
                                         .block()
                                 ).build();
                     } catch (RuntimeException e) {
@@ -76,7 +76,7 @@ public class CaseRequestConfiguration {
                     CaseAndJournalpostIds caseAndJournalpostIds = extractCaseAndJournalpostIds(consumerRecord.value());
                     try {
                         SakResource sakResource = fintArchiveResourceClient
-                                .getResources("/arkiv/noark/sak/mappeid/" + caseAndJournalpostIds.getCaseId(), SakResource.class)
+                                .getResource("/arkiv/noark/sak/mappeid/" + caseAndJournalpostIds.getCaseId(), SakResource.class)
                                 .block();
                         if (sakResource != null) {
                             List<JournalpostResource> filteredJournalposts = sakResource.getJournalpost()

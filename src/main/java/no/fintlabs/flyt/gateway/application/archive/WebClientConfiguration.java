@@ -1,4 +1,4 @@
-package no.fintlabs.flyt;
+package no.fintlabs.flyt.gateway.application.archive;
 
 import io.netty.channel.ChannelOption;
 import org.springframework.context.annotation.Bean;

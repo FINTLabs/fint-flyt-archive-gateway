@@ -39,6 +39,31 @@
       "name": "fint.kafka.application-id",
       "type": "java.lang.String",
       "description": "Description for fint.kafka.application-id."
+    },
+    {
+      "name": "fint.flyt.gateway.application.archive.dispatch.flyt-file-client.get-file-timeout-millis",
+      "type": "java.lang.Long",
+      "description": "Description for fint.flyt.gateway.application.archive.dispatch.flyt-file-client.get-file-timeout-millis."
+    },
+    {
+      "name": "fint.flyt.gateway.application.archive.resource.publishing.refresh.interval-ms",
+      "type": "java.lang.Long",
+      "description": "Description for fint.flyt.gateway.application.archive.resource.publishing.refresh.interval-ms."
+    },
+    {
+      "name": "fint.flyt.gateway.application.archive.resource.publishing.refresh.topic-retention-time-offset-ms",
+      "type": "java.lang.Long",
+      "description": "Description for fint.flyt.gateway.application.archive.resource.publishing.refresh.topic-retention-time-offset-ms."
+    },
+    {
+      "name": "fint.flyt.gateway.application.archive.resource.publishing.pull.initial-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Description for fint.flyt.gateway.application.archive.resource.publishing.pull.initial-delay-ms."
+    },
+    {
+      "name": "fint.flyt.gateway.application.archive.resource.publishing.pull.fixed-delay-ms",
+      "type": "java.lang.Long",
+      "description": "Description for fint.flyt.gateway.application.archive.resource.publishing.pull.fixed-delay-ms."
     }
   ]
 }
