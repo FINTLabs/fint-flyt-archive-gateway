@@ -43,7 +43,7 @@ patches:
           }
       - op: replace
         path: "/spec/onePassword/itemPath"
-        value: "vaults/aks-beta-vault/items/fint-flyt-v1-slack-webhook"
+        value: "vaults/aks-api-vault/items/fint-flyt-v1-slack-webhook"
     target:
       kind: Application
       name: fint-flyt-archive-gateway
