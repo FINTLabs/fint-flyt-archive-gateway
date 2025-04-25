@@ -73,7 +73,13 @@ public class FintArchiveResourceClient {
                         .collectList()
                         .doOnNext(list -> sinceTimestamp.put(urlResourcePath, lastUpdated.getLastUpdated()))
                 )
-                .doOnError(webUtilErrorHandler::logAndSendError)
+                .doOnError(e -> {
+                    if (e instanceof WebClientResponseException ex) {
+                        log.error("{} body={}", ex, ex.getResponseBodyAsString());
+                    } else {
+                        log.error(e.toString());
+                    }
+                })
                 .doFinally(signal -> sample.stop(lastUpdatedTimer));
     }
 
