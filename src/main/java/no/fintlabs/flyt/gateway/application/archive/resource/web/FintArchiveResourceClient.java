@@ -10,13 +10,17 @@ import no.fint.model.resource.arkiv.noark.SakResource;
 import no.fint.model.resource.arkiv.noark.SakResources;
 import no.fintlabs.flyt.gateway.application.archive.WebUtilErrorHandler;
 import no.fintlabs.flyt.gateway.application.archive.resource.model.ResourceCollection;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClientRequest;
+import reactor.util.retry.Retry;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 public class FintArchiveResourceClient {
+    private final FintArchiveResourceClientProperties properties;
     private final WebClient fintWebClient;
 
     private final Map<String, Long> sinceTimestamp = new ConcurrentHashMap<>();
@@ -37,10 +42,12 @@ public class FintArchiveResourceClient {
     private final WebUtilErrorHandler webUtilErrorHandler;
 
     public FintArchiveResourceClient(
-            WebClient fintWebClient,
+            FintArchiveResourceClientProperties fintArchiveResourceClientProperties,
+            @Qualifier("fintWebClient") WebClient fintWebClient,
             MeterRegistry meterRegistry,
             WebUtilErrorHandler webUtilErrorHandler
     ) {
+        this.properties = fintArchiveResourceClientProperties;
         this.fintWebClient = fintWebClient;
         this.webUtilErrorHandler = webUtilErrorHandler;
         this.objectMapper = new ObjectMapper();
@@ -59,6 +66,12 @@ public class FintArchiveResourceClient {
         Timer.Sample sample = Timer.start(meterRegistry);
         return fintWebClient.get()
                 .uri(urlResourcePath.concat("/last-updated"))
+                .httpRequest(clientHttpRequest -> {
+                    HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                    reactorRequest.responseTimeout(Duration.ofMillis(
+                            properties.getGetResourcesLastUpdatedTimeoutMillis()
+                    ));
+                })
                 .retrieve()
                 .bodyToMono(LastUpdated.class)
                 .flatMap(lastUpdated -> fintWebClient.get()
@@ -83,44 +96,69 @@ public class FintArchiveResourceClient {
                 .doFinally(signal -> sample.stop(lastUpdatedTimer));
     }
 
-    public void resetLastUpdatedTimestamps() {
-        this.sinceTimestamp.clear();
-    }
-
-    public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
-        Timer.Sample sample = Timer.start(meterRegistry);
-        return fintWebClient
-                .get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/arkiv/noark/sak")
-                        .queryParam("$filter", caseFilter)
-                        .build()
-                )
-                .retrieve()
-                .bodyToMono(SakResources.class)
-                .map(SakResources::getContent)
-                .onErrorReturn(WebClientResponseException.NotFound.class, List.of())
-                .doOnError(webUtilErrorHandler::logAndSendError)
-                .doFinally(signal -> sample.stop(findCasesTimer));
-    }
-
-    public <T> Mono<T> getResources(String endpoint, Class<T> clazz) {
-        return fintWebClient.get()
-                .uri(endpoint)
-                .retrieve()
-                .bodyToMono(clazz);
-    }
 
     @Data
     private static class LastUpdated {
         private Long lastUpdated;
     }
 
-    public Mono<SakResource> getCase(URI uri) {
-        return fintWebClient
-                .get()
-                .uri(uri)
-                .retrieve()
-                .bodyToMono(SakResource.class);
+    public void resetLastUpdatedTimestamps() {
+        this.sinceTimestamp.clear();
     }
+
+    public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
+        return Mono.defer(() -> {
+                    Timer.Sample sample = Timer.start(meterRegistry);
+                    return fintWebClient
+                            .get()
+                            .uri(uriBuilder -> uriBuilder
+                                    .path("/arkiv/noark/sak")
+                                    .queryParam("$filter", caseFilter)
+                                    .build()
+                            )
+                            .httpRequest(clientHttpRequest -> {
+                                HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                                reactorRequest.responseTimeout(Duration.ofMillis(
+                                        properties.getFindCasesWithFilterTimeoutMillis()
+                                ));
+                            })
+                            .retrieve()
+                            .bodyToMono(SakResources.class)
+                            .map(SakResources::getContent)
+                            .onErrorReturn(WebClientResponseException.NotFound.class, List.of())
+                            .doOnError(webUtilErrorHandler::logAndSendError)
+                            .doFinally(signal -> sample.stop(findCasesTimer));
+                })
+                .retryWhen(
+                        Retry.backoff(
+                                properties.getFindCasesWithFilterMaxAttempts() - 1,
+                                Duration.ofMillis(properties.getFindCasesWithFilterBackoffRetryMinDelayMillis())
+                        ).maxBackoff(
+                                Duration.ofMillis(properties.getFindCasesWithFilterBackoffRetryMaxDelayMillis())
+                        ).doBeforeRetry(
+                                retrySignal -> log.warn(
+                                        "Encountered error when finding cases with filter" +
+                                        " -- performing retry " + (retrySignal.totalRetries() + 1),
+                                        retrySignal.failure())
+                        )
+                );
+    }
+
+    public <T> Mono<T> getResource(String endpoint, Class<T> clazz) {
+        return fintWebClient.get()
+                .uri(endpoint)
+                .httpRequest(clientHttpRequest -> {
+                    HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                    reactorRequest.responseTimeout(Duration.ofMillis(
+                            properties.getGetResourceTimeoutMillis()
+                    ));
+                })
+                .retrieve()
+                .bodyToMono(clazz);
+    }
+
+    public Mono<SakResource> getCase(URI uri) {
+        return getResource(uri.getPath(), SakResource.class);
+    }
+
 }

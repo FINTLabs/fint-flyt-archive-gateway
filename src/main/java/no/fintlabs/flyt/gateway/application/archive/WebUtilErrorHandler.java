@@ -1,7 +1,7 @@
 package no.fintlabs.flyt.gateway.application.archive;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fintlabs.flyt.gateway.application.slack.SlackAlertService;
+import no.fintlabs.flyt.gateway.application.archive.slack.SlackAlertService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 

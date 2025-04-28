@@ -11,13 +11,13 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.File;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.JournalpostWrapper;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClientRequest;
 import reactor.retry.Repeat;
 
 import java.net.URI;
@@ -28,9 +28,7 @@ import java.util.Comparator;
 @Service
 public class FintArchiveDispatchClient {
 
-    private final Integer createdLocationPollTimes;
-    private final Long createdLocationPollMinDelayMillis;
-    private final Long createdLocationPollMaxDelayMillis;
+    private final FintArchiveDispatchClientConfigurationProperties properties;
     private final WebClient fintWebClient;
     private final FintArchiveResourceClient fintArchiveResourceClient;
 
@@ -43,17 +41,13 @@ public class FintArchiveDispatchClient {
     private final WebUtilErrorHandler webUtilErrorHandler;
 
     public FintArchiveDispatchClient(
-            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.attempts}") Integer createdLocationPollAttempts,
-            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.min-delay-millis}") Long createdLocationPollMinDelayMillis,
-            @Value("${fint.flyt.gateway.application.archive.client.fint-archive.created-location-polling.max-delay-millis}") Long createdLocationPollMaxDelayMillis,
+            FintArchiveDispatchClientConfigurationProperties fintArchiveDispatchClientConfigurationProperties,
             @Qualifier("fintWebClient") WebClient fintWebClient,
             FintArchiveResourceClient fintArchiveResourceClient,
             MeterRegistry meterRegistry,
             WebUtilErrorHandler webUtilErrorHandler
     ) {
-        this.createdLocationPollTimes = createdLocationPollAttempts;
-        this.createdLocationPollMinDelayMillis = createdLocationPollMinDelayMillis;
-        this.createdLocationPollMaxDelayMillis = createdLocationPollMaxDelayMillis;
+        this.properties = fintArchiveDispatchClientConfigurationProperties;
         this.fintWebClient = fintWebClient;
         this.fintArchiveResourceClient = fintArchiveResourceClient;
         this.meterRegistry = meterRegistry;
@@ -72,6 +66,12 @@ public class FintArchiveDispatchClient {
                     fintWebClient
                             .post()
                             .uri("/arkiv/noark/dokumentfil")
+                            .httpRequest(clientHttpRequest -> {
+                                HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                                reactorRequest.responseTimeout(Duration.ofMillis(
+                                        properties.getPostFileTimeoutMillis()
+                                ));
+                            })
                             .contentType(getMediaType(file.getType()))
                             .bodyValue(file.getContents())
                             .header("Content-Disposition", "attachment; filename=" + file.getName())
@@ -100,6 +100,12 @@ public class FintArchiveDispatchClient {
                     fintWebClient
                             .post()
                             .uri("/arkiv/noark/sak")
+                            .httpRequest(clientHttpRequest -> {
+                                HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                                reactorRequest.responseTimeout(Duration.ofMillis(
+                                        properties.getPostCaseTimeoutMillis()
+                                ));
+                            })
                             .bodyValue(sakResource)
                             .retrieve()
             )
@@ -115,6 +121,12 @@ public class FintArchiveDispatchClient {
                     fintWebClient
                             .put()
                             .uri("/arkiv/noark/sak/mappeid/" + caseId)
+                            .httpRequest(clientHttpRequest -> {
+                                HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                                reactorRequest.responseTimeout(Duration.ofMillis(
+                                        properties.getPostRecordTimeoutMillis()
+                                ));
+                            })
                             .bodyValue(new JournalpostWrapper(journalpostResource))
                             .retrieve()
             )
@@ -144,7 +156,7 @@ public class FintArchiveDispatchClient {
                 .toBodilessEntity()
                 .handle((entity, sink) -> {
                             if (HttpStatus.ACCEPTED.equals(entity.getStatusCode())
-                                    && entity.getHeaders().getLocation() != null) {
+                                && entity.getHeaders().getLocation() != null) {
                                 sink.next(entity.getHeaders().getLocation());
                             } else {
                                 sink.error(new RuntimeException("Expected 202 Accepted response with redirect header"));
@@ -159,6 +171,12 @@ public class FintArchiveDispatchClient {
                             return fintWebClient
                                     .get()
                                     .uri(statusUri)
+                                    .httpRequest(clientHttpRequest -> {
+                                        HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
+                                        reactorRequest.responseTimeout(Duration.ofMillis(
+                                                properties.getGetStatusTimeoutMillis()
+                                        ));
+                                    })
                                     .retrieve()
                                     .toBodilessEntity()
                                     .doOnError(webUtilErrorHandler::logAndSendError)
@@ -169,12 +187,12 @@ public class FintArchiveDispatchClient {
                 .mapNotNull(entity -> entity.getHeaders().getLocation())
                 .repeatWhenEmpty(
                         Repeat
-                                .times(createdLocationPollTimes - 1)
+                                .times(Long.MAX_VALUE)
                                 .exponentialBackoff(
-                                        Duration.ofMillis(createdLocationPollMinDelayMillis),
-                                        Duration.ofMillis(createdLocationPollMaxDelayMillis)
-                                )
+                                        Duration.ofMillis(properties.getCreatedLocationPollBackoffMinDelayMillis()),
+                                        Duration.ofMillis(properties.getCreatedLocationPollBackoffMaxDelayMillis())
+                                ).timeout(Duration.ofMillis(properties.getCreatedLocationPollTotalTimeoutMillis()))
                 )
-                .switchIfEmpty(Mono.error(new RuntimeException("Reached max number of retries for polling created location from destination")));
+                .switchIfEmpty(Mono.error(new RuntimeException("Reached max total timeout for polling created location from destination")));
     }
 }

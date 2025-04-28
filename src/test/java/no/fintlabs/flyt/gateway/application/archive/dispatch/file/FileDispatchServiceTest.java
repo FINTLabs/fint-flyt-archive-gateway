@@ -7,7 +7,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDis
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.File;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.web.file.FileClient;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.flytfile.FlytFileClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +30,7 @@ class FileDispatchServiceTest {
     @Mock
     private FintArchiveDispatchClient fintArchiveDispatchClient;
     @Mock
-    private FileClient fileClient;
+    private FlytFileClient flytFileClient;
     @InjectMocks
     private FileDispatchService fileDispatchService;
     private Random random;
@@ -44,7 +44,7 @@ class FileDispatchServiceTest {
     public void givenSuccessFromGetFileAndSuccessFromPostFileShouldReturnAcceptedResult() {
         FileMock fileMock = mockFile();
 
-        doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);
+        doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);
         doReturn(Mono.just(fileMock.archiveLink)).when(fintArchiveDispatchClient).postFile(fileMock.file);
 
         StepVerifier
@@ -52,8 +52,8 @@ class FileDispatchServiceTest {
                 .expectNext(FileDispatchResult.accepted(fileMock.fileId, fileMock.archiveLink))
                 .verifyComplete();
 
-        verify(fileClient, times(1)).getFile(fileMock.fileId);
-        verifyNoMoreInteractions(fileClient);
+        verify(flytFileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(flytFileClient);
 
         verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
         verifyNoMoreInteractions(fintArchiveDispatchClient);
@@ -63,7 +63,7 @@ class FileDispatchServiceTest {
     public void givenErrorFromGetFileShouldReturnFailedCouldNotBeRetrievedResult() {
         UUID fileId = getUuid();
 
-        doReturn(Mono.error(new RuntimeException())).when(fileClient).getFile(fileId);
+        doReturn(Mono.error(new RuntimeException())).when(flytFileClient).getFile(fileId);
 
         DokumentobjektDto dokumentobjektDto = DokumentobjektDto
                 .builder()
@@ -75,15 +75,15 @@ class FileDispatchServiceTest {
                 .expectNext(FileDispatchResult.couldNotBeRetrieved(fileId))
                 .verifyComplete();
 
-        verify(fileClient, times(1)).getFile(fileId);
-        verifyNoMoreInteractions(fileClient);
+        verify(flytFileClient, times(1)).getFile(fileId);
+        verifyNoMoreInteractions(flytFileClient);
     }
 
     @Test
     public void givenSuccessFromGetFileAndWebClientResponseExceptionFromPostFileShouldReturnDeclinedResult() {
         FileMock fileMock = mockFile();
 
-        doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);
+        doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);
 
         WebClientResponseException webClientResponseException = mock(WebClientResponseException.class);
         doReturn("test response body").when(webClientResponseException).getResponseBodyAsString();
@@ -94,8 +94,8 @@ class FileDispatchServiceTest {
                 .expectNext(FileDispatchResult.declined(fileMock.fileId, "test response body"))
                 .verifyComplete();
 
-        verify(fileClient, times(1)).getFile(fileMock.fileId);
-        verifyNoMoreInteractions(fileClient);
+        verify(flytFileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(flytFileClient);
 
         verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
         verifyNoMoreInteractions(fintArchiveDispatchClient);
@@ -104,7 +104,7 @@ class FileDispatchServiceTest {
     @Test
     public void givenSuccessFromGetFileAndReadTimeoutExceptionFromDispatchClientShouldReturnFailedTimedOutResult() {
         FileMock fileMock = mockFile();
-        doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);
+        doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);
         doReturn(Mono.error(new ReadTimeoutException())).when(fintArchiveDispatchClient).postFile(fileMock.file);
 
         StepVerifier
@@ -112,8 +112,8 @@ class FileDispatchServiceTest {
                 .expectNext(FileDispatchResult.timedOut(fileMock.fileId))
                 .verifyComplete();
 
-        verify(fileClient, times(1)).getFile(fileMock.fileId);
-        verifyNoMoreInteractions(fileClient);
+        verify(flytFileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(flytFileClient);
 
         verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
         verifyNoMoreInteractions(fintArchiveDispatchClient);
@@ -123,7 +123,7 @@ class FileDispatchServiceTest {
     public void givenSuccessFromGetFileAndErrorOtherThanWebClientResponseExceptionAndReadTimeoutExceptionFromPostFileShouldReturnFailedResult() {
         FileMock fileMock = mockFile();
 
-        doReturn(Mono.just(fileMock.file)).when(fileClient).getFile(fileMock.fileId);
+        doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);
         doReturn(Mono.error(new RuntimeException())).when(fintArchiveDispatchClient).postFile(fileMock.file);
 
         StepVerifier
@@ -131,8 +131,8 @@ class FileDispatchServiceTest {
                 .expectNext(FileDispatchResult.failed(fileMock.fileId))
                 .verifyComplete();
 
-        verify(fileClient, times(1)).getFile(fileMock.fileId);
-        verifyNoMoreInteractions(fileClient);
+        verify(flytFileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(flytFileClient);
 
         verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
         verifyNoMoreInteractions(fintArchiveDispatchClient);

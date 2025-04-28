@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
-import no.fintlabs.flyt.gateway.application.archive.dispatch.web.file.FileClient;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.flytfile.FlytFileClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -15,16 +15,16 @@ import reactor.core.publisher.Mono;
 public class FileDispatchService {
 
     private final FintArchiveDispatchClient fintArchiveDispatchClient;
-    private final FileClient fileClient;
+    private final FlytFileClient flytFileClient;
 
-    public FileDispatchService(FintArchiveDispatchClient fintArchiveDispatchClient, FileClient fileClient) {
+    public FileDispatchService(FintArchiveDispatchClient fintArchiveDispatchClient, FlytFileClient flytFileClient) {
         this.fintArchiveDispatchClient = fintArchiveDispatchClient;
-        this.fileClient = fileClient;
+        this.flytFileClient = flytFileClient;
     }
 
     public Mono<FileDispatchResult> dispatch(DokumentobjektDto dokumentobjektDto) {
         log.info("Dispatching file");
-        return dokumentobjektDto.getFileId().map(fileId -> fileClient.getFile(fileId)
+        return dokumentobjektDto.getFileId().map(fileId -> flytFileClient.getFile(fileId)
                         .flatMap(file -> fintArchiveDispatchClient.postFile(file)
                                 .map(link -> FileDispatchResult.accepted(fileId, link))
                                 .onErrorResume(WebClientResponseException.class, e -> Mono.just(

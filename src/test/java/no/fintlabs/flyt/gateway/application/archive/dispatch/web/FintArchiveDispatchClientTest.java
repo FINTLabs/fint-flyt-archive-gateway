@@ -8,14 +8,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.web.reactive.function.client.WebClient.RequestHeadersSpec;
 import static org.springframework.web.reactive.function.client.WebClient.RequestHeadersUriSpec;
 
 class FintArchiveDispatchClientTest {
@@ -33,9 +34,16 @@ class FintArchiveDispatchClientTest {
         meterRegistry = new SimpleMeterRegistry();
         webUtilErrorHandler = mock(WebUtilErrorHandler.class);
         fintArchiveDispatchClient = new FintArchiveDispatchClient(
-                4,
-                100L,
-                250L,
+                FintArchiveDispatchClientConfigurationProperties
+                        .builder()
+                        .postFileTimeoutMillis(130000L)
+                        .postRecordTimeoutMillis(130000L)
+                        .postCaseTimeoutMillis(130000L)
+                        .getStatusTimeoutMillis(130000L)
+                        .createdLocationPollBackoffMinDelayMillis(100L)
+                        .createdLocationPollBackoffMaxDelayMillis(250L)
+                        .createdLocationPollTotalTimeoutMillis(1000L)
+                        .build(),
                 fintWebClient,
                 fintArchiveResourceClient,
                 meterRegistry,
@@ -44,15 +52,17 @@ class FintArchiveDispatchClientTest {
     }
 
     @Test
-    public void givenCreatedLocationOnFirstPoll_shouldReturnWithoutRepeats() {
+    public void givenCreatedLocationOnFirstPoll_whenPollForCreatedLocation_shouldReturnWithoutRepeats() {
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
         when(fintWebClient.get()).thenReturn(requestHeadersUriSpec);
 
-        WebClient.RequestHeadersSpec<?> requestHeadersSpec = mock(RequestHeadersSpec.class);
-        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestHeadersSpec);
+        WebClient.RequestBodySpec requestBodySpec = mock(WebClient.RequestBodySpec.class);
+        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestBodySpec);
+
+        when(requestBodySpec.httpRequest(any())).thenReturn(requestBodySpec);
 
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
 
         when(responseSpec.toBodilessEntity()).thenAnswer(invocation -> Mono.just(ResponseEntity.created(URI.create("testCreatedUri")).build()));
 
@@ -65,19 +75,26 @@ class FintArchiveDispatchClientTest {
     }
 
     @Test
-    public void givenRequiredAttemptsBelowMaxRepeats_shouldPollForStatusLocationUntilProvided() {
+    public void givenRequiredRepeatsFasterThanMaxTotalTimeout_whenPollForCreatedLocation_shouldPollForStatusLocationUntilProvided() {
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
         when(fintWebClient.get()).thenReturn(requestHeadersUriSpec);
 
-        WebClient.RequestHeadersSpec<?> requestHeadersSpec = mock(RequestHeadersSpec.class);
-        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestHeadersSpec);
+        WebClient.RequestBodySpec requestBodySpec = mock(WebClient.RequestBodySpec.class);
+        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestBodySpec);
+
+        when(requestBodySpec.httpRequest(any())).thenReturn(requestBodySpec);
 
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
 
-        AtomicInteger attempts = new AtomicInteger();
+        AtomicLong startTime = new AtomicLong(0);
         when(responseSpec.toBodilessEntity()).thenAnswer(invocation -> {
-            if (attempts.incrementAndGet() < 3) {
+            if (startTime.get() == 0) {
+                startTime.set(System.nanoTime());
+                return Mono.just(ResponseEntity.noContent().build());
+            }
+            if (Duration.ofNanos(System.nanoTime()).minus(Duration.ofNanos(startTime.get()))
+                        .compareTo(Duration.ofMillis(500)) < 0) {
                 return Mono.just(ResponseEntity.noContent().build());
             }
             return Mono.just(ResponseEntity.created(URI.create("testCreatedUri")).build());
@@ -88,27 +105,53 @@ class FintArchiveDispatchClientTest {
                 .expectComplete()
                 .verify();
 
-        verify(fintWebClient, times(3)).get();
+        verify(fintWebClient, atLeast(2)).get();
     }
 
     @Test
-    public void givenMaxPollingAttempts_shouldThrowException() {
+    public void givenMaxPollingTimeIsExceeded_whenPollForCreatedLocation_shouldThrowException() {
         WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
         when(fintWebClient.get()).thenReturn(requestHeadersUriSpec);
 
-        WebClient.RequestHeadersSpec<?> requestHeadersSpec = mock(RequestHeadersSpec.class);
-        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestHeadersSpec);
+        WebClient.RequestBodySpec requestBodySpec = mock(WebClient.RequestBodySpec.class);
+        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestBodySpec);
+
+        when(requestBodySpec.httpRequest(any())).thenReturn(requestBodySpec);
 
         WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
 
         when(responseSpec.toBodilessEntity()).thenAnswer(invocation -> Mono.just(ResponseEntity.noContent().build()));
 
         StepVerifier.create(fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri")))
-                .expectErrorMessage("Reached max number of retries for polling created location from destination")
+                .expectErrorMessage("Reached max total timeout for polling created location from destination")
                 .verify();
 
-        verify(fintWebClient, times(4)).get();
+        verify(fintWebClient, atLeast(2)).get();
+    }
+
+    @Test
+    public void givenErrorResponse_whenPollForCreatedLocation_shouldThrowException() {
+        WebClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(RequestHeadersUriSpec.class);
+        when(fintWebClient.get()).thenReturn(requestHeadersUriSpec);
+
+        WebClient.RequestBodySpec requestBodySpec = mock(WebClient.RequestBodySpec.class);
+        when(requestHeadersUriSpec.uri(URI.create("testStatusUri"))).thenReturn(requestBodySpec);
+
+        when(requestBodySpec.httpRequest(any())).thenReturn(requestBodySpec);
+
+        WebClient.ResponseSpec responseSpec = mock(WebClient.ResponseSpec.class);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+
+        WebClientException webClientException = mock(WebClientException.class);
+        when(webClientException.getMessage()).thenReturn("test message");
+        when(responseSpec.toBodilessEntity()).thenAnswer(invocation -> Mono.error(webClientException));
+
+        StepVerifier.create(fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri")))
+                .expectErrorMessage("test message")
+                .verify();
+
+        verify(fintWebClient, times(1)).get();
     }
 
 }

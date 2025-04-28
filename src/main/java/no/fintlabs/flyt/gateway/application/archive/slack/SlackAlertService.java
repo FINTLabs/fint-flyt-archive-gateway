@@ -1,4 +1,4 @@
-package no.fintlabs.flyt.gateway.application.slack;
+package no.fintlabs.flyt.gateway.application.archive.slack;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

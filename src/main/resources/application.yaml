@@ -4,19 +4,32 @@ fint:
     gateway:
       application:
         archive:
-          client:
-            fint-archive:
-              created-location-polling:
-                attempts: 10
-                min-delay-millis: 1000
-                max-delay-millis: 300000
+          dispatch:
+            fint-client:
+              post-file-timeout-millis: 130000
+              post-case-timeout-millis: 130000
+              post-record-timeout-millis: 130000
+              get-status-timeout-millis: 130000
+              created-location-poll-total-timeout-millis: 1800000
+              created-location-poll-backoff-min-delay-millis: 1000
+              created-location-poll-backoff-max-delay-millis: 10000
+            flyt-file-client:
+              get-file-timeout-millis: 120000
           resource:
-            refresh:
-              interval-ms: 518400000
-              topic-retention-time-offset-ms: 86400000
-            pull:
-              initial-delay-ms: 5000
-              fixed-delay-ms: 900000
+            fint-client:
+              get-resource-timeout-millis: 130000
+              get-resources-last-updated-timeout-millis: 130000
+              find-cases-with-filter-timeout-millis: 130000
+              find-cases-with-filter-max-attempts: 10
+              find-cases-with-filter-backoff-retry-min-delay-millis: 5000
+              find-cases-with-filter-backoff-retry-max-delay-millis: 60000
+            publishing:
+              refresh:
+                interval-ms: 518400000
+                topic-retention-time-offset-ms: 86400000
+              pull:
+                initial-delay-ms: 5000
+                fixed-delay-ms: 900000
   cache:
     defaultCacheEntryTimeToLiveMillis: 518400000
     defaultCacheHeapSize: 1000000
