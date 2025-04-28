@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
+import reactor.util.retry.Retry;
 
 import java.net.URI;
 import java.time.Duration;
@@ -128,7 +129,19 @@ public class FintArchiveResourceClient {
                             .doOnError(webUtilErrorHandler::logAndSendError)
                             .doFinally(signal -> sample.stop(findCasesTimer));
                 })
-                .retry(properties.getFindCasesWithFilterMaxAttempts() - 1);
+                .retryWhen(
+                        Retry.backoff(
+                                properties.getFindCasesWithFilterMaxAttempts() - 1,
+                                Duration.ofMillis(properties.getFindCasesWithFilterBackoffRetryMinDelayMillis())
+                        ).maxBackoff(
+                                Duration.ofMillis(properties.getFindCasesWithFilterBackoffRetryMaxDelayMillis())
+                        ).doBeforeRetry(
+                                retrySignal -> log.warn(
+                                        "Encountered error when finding cases with filter" +
+                                        " -- performing retry " + (retrySignal.totalRetries() + 1),
+                                        retrySignal.failure())
+                        )
+                );
     }
 
     public <T> Mono<T> getResource(String endpoint, Class<T> clazz) {

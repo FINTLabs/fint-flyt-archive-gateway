@@ -15,5 +15,7 @@ public class FintArchiveResourceClientProperties {
     private Long getResourcesLastUpdatedTimeoutMillis;
     private Long findCasesWithFilterTimeoutMillis;
     private Long findCasesWithFilterMaxAttempts;
+    private Long findCasesWithFilterBackoffRetryMinDelayMillis;
+    private Long findCasesWithFilterBackoffRetryMaxDelayMillis;
     private Long getResourceTimeoutMillis;
 }
