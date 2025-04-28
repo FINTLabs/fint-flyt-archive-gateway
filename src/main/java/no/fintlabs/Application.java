@@ -1,4 +1,4 @@
-package no.fintlabs.flyt.gateway.application.archive;
+package no.fintlabs;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

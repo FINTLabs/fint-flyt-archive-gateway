@@ -2,12 +2,12 @@ package no.fintlabs.flyt.gateway.application.archive.resource;
 
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePipeline;
-import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePublishingConfiguration;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import no.fintlabs.kafka.entity.EntityProducer;
 import no.fintlabs.kafka.entity.EntityProducerFactory;
 import no.fintlabs.kafka.entity.EntityProducerRecord;
 import no.fintlabs.kafka.entity.topic.EntityTopicService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientException;
@@ -27,16 +27,17 @@ public class FintResourcePublishingComponent {
 
     public FintResourcePublishingComponent(
             EntityTopicService entityTopicService,
-            ResourcePublishingConfiguration resourcePublishingConfiguration,
             EntityProducerFactory entityProducerFactory,
             FintArchiveResourceClient fintArchiveResourceClient,
-            List<ResourcePipeline<?>> resourcePipelines
+            List<ResourcePipeline<?>> resourcePipelines,
+            @Value("${fint.flyt.gateway.application.archive.resource.publishing.refresh.topic-retention-time-offset-ms}")
+            Long refreshTopicRetentionTimeOffsetMs
     ) {
         this.entityTopicService = entityTopicService;
         this.entityProducer = entityProducerFactory.createProducer(Object.class);
         this.fintArchiveResourceClient = fintArchiveResourceClient;
         this.resourcePipelines = resourcePipelines;
-        this.ensureTopics(resourcePipelines, resourcePublishingConfiguration.getRefresh().getTopicRetentionTimeMs());
+        this.ensureTopics(resourcePipelines, refreshTopicRetentionTimeOffsetMs);
     }
 
     private void ensureTopics(List<ResourcePipeline<?>> resourcePipelines, long topicRetentionTime) {
@@ -49,15 +50,15 @@ public class FintResourcePublishingComponent {
                 ));
     }
 
-    @Scheduled(fixedRateString = "${fint.flyt.gateway.application.archive.resource.refresh.interval-ms}")
+    @Scheduled(fixedRateString = "${fint.flyt.gateway.application.archive.resource.publishing.refresh.interval-ms}")
     private void resetLastUpdatedTimestamps() {
         log.warn("Resetting resource last updated timestamps");
         this.fintArchiveResourceClient.resetLastUpdatedTimestamps();
     }
 
     @Scheduled(
-            initialDelayString = "${fint.flyt.gateway.application.archive.resource.pull.initial-delay-ms}",
-            fixedDelayString = "${fint.flyt.gateway.application.archive.resource.pull.fixed-delay-ms}")
+            initialDelayString = "${fint.flyt.gateway.application.archive.resource.publishing.pull.initial-delay-ms}",
+            fixedDelayString = "${fint.flyt.gateway.application.archive.resource.publishing.pull.fixed-delay-ms}")
     private void pullAllUpdatedResources() {
         log.info("Starting pulling resources");
         resourcePipelines.forEach(this::pullUpdatedResources);

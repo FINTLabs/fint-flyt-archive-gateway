@@ -1,13 +1,13 @@
 package no.fintlabs.flyt.gateway.application.archive.dispatch.web;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Setter
 @Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @ConfigurationProperties("fint.flyt.gateway.application.archive.dispatch.fint-client")
 public class FintArchiveDispatchClientConfigurationProperties {
     private Long postFileTimeoutMillis;

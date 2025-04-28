@@ -22,7 +22,7 @@ public class FlytFileClient {
 
     public FlytFileClient(
             @Qualifier("fileWebClient") WebClient fileWebClient,
-            @Value("fint.flyt.gateway.application.archive.dispatch.flyt-file-client.get-file-timeout-millis")
+            @Value("${fint.flyt.gateway.application.archive.dispatch.flyt-file-client.get-file-timeout-millis}")
             Long timeoutMillis
     ) {
         this.fileWebClient = fileWebClient;

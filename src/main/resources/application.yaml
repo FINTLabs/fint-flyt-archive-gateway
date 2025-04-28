@@ -18,8 +18,8 @@ fint:
           resource:
             fint-client:
               get-resources-last-updated-timeout-millis: 130000
-              find-cases-with-filter-timeout-millis: 300000
-              find-cases-with-filter-max-attempts: 5
+              find-cases-with-filter-timeout-millis: 130000
+              find-cases-with-filter-max-attempts: 10
               get-resource-timeout-millis: 130000
             publishing:
               refresh:
