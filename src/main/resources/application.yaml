@@ -4,6 +4,11 @@ fint:
     gateway:
       application:
         archive:
+          web-client:
+            connection-max-life-time-millis: 1800000
+            connection-max-idle-time-millis: 180000
+            connect-timeout-millis: 120000
+            default-response-timeout-millis: 130000
           dispatch:
             fint-client:
               post-file-timeout-millis: 130000
