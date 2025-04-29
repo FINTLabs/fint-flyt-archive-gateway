@@ -68,25 +68,23 @@ public class FintResourcePublishingComponent {
     private <T> void pullUpdatedResources(ResourcePipeline<T> resourcePipeline) {
         try {
             List<T> resources = getUpdatedResources(resourcePipeline.getUrlResourcePath(), resourcePipeline.getResourceClass());
-
-            resources.forEach(resource -> handleResource(resource, resourcePipeline));
-
-            resourcePipeline.getCacheProperties().ifPresent(
-                    cacheProperties -> log.info(
-                            "{} entities cached in {}",
-                            resources.size(),
-                            cacheProperties.getCache().getAlias()
-                    )
-            );
-
-            resourcePipeline.getKafkaProperties().ifPresent(
-                    kafkaProperties -> log.info(
-                            "{} entities sent to {}",
-                            resources.size(),
-                            kafkaProperties.getTopicNameParameters()
-                    )
-            );
-
+            if (!resources.isEmpty()) {
+                resources.forEach(resource -> handleResource(resource, resourcePipeline));
+                resourcePipeline.getCacheProperties().ifPresent(
+                        cacheProperties -> log.info(
+                                "{} entities cached in {}",
+                                resources.size(),
+                                cacheProperties.getCache().getAlias()
+                        )
+                );
+                resourcePipeline.getKafkaProperties().ifPresent(
+                        kafkaProperties -> log.info(
+                                "{} entities sent to {}",
+                                resources.size(),
+                                kafkaProperties.getTopicNameParameters()
+                        )
+                );
+            }
         } catch (Exception e) {
             log.error("An error occurred processing entities", e);
         }
