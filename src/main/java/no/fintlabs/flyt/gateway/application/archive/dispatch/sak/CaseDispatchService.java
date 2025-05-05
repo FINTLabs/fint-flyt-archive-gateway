@@ -86,8 +86,10 @@ public class CaseDispatchService {
                         return Mono.just(CaseSearchResult.failed());
                     }).doOnNext(result -> log.info("Search result: {}", result.toString()));
         } catch (SearchKlasseOrderNotFoundInCaseException | KlasseOrderOutOfBoundsException e) {
+            log.error("Case search failed", e);
             return Mono.just(CaseSearchResult.declined(e.getMessage()));
         } catch (Exception e) {
+            log.error("Case search failed", e);
             return Mono.just(CaseSearchResult.failed());
         }
 
