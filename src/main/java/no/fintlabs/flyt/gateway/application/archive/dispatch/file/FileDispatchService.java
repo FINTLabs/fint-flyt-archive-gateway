@@ -4,6 +4,7 @@ import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.flytfile.FlytFileClient;
 import org.springframework.stereotype.Service;
@@ -27,14 +28,18 @@ public class FileDispatchService {
         return dokumentobjektDto.getFileId().map(fileId -> flytFileClient.getFile(fileId)
                         .flatMap(file -> fintArchiveDispatchClient.postFile(file)
                                 .map(link -> FileDispatchResult.accepted(fileId, link))
-                                .onErrorResume(WebClientResponseException.class, e -> Mono.just(
-                                        FileDispatchResult.declined(fileId, e.getResponseBodyAsString())
-                                ))
-                                .onErrorResume(ReadTimeoutException.class, e -> {
-                                    log.error("File dispatch timed out");
-                                    return Mono.just(FileDispatchResult.timedOut(fileId));
-                                })
-                                .onErrorResume(e -> {
+                                .onErrorResume(
+                                        WebClientResponseException.class, e -> Mono.just(
+                                                FileDispatchResult.declined(fileId, e.getResponseBodyAsString())
+                                        )
+                                ).onErrorResume(
+                                        e -> e instanceof ReadTimeoutException
+                                             || e instanceof CreatedLocationPollTimeoutException,
+                                        e -> {
+                                            log.error("File dispatch timed out");
+                                            return Mono.just(FileDispatchResult.timedOut(fileId));
+                                        }
+                                ).onErrorResume(e -> {
                                     log.error("File dispatch failed");
                                     return Mono.just(FileDispatchResult.failed(fileId));
                                 })

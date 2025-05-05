@@ -193,6 +193,6 @@ public class FintArchiveDispatchClient {
                                         Duration.ofMillis(properties.getCreatedLocationPollBackoffMaxDelayMillis())
                                 ).timeout(Duration.ofMillis(properties.getCreatedLocationPollTotalTimeoutMillis()))
                 )
-                .switchIfEmpty(Mono.error(new RuntimeException("Reached max total timeout for polling created location from destination")));
+                .switchIfEmpty(Mono.error(new CreatedLocationPollTimeoutException()));
     }
 }

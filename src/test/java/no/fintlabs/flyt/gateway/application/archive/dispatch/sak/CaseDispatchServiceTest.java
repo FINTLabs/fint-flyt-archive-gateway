@@ -9,6 +9,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.Case
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseSearchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
@@ -111,7 +112,28 @@ class CaseDispatchServiceTest {
     }
 
     @Test
-    public void givenExceptionOtherThanWebclientResponseExceptionAndReadTimeoutExceptionFromPostCaseShouldReturnFailedResult() {
+    public void givenCreatedLocationPollTimeoutExceptionFromPostCaseShouldReturnFailedTimedOutResult() {
+        SakDto sakDto = mock(SakDto.class);
+        SakResource sakResource = mock(SakResource.class);
+        doReturn(sakResource).when(sakMappingService).toSakResource(sakDto);
+
+        doReturn(Mono.error(new CreatedLocationPollTimeoutException())).when(fintArchiveDispatchClient).postCase(sakResource);
+
+        StepVerifier.create(
+                        caseDispatchService.dispatch(sakDto)
+                )
+                .expectNext(CaseDispatchResult.timedOut())
+                .verifyComplete();
+
+        verify(sakMappingService, times(1)).toSakResource(sakDto);
+        verifyNoMoreInteractions(sakMappingService);
+
+        verify(fintArchiveDispatchClient, times(1)).postCase(sakResource);
+        verifyNoMoreInteractions(fintArchiveDispatchClient);
+    }
+
+    @Test
+    public void givenExceptionOtherThanWebclientResponseExceptionAndTimeoutExceptionFromPostCaseShouldReturnFailedResult() {
         SakDto sakDto = mock(SakDto.class);
         SakResource sakResource = mock(SakResource.class);
         doReturn(sakResource).when(sakMappingService).toSakResource(sakDto);
