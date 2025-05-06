@@ -6,6 +6,7 @@ import no.fint.model.resource.Link;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.file.result.FileDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.File;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.flytfile.FlytFileClient;
 import org.junit.jupiter.api.BeforeEach;
@@ -120,7 +121,25 @@ class FileDispatchServiceTest {
     }
 
     @Test
-    public void givenSuccessFromGetFileAndErrorOtherThanWebClientResponseExceptionAndReadTimeoutExceptionFromPostFileShouldReturnFailedResult() {
+    public void givenSuccessFromGetFileAndCreatedLocationPollTimeoutExceptionFromDispatchClientShouldReturnFailedTimedOutResult() {
+        FileMock fileMock = mockFile();
+        doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);
+        doReturn(Mono.error(new CreatedLocationPollTimeoutException())).when(fintArchiveDispatchClient).postFile(fileMock.file);
+
+        StepVerifier
+                .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
+                .expectNext(FileDispatchResult.timedOut(fileMock.fileId))
+                .verifyComplete();
+
+        verify(flytFileClient, times(1)).getFile(fileMock.fileId);
+        verifyNoMoreInteractions(flytFileClient);
+
+        verify(fintArchiveDispatchClient, times(1)).postFile(fileMock.file);
+        verifyNoMoreInteractions(fintArchiveDispatchClient);
+    }
+
+    @Test
+    public void givenSuccessFromGetFileAndErrorOtherThanWebClientResponseExceptionAndTimeoutExceptionFromPostFileShouldReturnFailedResult() {
         FileMock fileMock = mockFile();
 
         doReturn(Mono.just(fileMock.file)).when(flytFileClient).getFile(fileMock.fileId);

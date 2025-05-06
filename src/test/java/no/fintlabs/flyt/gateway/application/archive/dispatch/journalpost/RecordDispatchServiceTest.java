@@ -10,6 +10,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.Journalpost
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentbeskrivelseDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.JournalpostDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -213,7 +214,22 @@ class RecordDispatchServiceTest {
     }
 
     @Test
-    public void givenExceptionOtherThanWebclientResponseExceptionAndReadTimeoutExceptionFromArchiveClientPostRecordShouldReturnFailedResultWithoutErrorMessage() {
+    public void givenCreatedLocationPollExceptionFromArchiveClientPostRecordShouldReturnFailedTimedOutResult() {
+        JournalpostDto journalpostDto = mock(JournalpostDto.class);
+
+        JournalpostResource journalpostResource = mock(JournalpostResource.class);
+        doReturn(journalpostResource).when(journalpostMappingService).toJournalpostResource(any(), any());
+
+        doReturn(Mono.error(new CreatedLocationPollTimeoutException())).when(fintArchiveDispatchClient).postRecord(any(), any());
+
+        StepVerifier
+                .create(recordDispatchService.dispatch("testCaseId", journalpostDto))
+                .expectNext(RecordDispatchResult.timedOut())
+                .verifyComplete();
+    }
+
+    @Test
+    public void givenExceptionOtherThanWebclientResponseExceptionAndTimeoutExceptionFromArchiveClientPostRecordShouldReturnFailedResultWithoutErrorMessage() {
         JournalpostDto journalpostDto = mock(JournalpostDto.class);
 
         JournalpostResource journalpostResource = mock(JournalpostResource.class);

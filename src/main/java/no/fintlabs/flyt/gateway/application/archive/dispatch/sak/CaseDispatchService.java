@@ -9,6 +9,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.Arch
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.SakDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseDispatchResult;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.sak.result.CaseSearchResult;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.CaseSearchParametersService;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
@@ -49,10 +50,13 @@ public class CaseDispatchService {
                             log.info("Post request for case was declined with message='{}'", e.getResponseBodyAsString());
                             return Mono.just(CaseDispatchResult.declined(e.getResponseBodyAsString()));
                         }
-                ).onErrorResume(ReadTimeoutException.class, e -> {
-                    log.error("Case dispatch timed out");
-                    return Mono.just(CaseDispatchResult.timedOut());
-                })
+                ).onErrorResume(
+                        e -> e instanceof ReadTimeoutException || e instanceof CreatedLocationPollTimeoutException,
+                        e -> {
+                            log.error("Case dispatch timed out");
+                            return Mono.just(CaseDispatchResult.timedOut());
+                        }
+                )
                 .onErrorResume(e -> {
                     log.error("Failed to post case", e);
                     return Mono.just(CaseDispatchResult.failed());
@@ -82,8 +86,10 @@ public class CaseDispatchService {
                         return Mono.just(CaseSearchResult.failed());
                     }).doOnNext(result -> log.info("Search result: {}", result.toString()));
         } catch (SearchKlasseOrderNotFoundInCaseException | KlasseOrderOutOfBoundsException e) {
+            log.error("Case search failed", e);
             return Mono.just(CaseSearchResult.declined(e.getMessage()));
         } catch (Exception e) {
+            log.error("Case search failed", e);
             return Mono.just(CaseSearchResult.failed());
         }
 

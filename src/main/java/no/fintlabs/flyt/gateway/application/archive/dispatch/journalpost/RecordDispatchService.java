@@ -10,6 +10,7 @@ import no.fintlabs.flyt.gateway.application.archive.dispatch.mapping.Journalpost
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentbeskrivelseDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.DokumentobjektDto;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.model.instance.JournalpostDto;
+import no.fintlabs.flyt.gateway.application.archive.dispatch.web.CreatedLocationPollTimeoutException;
 import no.fintlabs.flyt.gateway.application.archive.dispatch.web.FintArchiveDispatchClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -84,12 +85,13 @@ public class RecordDispatchService {
                 .map(RecordDispatchResult::accepted)
                 .onErrorResume(WebClientResponseException.class,
                         e -> Mono.just(RecordDispatchResult.declined(e.getResponseBodyAsString()))
-                )
-                .onErrorResume(ReadTimeoutException.class, e -> {
-                    log.error("Record dispatch timed out");
-                    return Mono.just(RecordDispatchResult.timedOut());
-                })
-                .onErrorResume(e -> {
+                ).onErrorResume(
+                        e -> e instanceof ReadTimeoutException || e instanceof CreatedLocationPollTimeoutException,
+                        e -> {
+                            log.error("Record dispatch timed out");
+                            return Mono.just(RecordDispatchResult.timedOut());
+                        }
+                ).onErrorResume(e -> {
                     log.error("Failed to post record", e);
                     return Mono.just(RecordDispatchResult.failed(null));
                 });
