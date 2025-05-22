@@ -7,6 +7,7 @@ import no.fintlabs.kafka.event.error.Error;
 import no.fintlabs.kafka.event.error.ErrorCollection;
 import no.fintlabs.kafka.event.error.topic.ErrorEventTopicNameParameters;
 import no.fintlabs.kafka.event.error.topic.ErrorEventTopicService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -22,14 +23,15 @@ public class InstanceDispatchingErrorProducerService {
 
     public InstanceDispatchingErrorProducerService(
             InstanceFlowErrorEventProducer errorEventProducer,
-            ErrorEventTopicService errorEventTopicService
+            ErrorEventTopicService errorEventTopicService,
+            @Value("${fint.kafka.topic.instance-retention-ms}") long retentionMs
     ) {
         this.errorEventProducer = errorEventProducer;
         errorEventTopicNameParameters = ErrorEventTopicNameParameters
                 .builder()
                 .errorEventName("instance-dispatching-error")
                 .build();
-        errorEventTopicService.ensureTopic(errorEventTopicNameParameters, 0);
+        errorEventTopicService.ensureTopic(errorEventTopicNameParameters, retentionMs);
     }
 
     public void publishInstanceDispatchDeclinedErrorEvent(
