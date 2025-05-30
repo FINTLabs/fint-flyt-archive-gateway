@@ -109,19 +109,19 @@ public class FintArchiveResourceClient {
     public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
         return Mono.defer(() -> {
                     Timer.Sample sample = Timer.start(meterRegistry);
+
+                    Map<String, String> requestBody = Map.of("$filter", caseFilter);
+
                     return fintWebClient
-                            .get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .path("/arkiv/noark/sak")
-                                    .queryParam("$filter", caseFilter)
-                                    .build()
-                            )
+                            .post()
+                            .uri("/arkiv/noark/sak")
                             .httpRequest(clientHttpRequest -> {
                                 HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
                                 reactorRequest.responseTimeout(Duration.ofMillis(
                                         properties.getFindCasesWithFilterTimeoutMillis()
                                 ));
                             })
+                            .bodyValue(requestBody)
                             .retrieve()
                             .bodyToMono(SakResources.class)
                             .map(SakResources::getContent)
