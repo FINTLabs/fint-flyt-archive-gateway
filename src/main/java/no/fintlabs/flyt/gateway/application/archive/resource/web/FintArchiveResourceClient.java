@@ -12,6 +12,7 @@ import no.fintlabs.flyt.gateway.application.archive.WebUtilErrorHandler;
 import no.fintlabs.flyt.gateway.application.archive.resource.model.ResourceCollection;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -110,18 +111,17 @@ public class FintArchiveResourceClient {
         return Mono.defer(() -> {
                     Timer.Sample sample = Timer.start(meterRegistry);
 
-                    Map<String, String> requestBody = Map.of("$filter", caseFilter);
-
                     return fintWebClient
                             .post()
-                            .uri("/arkiv/noark/sak")
+                            .uri("/arkiv/noark/sak/$query")
+                            .headers(headers -> headers.setContentType(MediaType.TEXT_PLAIN))
                             .httpRequest(clientHttpRequest -> {
                                 HttpClientRequest reactorRequest = clientHttpRequest.getNativeRequest();
                                 reactorRequest.responseTimeout(Duration.ofMillis(
                                         properties.getFindCasesWithFilterTimeoutMillis()
                                 ));
                             })
-                            .bodyValue(requestBody)
+                            .bodyValue(caseFilter)
                             .retrieve()
                             .bodyToMono(SakResources.class)
                             .map(SakResources::getContent)
