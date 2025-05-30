@@ -1,6 +1,8 @@
 package no.fintlabs.flyt.gateway.application.archive.resource;
 
 import lombok.extern.slf4j.Slf4j;
+import no.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
 import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePipeline;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import no.fintlabs.kafka.entity.EntityProducer;
@@ -15,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -100,6 +103,14 @@ public class FintResourcePublishingComponent {
                         resource
                 )
         );
+
+        if (resource instanceof PersonalressursResource prr) {
+            String ansattnummer = Optional.ofNullable(prr.getAnsattnummer())
+                    .map(Identifikator::getIdentifikatorverdi)
+                    .orElse("ukjent");
+
+            log.info("Personalressurs: ansattnummer={}", ansattnummer);
+        }
 
         resourcePipeline.getKafkaProperties().ifPresent(
                 kafkaProperties -> entityProducer.send(
