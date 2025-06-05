@@ -4,6 +4,9 @@ fint:
     gateway:
       application:
         archive:
+          kafka:
+            topic:
+              instance-processing-events-retention-time-ms: 345600000
           web-client:
             connection-max-life-time-millis: 1800000
             connection-max-idle-time-millis: 180000
