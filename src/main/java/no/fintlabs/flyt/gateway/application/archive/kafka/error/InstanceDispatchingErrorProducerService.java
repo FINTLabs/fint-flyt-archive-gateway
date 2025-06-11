@@ -1,5 +1,6 @@
 package no.fintlabs.flyt.gateway.application.archive.kafka.error;
 
+import no.fintlabs.flyt.gateway.application.archive.kafka.KafkaTopicProperties;
 import no.fintlabs.flyt.kafka.event.error.InstanceFlowErrorEventProducer;
 import no.fintlabs.flyt.kafka.event.error.InstanceFlowErrorEventProducerRecord;
 import no.fintlabs.flyt.kafka.headers.InstanceFlowHeaders;
@@ -22,14 +23,15 @@ public class InstanceDispatchingErrorProducerService {
 
     public InstanceDispatchingErrorProducerService(
             InstanceFlowErrorEventProducer errorEventProducer,
-            ErrorEventTopicService errorEventTopicService
+            ErrorEventTopicService errorEventTopicService,
+            KafkaTopicProperties kafkaTopicProperties
     ) {
         this.errorEventProducer = errorEventProducer;
         errorEventTopicNameParameters = ErrorEventTopicNameParameters
                 .builder()
                 .errorEventName("instance-dispatching-error")
                 .build();
-        errorEventTopicService.ensureTopic(errorEventTopicNameParameters, 0);
+        errorEventTopicService.ensureTopic(errorEventTopicNameParameters, kafkaTopicProperties.getInstanceProcessingEventsRetentionTimeMs());
     }
 
     public void publishInstanceDispatchDeclinedErrorEvent(
