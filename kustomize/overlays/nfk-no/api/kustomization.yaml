@@ -25,7 +25,7 @@ patches:
         path: "/spec/url/basePath"
         value: "/nfk-no"
       - op: replace
-        path: "/spec/url/basePath"
+        path: "/spec/observability/metrics/path"
         value: "/nfk-no/actuator/prometheus"
       - op: replace
         path: "/spec/ingress/basePath"
