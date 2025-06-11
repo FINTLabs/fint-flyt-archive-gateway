@@ -111,6 +111,8 @@ public class FintArchiveResourceClient {
         return Mono.defer(() -> {
                     Timer.Sample sample = Timer.start(meterRegistry);
 
+                    log.info("Sending case filter to FINT: {}", caseFilter);
+
                     return fintWebClient
                             .post()
                             .uri("/arkiv/noark/sak/$query")
