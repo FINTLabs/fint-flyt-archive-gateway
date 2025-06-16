@@ -14,10 +14,10 @@ import org.springframework.kafka.listener.ContainerProperties;
 
 @Configuration
 @Slf4j
-public class InstanceReadyForDispatchEventConsumerConfiguration {
+public class InstanceMappedEventConsumerConfiguration {
 
     @Bean
-    public ConcurrentMessageListenerContainer<String, ArchiveInstance> instanceReadyForDispatchEventConsumer(
+    public ConcurrentMessageListenerContainer<String, ArchiveInstance> instanceMappedEventConsumer(
             InstanceFlowEventConsumerFactoryService instanceFlowEventConsumerFactoryService,
             DispatchService dispatchService,
             InstanceDispatchedEventProducerService instanceDispatchedEventProducerService,
