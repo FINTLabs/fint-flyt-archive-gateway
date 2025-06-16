@@ -56,7 +56,7 @@ public class InstanceReadyForDispatchEventConsumerConfiguration {
                         .build()
         ).createContainer(
                 EventTopicNameParameters.builder()
-                        .eventName("instance-ready-for-dispatch")
+                        .eventName("instance-mapped")
                         .build()
         );
     }
