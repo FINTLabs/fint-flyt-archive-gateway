@@ -12,9 +12,15 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientException;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.PostConstruct;
+import java.time.*;
+import java.util.concurrent.*;
+
+
 
 @Slf4j
 @Component
@@ -24,6 +30,7 @@ public class FintResourcePublishingComponent {
     private final EntityProducer<Object> entityProducer;
     private final FintArchiveResourceClient fintArchiveResourceClient;
     private final List<ResourcePipeline<?>> resourcePipelines;
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     public FintResourcePublishingComponent(
             EntityTopicService entityTopicService,
@@ -50,7 +57,28 @@ public class FintResourcePublishingComponent {
                 ));
     }
 
-    @Scheduled(fixedRateString = "${fint.flyt.gateway.application.archive.resource.publishing.refresh.interval-ms}")
+    @PostConstruct
+    private void scheduleResetLastUpdatedTimestamps() {
+        ZonedDateTime now = ZonedDateTime.now();
+
+        ZonedDateTime nextMidnight = now.truncatedTo(ChronoUnit.DAYS).plusDays(1);
+
+        long randomOffsetMs = ThreadLocalRandom.current().nextLong(Duration.ofHours(4).toMillis());
+
+        ZonedDateTime scheduledTime = nextMidnight.plus(Duration.ofMillis(randomOffsetMs));
+
+        long initialDelayMs = Duration.between(now, scheduledTime).toMillis();
+
+        log.info("Scheduling resetLastUpdatedTimestamps() for {}", scheduledTime);
+
+        scheduler.scheduleAtFixedRate(
+                this::resetLastUpdatedTimestamps,
+                initialDelayMs,
+                Duration.ofDays(1).toMillis(),
+                TimeUnit.MILLISECONDS
+        );
+    }
+
     private void resetLastUpdatedTimestamps() {
         log.warn("Resetting resource last updated timestamps");
         this.fintArchiveResourceClient.resetLastUpdatedTimestamps();
