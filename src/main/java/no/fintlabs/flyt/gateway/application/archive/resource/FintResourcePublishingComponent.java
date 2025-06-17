@@ -12,14 +12,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientException;
 
+import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import javax.annotation.PostConstruct;
-import java.time.*;
+import java.util.Map;
 import java.util.concurrent.*;
-
 
 
 @Slf4j
@@ -31,6 +31,8 @@ public class FintResourcePublishingComponent {
     private final FintArchiveResourceClient fintArchiveResourceClient;
     private final List<ResourcePipeline<?>> resourcePipelines;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+    private final Map<String, Long> sinceTimestamp = new ConcurrentHashMap<>();
 
     public FintResourcePublishingComponent(
             EntityTopicService entityTopicService,
@@ -69,7 +71,7 @@ public class FintResourcePublishingComponent {
 
         long initialDelayMs = Duration.between(now, scheduledTime).toMillis();
 
-        log.info("Scheduling resetLastUpdatedTimestamps() for {}", scheduledTime);
+        log.info("Scheduled resetLastUpdatedTimestamps() to run at {}", scheduledTime);
 
         scheduler.scheduleAtFixedRate(
                 this::resetLastUpdatedTimestamps,
@@ -81,7 +83,7 @@ public class FintResourcePublishingComponent {
 
     private void resetLastUpdatedTimestamps() {
         log.warn("Resetting resource last updated timestamps");
-        this.fintArchiveResourceClient.resetLastUpdatedTimestamps();
+        sinceTimestamp.clear();
     }
 
     @Scheduled(
@@ -142,8 +144,25 @@ public class FintResourcePublishingComponent {
     }
 
     private <T> List<T> getUpdatedResources(String urlResourcePath, Class<T> resourceClass) {
+        long lastSeen = sinceTimestamp.getOrDefault(urlResourcePath, 0L);
+
         try {
-            return Objects.requireNonNull(fintArchiveResourceClient.getResourcesLastUpdated(urlResourcePath, resourceClass).block());
+            Long newLast = fintArchiveResourceClient
+                    .getLastUpdated(urlResourcePath)
+                    .block();
+            if (newLast == null) {
+                log.warn("Last‐updated response was null for {}", urlResourcePath);
+                return Collections.emptyList();
+            }
+
+            List<T> resources = fintArchiveResourceClient
+                    .getResourcesSince(urlResourcePath, resourceClass, lastSeen)
+                    .collectList()
+                    .block();
+
+            sinceTimestamp.put(urlResourcePath, newLast);
+            return resources != null ? resources : Collections.emptyList();
+
         } catch (WebClientException e) {
             log.error("Could not pull entities from url resource path={}", urlResourcePath, e);
             return Collections.emptyList();
