@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.fint.model.felles.basisklasser.Begrep;
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
+import no.fint.model.resource.arkiv.kodeverk.SaksstatusResource;
 import no.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource;
 import no.fint.model.resource.arkiv.noark.AdministrativEnhetResource;
 import no.fint.model.resource.arkiv.noark.ArkivdelResource;
@@ -29,6 +30,7 @@ public class CaseSearchParametersService {
     private final FintCache<String, AdministrativEnhetResource> administrativEnhetResourceCache;
     private final FintCache<String, TilgangsrestriksjonResource> tilgangsrestriksjonResourceCache;
     private final FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache;
+    private final FintCache<String, SaksstatusResource> saksstatusResourceCache;
     private final FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache;
 
     public CaseSearchParametersService(
@@ -36,12 +38,14 @@ public class CaseSearchParametersService {
             FintCache<String, AdministrativEnhetResource> administrativEnhetResourceCache,
             FintCache<String, TilgangsrestriksjonResource> tilgangsrestriksjonResourceCache,
             FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache,
+            FintCache<String, SaksstatusResource> saksstatusResourceCache,
             FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache
     ) {
         this.arkivdelResourceCache = arkivdelResourceCache;
         this.administrativEnhetResourceCache = administrativEnhetResourceCache;
         this.tilgangsrestriksjonResourceCache = tilgangsrestriksjonResourceCache;
         this.saksmappetypeResourceCache = saksmappetypeResourceCache;
+        this.saksstatusResourceCache = saksstatusResourceCache;
         this.klassifikasjonssystemResourceCache = klassifikasjonssystemResourceCache;
     }
 
@@ -79,6 +83,14 @@ public class CaseSearchParametersService {
                     .map(Begrep::getSystemId)
                     .map(Identifikator::getIdentifikatorverdi)
                     .map(value -> createFilterLine("saksmappetype", value))
+                    .ifPresent(filterJoiner::add);
+        }
+        if (caseSearchParametersDto.isSaksstatus()) {
+            sakDto.getSaksstatus()
+                    .map(saksstatusResourceCache::get)
+                    .map(Begrep::getSystemId)
+                    .map(Identifikator::getIdentifikatorverdi)
+                    .map(value -> createFilterLine("saksstatus", value))
                     .ifPresent(filterJoiner::add);
         }
         if (caseSearchParametersDto.isTittel()) {

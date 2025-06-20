@@ -62,6 +62,18 @@ public class SearchParametersTemplateService {
                 .addTemplate(
                         ElementConfig
                                 .builder()
+                                .key("saksstatus")
+                                .displayName("Saksstatus")
+                                .description("")
+                                .build(),
+                        ValueTemplate
+                                .builder()
+                                .type(ValueTemplate.Type.BOOLEAN)
+                                .build()
+                )
+                .addTemplate(
+                        ElementConfig
+                                .builder()
                                 .key("tittel")
                                 .displayName("Tittel")
                                 .description("")
