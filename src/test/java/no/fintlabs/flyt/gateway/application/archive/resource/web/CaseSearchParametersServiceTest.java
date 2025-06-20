@@ -2,6 +2,7 @@ package no.fintlabs.flyt.gateway.application.archive.resource.web;
 
 import no.fint.model.felles.kompleksedatatyper.Identifikator;
 import no.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
+import no.fint.model.resource.arkiv.kodeverk.SaksstatusResource;
 import no.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource;
 import no.fint.model.resource.arkiv.noark.AdministrativEnhetResource;
 import no.fint.model.resource.arkiv.noark.ArkivdelResource;
@@ -42,6 +43,9 @@ class CaseSearchParametersServiceTest {
     private FintCache<String, SaksmappetypeResource> saksmappetypeResourceCache;
 
     @Mock
+    private FintCache<String, SaksstatusResource> saksstatusResourceCache;
+
+    @Mock
     private FintCache<String, KlassifikasjonssystemResource> klassifikasjonssystemResourceCache;
 
     @Mock
@@ -58,6 +62,7 @@ class CaseSearchParametersServiceTest {
                 administrativEnhetResourceCache,
                 tilgangsrestriksjonResourceCache,
                 saksmappetypeResourceCache,
+                saksstatusResourceCache,
                 klassifikasjonssystemResourceCache
         );
         caseSearchParametersDtoBuilder = CaseSearchParametersDto.builder();
@@ -79,6 +84,24 @@ class CaseSearchParametersServiceTest {
         String result = caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto);
 
         assertEquals("arkivdel eq 'arkivdelId'", result);
+    }
+
+    @Test
+    void shouldCreateFilterQueryParamValueForSaksstatus() {
+        CaseSearchParametersDto caseSearchParametersDto = caseSearchParametersDtoBuilder.saksstatus(true).build();
+
+        Identifikator identifikator = new Identifikator();
+        identifikator.setIdentifikatorverdi("saksstatusId");
+
+        SaksstatusResource saksstatusResource = new SaksstatusResource();
+        saksstatusResource.setSystemId(identifikator);
+
+        when(sakDto.getSaksstatus()).thenReturn(Optional.of("saksstatusKey"));
+        when(saksstatusResourceCache.get("saksstatusKey")).thenReturn(saksstatusResource);
+
+        String result = caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto);
+
+        assertEquals("saksstatus eq 'saksstatusId'", result);
     }
 
     @Test
