@@ -70,6 +70,8 @@ public class CaseDispatchService {
                     archiveInstance.getNewCase(),
                     archiveInstance.getCaseSearchParameters()
             );
+            log.debug("Generated case filter: {}", caseFilter);
+
             return fintArchiveResourceClient.findCasesWithFilter(caseFilter)
                     .map(sakResources -> sakResources.stream()
                             .map(SakResource::getMappeId)
