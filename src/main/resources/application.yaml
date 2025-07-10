@@ -33,7 +33,9 @@ fint:
               find-cases-with-filter-backoff-retry-max-delay-millis: 60000
             publishing:
               refresh:
-                topic-retention-time-offset-ms: 345600000
+                from-time-of-day: 03:00:00
+                to-time-of-day: 03:30:00
+                resource-topic-retention-time-offset: "4d"
               pull:
                 initial-delay-ms: 5000
                 fixed-delay-ms: 900000
