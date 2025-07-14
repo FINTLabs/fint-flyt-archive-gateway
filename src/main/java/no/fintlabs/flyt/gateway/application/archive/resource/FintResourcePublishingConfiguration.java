@@ -3,7 +3,7 @@ package no.fintlabs.flyt.gateway.application.archive.resource;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePipeline;
-import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePublishingRefreshConfigurationProperties;
+import no.fintlabs.flyt.gateway.application.archive.resource.configuration.ResourcePublishingConfigurationProperties;
 import no.fintlabs.flyt.gateway.application.archive.resource.web.FintArchiveResourceClient;
 import no.fintlabs.kafka.entity.EntityProducer;
 import no.fintlabs.kafka.entity.EntityProducerFactory;
@@ -11,9 +11,9 @@ import no.fintlabs.kafka.entity.EntityProducerRecord;
 import no.fintlabs.kafka.entity.topic.EntityTopicService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.CronTask;
+import org.springframework.scheduling.config.IntervalTask;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.web.reactive.function.client.WebClientException;
@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class FintResourcePublishingConfiguration implements SchedulingConfigurer {
 
     private final Random randomSeededByOrgAndApplicationId;
-    private final ResourcePublishingRefreshConfigurationProperties resourcePublishingRefreshConfigurationProperties;
+    private final ResourcePublishingConfigurationProperties resourcePublishingConfigurationProperties;
     private final List<ResourcePipeline<?>> resourcePipelines;
     private final EntityTopicService entityTopicService;
     private final EntityProducer<Object> entityProducer;
@@ -39,14 +39,13 @@ public class FintResourcePublishingConfiguration implements SchedulingConfigurer
     public FintResourcePublishingConfiguration(
             @Value("${fint.org-id}") String orgId,
             @Value("${fint.application-id}") String applicationId,
-            ResourcePublishingRefreshConfigurationProperties resourcePublishingRefreshConfigurationProperties,
+            ResourcePublishingConfigurationProperties resourcePublishingConfigurationProperties,
             List<ResourcePipeline<?>> resourcePipelines,
             EntityTopicService entityTopicService,
             EntityProducerFactory entityProducerFactory,
-            FintArchiveResourceClient fintArchiveResourceClient
-    ) {
+            FintArchiveResourceClient fintArchiveResourceClient) {
         this.randomSeededByOrgAndApplicationId = new Random(Objects.hash(orgId, applicationId));
-        this.resourcePublishingRefreshConfigurationProperties = resourcePublishingRefreshConfigurationProperties;
+        this.resourcePublishingConfigurationProperties = resourcePublishingConfigurationProperties;
         this.resourcePipelines = resourcePipelines;
         this.entityTopicService = entityTopicService;
         this.entityProducer = entityProducerFactory.createProducer(Object.class);
@@ -57,7 +56,7 @@ public class FintResourcePublishingConfiguration implements SchedulingConfigurer
 
     private void ensureTopics() {
         long resourceTopicRetentionTime = Duration.ofDays(1)
-                .plus(resourcePublishingRefreshConfigurationProperties.getResourceTopicRetentionTimeOffset())
+                .plus(resourcePublishingConfigurationProperties.getReset().getResourceTopicRetentionTimeOffset())
                 .toMillis();
 
         resourcePipelines.forEach(
@@ -71,18 +70,25 @@ public class FintResourcePublishingConfiguration implements SchedulingConfigurer
 
     @Override
     public void configureTasks(@NonNull ScheduledTaskRegistrar taskRegistrar) {
-        resourcePipelines.forEach(
-                resourcePipeline -> {
-                    LocalTime refreshTimeOfDay = getRefreshTimeOfDay();
-                    CronTrigger cronTrigger = createCronTrigger(refreshTimeOfDay);
-                    taskRegistrar.addCronTask(
-                            new CronTask(
-                                    () -> lastUpdatedTimestampForPulledResourcesPerResourcePath
-                                            .remove(resourcePipeline.getUrlResourcePath()),
-                                    cronTrigger
-                            )
-                    );
-                }
+        LocalTime timeOfDayToReset = getTimeOfDayToReset();
+        CronTrigger cronTrigger = createCronTrigger(timeOfDayToReset);
+        taskRegistrar.addCronTask(
+                new CronTask(
+                        () -> {
+                            lastUpdatedTimestampForPulledResourcesPerResourcePath.clear();
+                            log.info("Reset last updated timestamp");
+                        },
+                        cronTrigger
+                )
+        );
+        log.info("Scheduled reset of last updated timestamp at {}", timeOfDayToReset);
+
+        taskRegistrar.addFixedDelayTask(
+                new IntervalTask(
+                        this::pullAllUpdatedResources,
+                        resourcePublishingConfigurationProperties.getPull().getFixedDelay().toMillis(),
+                        resourcePublishingConfigurationProperties.getPull().getInitialDelay().toMillis()
+                )
         );
     }
 
@@ -97,24 +103,24 @@ public class FintResourcePublishingConfiguration implements SchedulingConfigurer
         );
     }
 
-    private LocalTime getRefreshTimeOfDay() {
-        LocalTime from = resourcePublishingRefreshConfigurationProperties.getFromTimeOfDay();
-        LocalTime to = resourcePublishingRefreshConfigurationProperties.getToTimeOfDay();
+    private LocalTime getTimeOfDayToReset() {
+        LocalTime from = resourcePublishingConfigurationProperties.getReset().getFromTimeOfDay();
+        LocalTime to = resourcePublishingConfigurationProperties.getReset().getToTimeOfDay();
         if (from.equals(to)) {
             return from;
         }
+        Duration duration = from.isBefore(to)
+                ? Duration.between(from, to)
+                : Duration.between(from, to).plusHours(24);
         return from
                 .plusSeconds(
                         randomSeededByOrgAndApplicationId.nextLong(
                                 1,
-                                Duration.between(from, to).toSeconds()
+                                duration.toSeconds()
                         )
                 );
     }
 
-    @Scheduled(
-            initialDelayString = "${fint.flyt.gateway.application.archive.resource.publishing.pull.initial-delay-ms}",
-            fixedDelayString = "${fint.flyt.gateway.application.archive.resource.publishing.pull.fixed-delay-ms}")
     private void pullAllUpdatedResources() {
         log.info("Starting pulling resources");
         resourcePipelines.forEach(this::pullUpdatedResources);

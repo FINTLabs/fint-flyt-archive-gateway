@@ -32,13 +32,13 @@ fint:
               find-cases-with-filter-backoff-retry-min-delay-millis: 5000
               find-cases-with-filter-backoff-retry-max-delay-millis: 60000
             publishing:
-              refresh:
-                from-time-of-day: 03:00:00
-                to-time-of-day: 03:30:00
+              reset:
+                from-time-of-day: "03:00:00"
+                to-time-of-day: "03:30:00"
                 resource-topic-retention-time-offset: "4d"
               pull:
-                initial-delay-ms: 5000
-                fixed-delay-ms: 900000
+                initial-delay: "5s"
+                fixed-delay: "15m"
   cache:
     defaultCacheEntryTimeToLiveMillis: 518400000
     defaultCacheHeapSize: 1000000
