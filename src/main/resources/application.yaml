@@ -34,7 +34,7 @@ fint:
             publishing:
               reset:
                 from-time-of-day: "03:00:00"
-                to-time-of-day: "03:30:00"
+                to-time-of-day: "04:00:00"
                 resource-topic-retention-time-offset: "4d"
               pull:
                 initial-delay: "5s"
