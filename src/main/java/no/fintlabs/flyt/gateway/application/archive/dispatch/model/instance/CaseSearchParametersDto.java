@@ -14,6 +14,7 @@ public class CaseSearchParametersDto {
     private final boolean administrativEnhet;
     private final boolean tilgangsrestriksjon;
     private final boolean saksmappetype;
+    private final boolean saksstatus;
     private final boolean tittel;
     private final boolean klassering;
     private final String klasseringRekkefolge;

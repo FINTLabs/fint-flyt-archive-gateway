@@ -71,7 +71,5 @@ test {
 }
 
 jar {
-    enabled = true
-    archiveVersion = ""
-    archiveClassifier = ""
+    enabled = false
 }
