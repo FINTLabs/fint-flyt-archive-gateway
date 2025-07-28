@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClientRequest;
 import reactor.util.retry.Retry;
@@ -23,16 +24,12 @@ import reactor.util.retry.Retry;
 import java.net.URI;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @Slf4j
 public class FintArchiveResourceClient {
     private final FintArchiveResourceClientProperties properties;
     private final WebClient fintWebClient;
-
-    private final Map<String, Long> sinceTimestamp = new ConcurrentHashMap<>();
 
     private final ObjectMapper objectMapper;
 
@@ -63,7 +60,7 @@ public class FintArchiveResourceClient {
                 .register(meterRegistry);
     }
 
-    public <T> Mono<List<T>> getResourcesLastUpdated(String urlResourcePath, Class<T> resourceClass) {
+    public Mono<Long> getLastUpdated(String urlResourcePath) {
         Timer.Sample sample = Timer.start(meterRegistry);
         return fintWebClient.get()
                 .uri(urlResourcePath.concat("/last-updated"))
@@ -75,36 +72,34 @@ public class FintArchiveResourceClient {
                 })
                 .retrieve()
                 .bodyToMono(LastUpdated.class)
-                .flatMap(lastUpdated -> fintWebClient.get()
-                        .uri(urlResourcePath, uriBuilder ->
-                                uriBuilder.queryParam("sinceTimeStamp",
-                                        sinceTimestamp.getOrDefault(urlResourcePath, 0L)).build())
-                        .retrieve()
-                        .bodyToMono(new ParameterizedTypeReference<ResourceCollection>() {
-                        })
-                        .flatMapIterable(AbstractCollectionResources::getContent)
-                        .map(resource -> objectMapper.convertValue(resource, resourceClass))
-                        .collectList()
-                        .doOnNext(list -> sinceTimestamp.put(urlResourcePath, lastUpdated.getLastUpdated()))
+                .map(LastUpdated::getLastUpdated)
+                .doFinally(signal -> sample.stop(lastUpdatedTimer));
+    }
+
+    public <T> Flux<T> getResourcesSince(String urlResourcePath, Class<T> resourceClass, long sinceTimestamp) {
+        return fintWebClient.get()
+                .uri(uriBuilder ->
+                        uriBuilder.path(urlResourcePath)
+                                .queryParam("sinceTimeStamp", sinceTimestamp)
+                                .build()
                 )
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<ResourceCollection>() {
+                })
+                .flatMapIterable(AbstractCollectionResources::getContent)
+                .map(resource -> objectMapper.convertValue(resource, resourceClass))
                 .doOnError(e -> {
                     if (e instanceof WebClientResponseException ex) {
                         log.error("{} body={}", ex, ex.getResponseBodyAsString());
                     } else {
-                        log.error(e.toString());
+                        log.error("Error fetching resources since {}", sinceTimestamp, e);
                     }
-                })
-                .doFinally(signal -> sample.stop(lastUpdatedTimer));
+                });
     }
-
 
     @Data
     private static class LastUpdated {
         private Long lastUpdated;
-    }
-
-    public void resetLastUpdatedTimestamps() {
-        this.sinceTimestamp.clear();
     }
 
     public Mono<List<SakResource>> findCasesWithFilter(String caseFilter) {
@@ -136,10 +131,7 @@ public class FintArchiveResourceClient {
                         ).maxBackoff(
                                 Duration.ofMillis(properties.getFindCasesWithFilterBackoffRetryMaxDelayMillis())
                         ).doBeforeRetry(
-                                retrySignal -> log.warn(
-                                        "Encountered error when finding cases with filter" +
-                                        " -- performing retry " + (retrySignal.totalRetries() + 1),
-                                        retrySignal.failure())
+                                retrySignal -> log.warn("Encountered error when finding cases with filter -- performing retry {}", retrySignal.totalRetries() + 1, retrySignal.failure())
                         )
                 );
     }
