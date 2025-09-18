@@ -22,7 +22,10 @@ import reactor.retry.Repeat;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -130,10 +133,13 @@ public class FintArchiveDispatchClient {
                             .bodyValue(new JournalpostWrapper(journalpostResource))
                             .retrieve()
             )
-                    .map(sak -> sak.getJournalpost()
+                    .map(sak -> Optional.ofNullable(sak.getJournalpost())
+                            .orElseGet(Collections::emptyList)
                             .stream()
+                            .filter(jp -> jp.getJournalPostnummer() != null)
                             .max(Comparator.comparing(JournalpostResource::getJournalPostnummer))
-                            .orElseThrow()
+                            .orElseThrow(() -> new NoSuchElementException(
+                                    "Journalpost is missing journalpostNummer for case " + caseId))
                     )
                     .doFinally(sig -> sample.stop(postRecordTimer));
         });
@@ -156,7 +162,7 @@ public class FintArchiveDispatchClient {
                 .toBodilessEntity()
                 .handle((entity, sink) -> {
                             if (HttpStatus.ACCEPTED.equals(entity.getStatusCode())
-                                && entity.getHeaders().getLocation() != null) {
+                                    && entity.getHeaders().getLocation() != null) {
                                 sink.next(entity.getHeaders().getLocation());
                             } else {
                                 sink.error(new RuntimeException("Expected 202 Accepted response with redirect header"));
