@@ -47,6 +47,9 @@ patches:
       - op: replace
         path: "/spec/probes/readiness/path"
         value: "/rogfk-no/actuator/health"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "/rogfk-no/actuator/prometheus"
     target:
       kind: Application
       name: fint-flyt-archive-gateway
