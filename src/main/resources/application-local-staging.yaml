@@ -18,7 +18,6 @@ novari:
       security:
         api:
           internal:
-            enabled: true
             authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"DEVELOPER\",\"USER\"]}"
 
   kafka:

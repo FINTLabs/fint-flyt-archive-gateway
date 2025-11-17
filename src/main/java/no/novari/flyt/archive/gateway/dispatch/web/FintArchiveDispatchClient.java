@@ -54,10 +54,10 @@ public class FintArchiveDispatchClient {
         this.fintWebClient = fintWebClient;
         this.fintArchiveResourceClient = fintArchiveResourceClient;
         this.meterRegistry = meterRegistry;
-        this.postFileTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postFile").description("Timing postFile").register(meterRegistry);
-        this.postCaseTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postCase").description("Timing postCase").register(meterRegistry);
-        this.postRecordTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.postRecord").description("Timing postRecord").register(meterRegistry);
-        this.pollForCreationTimer = Timer.builder("fint.flyt.gateway.archive.dispatch.pollForCreatedLocation").description("Timing poll for created location").register(meterRegistry);
+        this.postFileTimer = Timer.builder("novari.flyt.gateway.archive.dispatch.postFile").description("Timing postFile").register(meterRegistry);
+        this.postCaseTimer = Timer.builder("novari.flyt.gateway.archive.dispatch.postCase").description("Timing postCase").register(meterRegistry);
+        this.postRecordTimer = Timer.builder("novari.flyt.gateway.archive.dispatch.postRecord").description("Timing postRecord").register(meterRegistry);
+        this.pollForCreationTimer = Timer.builder("novari.flyt.gateway.archive.dispatch.pollForCreatedLocation").description("Timing poll for created location").register(meterRegistry);
         this.webUtilErrorHandler = webUtilErrorHandler;
     }
 

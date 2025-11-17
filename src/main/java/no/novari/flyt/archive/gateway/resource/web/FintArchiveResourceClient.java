@@ -50,11 +50,11 @@ public class FintArchiveResourceClient {
         this.objectMapper = new ObjectMapper();
         this.meterRegistry = meterRegistry;
 
-        this.lastUpdatedTimer = Timer.builder("fint.flyt.gateway.archive.resource.getResourcesLastUpdated")
+        this.lastUpdatedTimer = Timer.builder("novari.flyt.gateway.archive.resource.getResourcesLastUpdated")
                 .description("Time to fetch and map last-updated resources")
                 .register(meterRegistry);
 
-        this.findCasesTimer = Timer.builder("fint.flyt.gateway.archive.resource.findCasesWithFilter")
+        this.findCasesTimer = Timer.builder("novari.flyt.gateway.archive.resource.findCasesWithFilter")
                 .description("Time to fetch cases with filter")
                 .register(meterRegistry);
     }

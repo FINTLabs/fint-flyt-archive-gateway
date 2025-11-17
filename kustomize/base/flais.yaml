@@ -34,10 +34,6 @@ spec:
       value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -Xms2G'
     - name: novari.flyt.archive.gateway.client.fint-archive.authorization.enable
       value: 'true'
-    - name: fint.flyt.resource-server.security.api.internal.enabled
-      value: "true"
-    - name: novari.kafka.topic.org-id
-      value: fintlabs-no
   onePassword:
     itemPath: path
   envFrom:

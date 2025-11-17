@@ -4,3 +4,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: https://idp.felleskomponent.no/nidp/oauth/nam
+novari:
+  flyt:
+    resource-server:
+      security:
+        api:
+          internal:
+            enabled: true
