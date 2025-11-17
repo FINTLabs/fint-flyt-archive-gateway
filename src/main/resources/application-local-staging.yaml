@@ -1,6 +1,8 @@
 fint:
   org-id: fintlabs.no
   kafka:
+    topic:
+      org-id: fintlabs-no
     enable-ssl: false
 
 novari:
@@ -19,11 +21,8 @@ novari:
         api:
           internal:
             authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"DEVELOPER\",\"USER\"]}"
-
   kafka:
     default-replicas: 1
-    topic:
-      org-id: fintlabs-no
 
 spring:
   kafka:
