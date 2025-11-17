@@ -16,9 +16,9 @@
       "description": "Description for fint.client.password."
     },
     {
-      "name": "fint.kafka.application-id",
+      "name": "novari.kafka.application-id",
       "type": "java.lang.String",
-      "description": "Description for fint.kafka.application-id."
+      "description": "Description for novari.kafka.application-id."
     }
   ]
 }

@@ -8,11 +8,11 @@ spring:
             client-id: ${fint.sso.client-id}
             client-secret: ${fint.sso.client-secret}
             provider: fint-idp
-fint:
+
+novari:
   flyt:
-    gateway:
-      application:
-        archive:
-          client:
-            fint-flyt-file:
-              base-url: 'http://fint-flyt-file-service:8080'
+    archive:
+      gateway:
+        client:
+          fint-flyt-file:
+            base-url: 'http://fint-flyt-file-service:8080'

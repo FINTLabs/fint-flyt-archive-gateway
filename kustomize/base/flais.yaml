@@ -32,17 +32,12 @@ spec:
   env:
     - name: JAVA_TOOL_OPTIONS
       value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -Xms2G'
-    - name: fint.flyt.gateway.application.archive.client.fint-archive.authorization.enable
+    - name: novari.flyt.archive.gateway.client.fint-archive.authorization.enable
       value: 'true'
     - name: fint.flyt.resource-server.security.api.internal.enabled
       value: "true"
-    - name: fint.flyt.gateway.application.archive.client.fint-archive.base-url
-      value: path
-    - name: fint.flyt.resource-server.security.api.internal.authorized-org-id-role-pairs-json
-      value: |
-        {
-          "fintlabs.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"]
-        }
+    - name: novari.kafka.topic.org-id
+      value: fintlabs-no
   onePassword:
     itemPath: path
   envFrom:

@@ -1,49 +1,52 @@
 fint:
   application-id: fint-flyt-archive-gateway
+
+novari:
   flyt:
-    gateway:
-      application:
-        archive:
-          kafka:
-            topic:
-              instance-processing-events-retention-time-ms: 345600000
-          web-client:
-            connection-max-life-time-millis: 1800000
-            connection-max-idle-time-millis: 180000
-            connect-timeout-millis: 120000
-            default-response-timeout-millis: 130000
-          dispatch:
-            fint-client:
-              post-file-timeout-millis: 130000
-              post-case-timeout-millis: 130000
-              post-record-timeout-millis: 130000
-              get-status-timeout-millis: 130000
-              created-location-poll-total-timeout-millis: 1800000
-              created-location-poll-backoff-min-delay-millis: 1000
-              created-location-poll-backoff-max-delay-millis: 10000
-            flyt-file-client:
-              get-file-timeout-millis: 120000
-          resource:
-            fint-client:
-              get-resource-timeout-millis: 130000
-              get-resources-last-updated-timeout-millis: 130000
-              find-cases-with-filter-timeout-millis: 130000
-              find-cases-with-filter-max-attempts: 10
-              find-cases-with-filter-backoff-retry-min-delay-millis: 5000
-              find-cases-with-filter-backoff-retry-max-delay-millis: 60000
-            publishing:
-              reset:
-                from-time-of-day: "03:00:00"
-                to-time-of-day: "04:00:00"
-                resource-topic-retention-time-offset: "4d"
-              pull:
-                initial-delay: "5s"
-                fixed-delay: "15m"
-  cache:
-    defaultCacheEntryTimeToLiveMillis: 518400000
-    defaultCacheHeapSize: 1000000
+    archive:
+      gateway:
+        kafka:
+          topic:
+            instance-processing-events-retention-time: "4"
+
+        web-client:
+          connection-max-life-time: "30m"
+          connection-max-idle-time: "30m"
+          connect-timeout: "2m"
+          default-response-timeout: "130s"
+        dispatch:
+          fint-client:
+            post-file-timeout: "130s"
+            post-case-timeout: "130s"
+            post-record-timeout: "130s"
+            get-status-timeout: "130s"
+            created-location-poll-total-timeout: "30m"
+            created-location-poll-backoff-min-delay: "1s"
+            created-location-poll-backoff-max-delay: "10s"
+          flyt-file-client:
+            get-file-timeout: "2m"
+
+        resource:
+          fint-client:
+            get-resource-timeout: "130s"
+            get-resources-last-updated-timeout: "130s"
+            find-cases-with-filter-timeout: "130s"
+            find-cases-with-filter-max-attempts: 10
+            find-cases-with-filter-backoff-retry-min-delay: "5s"
+            find-cases-with-filter-backoff-retry-max-delay: "60s"
+
+          publishing:
+            reset:
+              from-time-of-day: "03:00:00"
+              to-time-of-day: "04:00:00"
+              resource-topic-retention-time-offset: "4d"
+            pull:
+              initial-delay: "5s"
+              fixed-delay: "15m"
+
 server:
-  max-http-header-size: 40KB
+  max-http-request-header-size: 40KB
+
 spring:
   profiles:
     include:
@@ -53,6 +56,11 @@ spring:
       - flyt-kafka
       - flyt-logging
       - flyt-resource-server
+
+  output:
+    ansi:
+      enabled: always
+
 logging:
   level:
-    no.fintlabs.cache.ehcache.FintEhCacheEventLogger: WARN
+    no.novari.cache.ehcache.FintEhCacheEventLogger: WARN
