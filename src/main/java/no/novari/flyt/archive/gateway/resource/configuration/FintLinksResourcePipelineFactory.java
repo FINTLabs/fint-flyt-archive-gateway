@@ -38,7 +38,7 @@ public class FintLinksResourcePipelineFactory {
                                     EntityTopicNameParameters
                                             .builder()
                                             .topicNamePrefixParameters(TopicNamePrefixParameters
-                                                    .builder()
+                                                    .stepBuilder()
                                                     .orgIdApplicationDefault()
                                                     .domainContextApplicationDefault()
                                                     .build()

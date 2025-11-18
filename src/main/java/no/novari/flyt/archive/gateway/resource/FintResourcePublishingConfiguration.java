@@ -70,10 +70,9 @@ public class FintResourcePublishingConfiguration implements SchedulingConfigurer
                         kafkaProperties -> this.entityTopicService.createOrModifyTopic(
                                 kafkaProperties.getTopicNameParameters(),
                                 EntityTopicConfiguration
-                                        .builder()
+                                        .stepBuilder()
                                         .partitions(PARTITIONS)
-                                        .lastValueRetainedForever()
-                                        // TODO Correct value?
+                                        .lastValueRetentionTime(resourceTopicRetentionTime)
                                         .nullValueRetentionTime(resourceTopicRetentionTime)
                                         .cleanupFrequency(EntityCleanupFrequency.NORMAL)
                                         .build()

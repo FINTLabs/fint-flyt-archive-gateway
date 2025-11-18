@@ -29,7 +29,7 @@ public class InstanceDispatchedEventProducerService {
         eventTopicNameParameters = EventTopicNameParameters
                 .builder()
                 .topicNamePrefixParameters(TopicNamePrefixParameters
-                        .builder()
+                        .stepBuilder()
                         .orgIdApplicationDefault()
                         .domainContextApplicationDefault()
                         .build()
@@ -39,7 +39,7 @@ public class InstanceDispatchedEventProducerService {
 
         eventTopicService.createOrModifyTopic(eventTopicNameParameters,
                 EventTopicConfiguration
-                        .builder()
+                        .stepBuilder()
                         .partitions(PARTITIONS)
                         .retentionTime(kafkaTopicProperties.getInstanceProcessingEventsRetentionTime())
                         .cleanupFrequency(EventCleanupFrequency.NORMAL)
@@ -51,8 +51,6 @@ public class InstanceDispatchedEventProducerService {
         instanceFlowtemplate.send(
                 InstanceFlowProducerRecord
                         .builder()
-                        // TODO: No key??
-                        .key("???")
                         .instanceFlowHeaders(instanceFlowHeaders)
                         .topicNameParameters(eventTopicNameParameters)
                         .value(null)

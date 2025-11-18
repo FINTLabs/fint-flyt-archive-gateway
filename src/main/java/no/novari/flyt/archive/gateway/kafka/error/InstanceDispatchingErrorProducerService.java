@@ -36,7 +36,7 @@ public class InstanceDispatchingErrorProducerService {
         errorEventTopicNameParameters = ErrorEventTopicNameParameters
                 .builder()
                 .topicNamePrefixParameters(TopicNamePrefixParameters
-                        .builder()
+                        .stepBuilder()
                         .orgIdApplicationDefault()
                         .domainContextApplicationDefault()
                         .build()
@@ -44,7 +44,7 @@ public class InstanceDispatchingErrorProducerService {
                 .errorEventName("instance-dispatching-error")
                 .build();
         errorEventTopicService.createOrModifyTopic(errorEventTopicNameParameters, EventTopicConfiguration
-                .builder()
+                .stepBuilder()
                 .partitions(PARTITIONS)
                 .retentionTime(kafkaTopicProperties.getInstanceProcessingEventsRetentionTime())
                 .cleanupFrequency(EventCleanupFrequency.NORMAL)
@@ -61,8 +61,6 @@ public class InstanceDispatchingErrorProducerService {
                         .<ErrorCollection>builder()
                         .instanceFlowHeaders(instanceFlowHeaders)
                         .topicNameParameters(errorEventTopicNameParameters)
-                        // TODO: Any key??
-                        .key("???")
                         .value(
                                 new ErrorCollection(
                                         Error
@@ -93,7 +91,6 @@ public class InstanceDispatchingErrorProducerService {
                         .<ErrorCollection>builder()
                         .instanceFlowHeaders(instanceFlowHeaders)
                         .topicNameParameters(errorEventTopicNameParameters)
-                        .key("???")
                         .value(
                                 new ErrorCollection(
                                         Error

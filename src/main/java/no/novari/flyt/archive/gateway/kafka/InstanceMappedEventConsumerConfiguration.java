@@ -56,10 +56,8 @@ public class InstanceMappedEventConsumerConfiguration {
                 ListenerConfiguration
                         .stepBuilder()
                         .groupIdApplicationDefault()
-                        // TODO: Verify this is correct
                         .maxPollRecords(1)
-                        // TODO: Verify this is correct
-                        .maxPollInterval(Duration.ofMillis(1800000))
+                        .maxPollInterval(Duration.ofMinutes(30))
                         .continueFromPreviousOffsetOnAssignment()
                         .build(),
                 errorHandlerFactory.createErrorHandler(
@@ -73,7 +71,7 @@ public class InstanceMappedEventConsumerConfiguration {
                 EventTopicNameParameters
                         .builder()
                         .topicNamePrefixParameters(TopicNamePrefixParameters
-                                .builder()
+                                .stepBuilder()
                                 .orgIdApplicationDefault()
                                 .domainContextApplicationDefault()
                                 .build()

@@ -14,6 +14,7 @@ novari:
           connection-max-idle-time: "30m"
           connect-timeout: "2m"
           default-response-timeout: "130s"
+
         dispatch:
           fint-client:
             post-file-timeout: "130s"
