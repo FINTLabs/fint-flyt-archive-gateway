@@ -56,7 +56,6 @@ spring:
       - flyt-file-client
       - flyt-kafka
       - flyt-logging
-      - flyt-resource-server
 
   output:
     ansi:

@@ -47,7 +47,6 @@ public class FintArchiveWebClientConfiguration {
         authorizedClientManager.setAuthorizedClientProvider(
                 ReactiveOAuth2AuthorizedClientProviderBuilder
                         .builder()
-                        .password()
                         .refreshToken()
                         .build()
         );

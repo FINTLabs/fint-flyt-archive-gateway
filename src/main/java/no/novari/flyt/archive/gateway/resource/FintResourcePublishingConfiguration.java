@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePipeline;
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePublishingConfigurationProperties;
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient;
-import no.novari.kafka.model.ParameterizedProducerRecord;
+import no.novari.kafka.producing.ParameterizedProducerRecord;
 import no.novari.kafka.producing.ParameterizedTemplate;
 import no.novari.kafka.producing.ParameterizedTemplateFactory;
 import no.novari.kafka.topic.EntityTopicService;

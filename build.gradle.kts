@@ -7,8 +7,7 @@ plugins {
 
 group = "no.fintlabs"
 version = "0.0.1-SNAPSHOT"
-
-val apiVersion: String by project
+var apiVersion = "3.21.10"
 
 java {
     toolchain {
@@ -41,12 +40,12 @@ dependencies {
 
     implementation("io.projectreactor.addons:reactor-extra")
 
-    implementation("no.novari:kafka:5.0.0-rc-19")
-    implementation("no.novari:flyt-kafka:4.0.0-rc-7")
+    implementation("no.novari:kafka:5.0.0-rc-20")
+    implementation("no.novari:flyt-kafka:4.0.0-rc-8")
     implementation("no.novari:flyt-cache:2.0.0-rc-2")
-    implementation("no.novari:flyt-resource-server:6.0.0-rc-25")
+    implementation("no.novari:flyt-resource-server:6.0.0-rc-26")
 
-    implementation("no.fint:fint-model-resource:0.4.1")
+    implementation("no.fintlabs:fint-model-resource:0.5.0")
     implementation("no.fint:fint-arkiv-resource-model-java:$apiVersion")
     implementation("no.fint:fint-administrasjon-resource-model-java:$apiVersion")
 
