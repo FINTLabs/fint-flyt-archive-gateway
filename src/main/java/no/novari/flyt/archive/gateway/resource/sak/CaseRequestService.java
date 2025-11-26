@@ -24,7 +24,8 @@ public class CaseRequestService {
     private final RequestTopicNameParameters requestTopicNameParameters;
     private final RequestTemplate<String, SakResource> requestTemplate;
 
-    private static final Duration RETENTION_TIME = Duration.ofMinutes(5);
+    private static final Duration RETENTION_TIME = Duration.ofMinutes(10);
+    public static final Duration REPLY_TIMEOUT = Duration.ofSeconds(60);
 
     public CaseRequestService(
             @Value("${novari.kafka.application-id}") String applicationId,
@@ -64,7 +65,7 @@ public class CaseRequestService {
                 replyTopicNameParameters,
                 String.class,
                 SakResource.class,
-                Duration.ofSeconds(60),
+                REPLY_TIMEOUT,
                 ListenerConfiguration
                         .stepBuilder()
                         .groupIdApplicationDefault()

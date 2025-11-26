@@ -32,7 +32,7 @@ public class CaseRequestConfiguration {
     private final RequestTopicService requestTopicService;
     private final FintArchiveResourceClient fintArchiveResourceClient;
 
-    private static final Duration RETENTION_TIME = Duration.ofMinutes(5);
+    private static final Duration RETENTION_TIME = Duration.ofMinutes(10);
 
     public CaseRequestConfiguration(
             RequestListenerContainerFactory requestListenerContainerFactory,
