@@ -7,7 +7,9 @@ plugins {
 
 group = "no.fintlabs"
 version = "0.0.1-SNAPSHOT"
-var apiVersion = "3.21.10"
+
+var fintResourceModelVersion = "3.21.10"
+var findModelResourceVersion = "0.5.0"
 
 java {
     toolchain {
@@ -40,14 +42,13 @@ dependencies {
 
     implementation("io.projectreactor.addons:reactor-extra")
 
-    implementation("no.novari:kafka:5.0.0-rc-20")
-    implementation("no.novari:flyt-kafka:4.0.0-rc-8")
+    implementation("no.novari:flyt-kafka:4.0.0-rc-10")
     implementation("no.novari:flyt-cache:2.0.0-rc-2")
-    implementation("no.novari:flyt-resource-server:6.0.0-rc-26")
+    implementation("no.novari:flyt-resource-server:6.0.0-rc-27")
 
-    implementation("no.fintlabs:fint-model-resource:0.5.0")
-    implementation("no.fint:fint-arkiv-resource-model-java:$apiVersion")
-    implementation("no.fint:fint-administrasjon-resource-model-java:$apiVersion")
+    implementation("no.fintlabs:fint-model-resource:$findModelResourceVersion")
+    implementation("no.fint:fint-arkiv-resource-model-java:$fintResourceModelVersion")
+    implementation("no.fint:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
 
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
