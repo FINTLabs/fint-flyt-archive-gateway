@@ -32,8 +32,6 @@ spec:
   env:
     - name: JAVA_TOOL_OPTIONS
       value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -Xms2G'
-    - name: novari.flyt.archive.gateway.client.fint-archive.authorization.enable
-      value: 'true'
   onePassword:
     itemPath: path
   envFrom:
