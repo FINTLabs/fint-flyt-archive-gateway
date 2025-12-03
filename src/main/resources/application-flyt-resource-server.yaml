@@ -1,0 +1,7 @@
+novari:
+  flyt:
+    resource-server:
+      security:
+        api:
+          internal:
+            enabled: true
