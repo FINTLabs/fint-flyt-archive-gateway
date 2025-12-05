@@ -5,6 +5,10 @@ novari:
   flyt:
     archive:
       gateway:
+        client:
+          fint-archive:
+            authorization:
+              enable: true
         kafka:
           topic:
             instance-processing-events-retention-time: "4"
