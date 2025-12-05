@@ -44,9 +44,11 @@ public class FintArchiveWebClientConfiguration {
                         clientRegistrationRepository,
                         authorizedClientService
                 );
+        // TODO: replace deprecated password function
         authorizedClientManager.setAuthorizedClientProvider(
                 ReactiveOAuth2AuthorizedClientProviderBuilder
                         .builder()
+                        .password()
                         .refreshToken()
                         .build()
         );

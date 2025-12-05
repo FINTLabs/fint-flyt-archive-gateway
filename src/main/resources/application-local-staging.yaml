@@ -10,8 +10,6 @@ novari:
             base-url: http://localhost:8091
           fint-archive:
             base-url: https://beta.felleskomponent.no
-            authorization:
-              enable: true
 
     resource-server:
       security:
