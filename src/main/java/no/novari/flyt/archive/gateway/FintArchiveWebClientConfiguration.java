@@ -44,7 +44,7 @@ public class FintArchiveWebClientConfiguration {
                         clientRegistrationRepository,
                         authorizedClientService
                 );
-        // TODO: replace deprecated password function
+        // TODO: migrate off the deprecated password grant (removed after Spring Security 5.8) when FINT IdP supports a supported flow.
         authorizedClientManager.setAuthorizedClientProvider(
                 ReactiveOAuth2AuthorizedClientProviderBuilder
                         .builder()
