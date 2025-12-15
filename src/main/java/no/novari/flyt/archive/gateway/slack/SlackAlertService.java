@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.slack;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -22,7 +23,7 @@ public class SlackAlertService {
     private final RestTemplate restTemplate;
 
     public SlackAlertService(
-            RestTemplate restTemplate
+            @Qualifier("slackRestTemplate") RestTemplate restTemplate
     ) {
         this.restTemplate = restTemplate;
     }

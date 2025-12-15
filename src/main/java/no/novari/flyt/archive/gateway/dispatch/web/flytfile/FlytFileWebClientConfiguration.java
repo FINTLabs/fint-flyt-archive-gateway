@@ -49,13 +49,12 @@ public class FlytFileWebClientConfiguration {
     @Bean
     public WebClient fileWebClient(
             @Qualifier("fileAuthorizedClientManager") Optional<ReactiveOAuth2AuthorizedClientManager> authorizedClientManager,
-            ClientHttpConnector clientHttpConnector
+            ClientHttpConnector clientHttpConnector,
+            WebClient.Builder webClientBuilder
     ) {
         ExchangeStrategies exchangeStrategies = ExchangeStrategies.builder()
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(-1))
                 .build();
-
-        WebClient.Builder webClientBuilder = WebClient.builder();
 
         authorizedClientManager.ifPresent(presentAuthorizedClientManager -> {
             ServerOAuth2AuthorizedClientExchangeFilterFunction authorizedClientExchangeFilterFunction =
