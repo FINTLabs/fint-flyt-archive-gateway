@@ -1,26 +1,33 @@
 fint:
-  org-id: fintlabs.no
+  org-id: novari.no
+
+novari:
   flyt:
-    gateway:
-      application:
-        archive:
-          client:
-            fint-flyt-file:
-              base-url: http://localhost:8091
-            fint-archive:
-              base-url: https://beta.felleskomponent.no
-              authorization:
-                enable: true
+    archive:
+      gateway:
+        client:
+          fint-flyt-file:
+            base-url: http://localhost:8091
+          fint-archive:
+            base-url: https://beta.felleskomponent.no
+
     resource-server:
       security:
         api:
           internal:
-            enabled: true
-            authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"https://role-catalog.vigoiks.no/vigo/flyt/developer\"]}"
+            authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"DEVELOPER\",\"USER\"]}"
   kafka:
     default-replicas: 1
+    topic:
+      org-id: novari-no
+
 spring:
   kafka:
     bootstrap-servers: localhost:9092
+
 server:
   port: 8301
+
+slack:
+  webhook:
+    url: https://example.com/slack

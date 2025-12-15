@@ -1,13 +1,13 @@
-fint:
+novari:
   flyt:
-    gateway:
-      application:
-        archive:
-          client:
-            fint-archive:
-              registration-id: fint
-              username: ${fint.core.oauth2.username}
-              password: ${fint.core.oauth2.password}
+    archive:
+      gateway:
+        client:
+          fint-archive:
+            registration-id: fint
+            username: ${fint.core.oauth2.username}
+            password: ${fint.core.oauth2.password}
+
 spring:
   security:
     oauth2:

@@ -30,18 +30,27 @@ patches:
       - op: replace
         path: "/spec/ingress/basePath"
         value: "/beta/bfk-no/api/intern/arkiv"
-      - op: replace
-        path: "/spec/env/3/value"
-        value: "https://beta.felleskomponent.no"
-      - op: replace
-        path: "/spec/env/4/value"
-        value: |
-          {
-            "bfk.no":["https://role-catalog.vigoiks.no/vigo/flyt/user"],
-            "frid-iks.no":["https://role-catalog.vigoiks.no/vigo/flyt/user"],
-            "vigo.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"],
-            "novari.no":["https://role-catalog.vigoiks.no/vigo/flyt/developer"]
-          }
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "novari.flyt.archive.gateway.client.fint-archive.base-url"
+          value: "https://beta.felleskomponent.no"
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "novari.flyt.resource-server.security.api.internal.authorized-org-id-role-pairs-json"
+          value: |
+            {
+              "bfk.no":["USER"],
+              "frid-iks.no":["USER"],
+              "vigo.no":["DEVELOPER", "USER"],
+              "novari.no":["DEVELOPER", "USER"]
+            }
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "novari.kafka.topic.org-id"
+          value: "bfk-no"
       - op: replace
         path: "/spec/onePassword/itemPath"
         value: "vaults/aks-beta-vault/items/fint-flyt-v1-slack-webhook"
@@ -65,4 +74,3 @@ patches:
     target:
       kind: FintClient
       name: fint-flyt-archive-fint-client
-
