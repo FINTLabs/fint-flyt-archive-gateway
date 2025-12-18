@@ -15,7 +15,7 @@ novari:
 
         web-client:
           connection-max-life-time: "30m"
-          connection-max-idle-time: "30m"
+          connection-max-idle-time: "3m"
           connect-timeout: "2m"
           default-response-timeout: "130s"
 
