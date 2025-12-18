@@ -68,4 +68,11 @@ spring:
 
 logging:
   level:
+    io.netty.handler.ssl: DEBUG
     no.novari.cache.ehcache.FintEhCacheEventLogger: WARN
+    org.springframework.scheduling: DEBUG
+    org.springframework.security.oauth2.client: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
+    reactor.netty.http.client: DEBUG
+    reactor.netty.resources: DEBUG
+    reactor.netty.transport: DEBUG
