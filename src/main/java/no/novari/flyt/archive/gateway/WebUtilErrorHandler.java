@@ -24,6 +24,11 @@ public class WebUtilErrorHandler {
             errorMessage = e.toString();
             log.error(errorMessage);
         }
-        slackAlertService.sendMessage(errorMessage);
+
+        slackAlertService
+                .sendMessage(errorMessage)
+                .subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic())
+                .doOnError(sendErr -> log.warn("Failed to send Slack alert", sendErr))
+                .subscribe();
     }
 }

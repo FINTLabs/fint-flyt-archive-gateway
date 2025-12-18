@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,17 +29,16 @@ public class SlackAlertService {
         this.webClient = webClient;
     }
 
-    public void sendMessage(String message) {
+    public Mono<Void> sendMessage(String message) {
         Map<String, String> payload = new HashMap<>();
         String formattedMessage = formatMessageWithPrefix(message);
         payload.put("text", formattedMessage);
 
-        webClient.post()
+        return webClient.post()
                 .uri(slackWebhookUrl)
                 .bodyValue(payload)
                 .retrieve()
-                .bodyToMono(Void.class)
-                .block();
+                .bodyToMono(Void.class);
     }
 
     private String formatMessageWithPrefix(String message) {
