@@ -110,7 +110,9 @@ while IFS= read -r file; do
   export INGRESS_BASE_PATH="${path_prefix}/api/intern/arkiv"
   export ARCHIVE_BASE_URL="$base_url"
   export ONEPASSWORD_ITEM_PATH="vaults/${onepassword_vault}/items/fint-flyt-v1-slack-webhook"
-  export READINESS_PATH="${path_prefix}/actuator/health"
+  export STARTUP_PATH="${path_prefix}/actuator/health"
+  export READINESS_PATH="${path_prefix}/actuator/health/readiness"
+  export LIVENESS_PATH="${path_prefix}/actuator/health/liveness"
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
   metrics_patch_before_ingress=""
   if [[ "$namespace" != "afk-no" ]]; then
@@ -131,7 +133,7 @@ while IFS= read -r file; do
   target_dir="$ROOT/kustomize/overlays/$dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
-  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $URL_BASE_PATH $METRICS_PATCH_BEFORE_INGRESS $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $READINESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID' \
+  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $URL_BASE_PATH $METRICS_PATCH_BEFORE_INGRESS $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
 done < <(find "$ROOT/kustomize/overlays" -name kustomization.yaml -print | sort)
