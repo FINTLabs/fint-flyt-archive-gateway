@@ -47,8 +47,14 @@ $AUTHORIZED_ORG_ROLE_PAIRS
         path: "/spec/onePassword/itemPath"
         value: "$ONEPASSWORD_ITEM_PATH"
       - op: replace
+        path: "/spec/probes/startup/path"
+        value: "$STARTUP_PATH"
+      - op: replace
         path: "/spec/probes/readiness/path"
         value: "$READINESS_PATH"
+      - op: replace
+        path: "/spec/probes/liveness/path"
+        value: "$LIVENESS_PATH"
       - op: replace
         path: "/spec/observability/metrics/path"
         value: "$METRICS_PATH"
