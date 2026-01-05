@@ -50,7 +50,7 @@ spec:
     startup:
       path: /
       port: 8080
-      initialDelaySeconds: 20
+      initialDelaySeconds: 70
       failureThreshold: 12
       periodSeconds: 10
       timeoutSeconds: 3
