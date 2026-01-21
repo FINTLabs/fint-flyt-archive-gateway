@@ -1,14 +1,14 @@
 package no.novari.flyt.archive.gateway.resource.web;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.felles.basisklasser.Begrep;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
-import no.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
-import no.fint.model.resource.arkiv.kodeverk.SaksstatusResource;
-import no.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource;
-import no.fint.model.resource.arkiv.noark.AdministrativEnhetResource;
-import no.fint.model.resource.arkiv.noark.ArkivdelResource;
-import no.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource;
+import no.novari.fint.model.felles.basisklasser.Begrep;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource;
+import no.novari.fint.model.resource.arkiv.kodeverk.SaksstatusResource;
+import no.novari.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource;
+import no.novari.fint.model.resource.arkiv.noark.AdministrativEnhetResource;
+import no.novari.fint.model.resource.arkiv.noark.ArkivdelResource;
+import no.novari.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource;
 import no.novari.cache.FintCache;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.CaseSearchParametersDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KlasseDto;

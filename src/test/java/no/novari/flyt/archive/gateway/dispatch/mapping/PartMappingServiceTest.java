@@ -1,8 +1,8 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.felles.kompleksedatatyper.Kontaktinformasjon;
-import no.fint.model.resource.arkiv.noark.PartResource;
-import no.fint.model.resource.felles.kompleksedatatyper.AdresseResource;
+import no.novari.fint.model.felles.kompleksedatatyper.Kontaktinformasjon;
+import no.novari.fint.model.resource.arkiv.noark.PartResource;
+import no.novari.fint.model.resource.felles.kompleksedatatyper.AdresseResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AdresseDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KontaktinformasjonDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.PartDto;

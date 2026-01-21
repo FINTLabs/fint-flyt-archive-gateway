@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.sak;
 
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import no.novari.flyt.archive.gateway.resource.sak.CaseController;
 import no.novari.flyt.archive.gateway.resource.sak.CaseRequestService;
 import no.novari.flyt.archive.gateway.resource.sak.CaseTitle;

@@ -1,8 +1,8 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.PartResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.PartResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.PartDto;
 import org.springframework.stereotype.Service;
 

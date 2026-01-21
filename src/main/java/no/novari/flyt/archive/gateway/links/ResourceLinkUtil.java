@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.links;
 
-import no.fint.model.resource.FintLinks;
-import no.fint.model.resource.Link;
+import no.novari.fint.model.resource.FintLinks;
+import no.novari.fint.model.resource.Link;
 
 import java.util.Collection;
 import java.util.List;

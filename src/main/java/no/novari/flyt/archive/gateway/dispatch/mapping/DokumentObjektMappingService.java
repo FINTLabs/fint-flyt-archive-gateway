@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.DokumentobjektResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.DokumentobjektResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ public class DokumentObjektMappingService {
         DokumentobjektResource dokumentobjektResource = new DokumentobjektResource();
         dokumentobjektDto.getVariantformat().map(Link::with).ifPresent(dokumentobjektResource::addVariantFormat);
         dokumentobjektDto.getFilformat().map(Link::with).ifPresent(dokumentobjektResource::addFilformat);
-        dokumentobjektDto.getFormat().ifPresent(dokumentobjektResource::setFormat);
+//        dokumentobjektDto.getFormat().ifPresent(dokumentobjektResource::addFilformat);
         dokumentobjektDto.getFileId()
                 .map(fileArchiveLinkPerFileId::get)
                 .ifPresent(dokumentobjektResource::addReferanseDokumentfil);

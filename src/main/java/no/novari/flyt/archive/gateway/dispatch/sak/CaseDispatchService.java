@@ -2,8 +2,8 @@ package no.novari.flyt.archive.gateway.dispatch.sak;
 
 import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import no.novari.flyt.archive.gateway.dispatch.mapping.SakMappingService;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto;

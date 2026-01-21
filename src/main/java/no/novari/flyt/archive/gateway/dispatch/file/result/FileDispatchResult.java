@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import no.fint.model.resource.Link;
+import no.novari.fint.model.resource.Link;
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus;
 
 import java.util.UUID;

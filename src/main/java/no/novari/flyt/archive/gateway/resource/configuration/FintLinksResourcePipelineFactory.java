@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.resource.configuration;
 
-import no.fint.model.resource.FintLinks;
+import no.novari.fint.model.resource.FintLinks;
 import no.novari.cache.FintCache;
 import no.novari.flyt.archive.gateway.links.ResourceLinkUtil;
 import no.novari.kafka.topic.name.EntityTopicNameParameters;

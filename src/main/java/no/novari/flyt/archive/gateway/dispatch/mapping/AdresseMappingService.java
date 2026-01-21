@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.felles.kompleksedatatyper.AdresseResource;
+import no.novari.fint.model.resource.felles.kompleksedatatyper.AdresseResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AdresseDto;
 import org.springframework.stereotype.Service;
 

@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.resource.sak;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import no.novari.kafka.consuming.ListenerConfiguration;
 import no.novari.kafka.requestreply.RequestProducerRecord;
 import no.novari.kafka.requestreply.RequestTemplate;
