@@ -30,8 +30,17 @@ public class InstanceMappedEventConsumerConfiguration {
     ) {
         return instanceFlowListenerFactoryService.createRecordListenerContainerFactory(
                 ArchiveInstance.class,
-                instanceFlowConsumerRecord ->
-                        dispatchService.process(
+                instanceFlowConsumerRecord -> {
+                    var consumerRecord = instanceFlowConsumerRecord.getConsumerRecord();
+                    log.info(
+                            "Consumed instance-mapped event topic={} partition={} offset={} key={} headers={}",
+                            consumerRecord.topic(),
+                            consumerRecord.partition(),
+                            consumerRecord.offset(),
+                            consumerRecord.key(),
+                            instanceFlowConsumerRecord.getInstanceFlowHeaders()
+                    );
+                    dispatchService.process(
                                 instanceFlowConsumerRecord.getInstanceFlowHeaders(),
                                 instanceFlowConsumerRecord.getConsumerRecord().value()
                         ).doOnNext(dispatchResult -> {
@@ -52,7 +61,8 @@ public class InstanceMappedEventConsumerConfiguration {
                                         dispatchResult.getErrorMessage()
                                 );
                             }
-                        }).block(),
+                        }).block();
+                },
                 ListenerConfiguration
                         .stepBuilder()
                         .groupIdApplicationDefault()

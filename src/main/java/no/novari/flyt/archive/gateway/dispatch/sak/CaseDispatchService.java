@@ -53,7 +53,7 @@ public class CaseDispatchService {
                 ).onErrorResume(
                         e -> e instanceof ReadTimeoutException || e instanceof CreatedLocationPollTimeoutException,
                         e -> {
-                            log.error("Case dispatch timed out");
+                            log.error("Case dispatch timed out", e);
                             return Mono.just(CaseDispatchResult.timedOut());
                         }
                 )

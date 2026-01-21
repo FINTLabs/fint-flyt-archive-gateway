@@ -92,7 +92,7 @@ public class RecordDispatchService {
                 ).onErrorResume(
                         e -> e instanceof ReadTimeoutException || e instanceof CreatedLocationPollTimeoutException,
                         e -> {
-                            log.error("Record dispatch timed out");
+                            log.error("Record dispatch timed out", e);
                             return Mono.just(RecordDispatchResult.timedOut());
                         }
                 ).onErrorResume(e -> {
