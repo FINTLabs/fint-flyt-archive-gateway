@@ -9,7 +9,6 @@ group = "no.fintlabs"
 version = "0.0.1-SNAPSHOT"
 
 var fintResourceModelVersion = "4.0.0"
-var findModelResourceVersion = "0.5.0"
 
 java {
     toolchain {
@@ -46,7 +45,6 @@ dependencies {
     implementation("no.novari:flyt-cache:2.0.0")
     implementation("no.novari:flyt-resource-server:6.0.0")
 
-    implementation("no.fintlabs:fint-model-resource:$findModelResourceVersion")
     implementation("no.novari:fint-arkiv-resource-model-java:$fintResourceModelVersion")
     implementation("no.novari:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
 
