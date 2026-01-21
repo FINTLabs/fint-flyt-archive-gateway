@@ -47,7 +47,6 @@ class DokumentObjektMappingServiceTest {
         assertThat(resource).isNotNull();
         assertThat(resource.getVariantFormat()).containsOnly(Link.with("testVariantFormat"));
         assertThat(resource.getFilformat()).containsOnly(Link.with("testFilFormat"));
-//        assertThat(resource.getFormat()).isEqualTo("testFormat");
         assertThat(resource.getReferanseDokumentfil()).contains(fileLink);
     }
 
