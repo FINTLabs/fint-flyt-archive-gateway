@@ -70,7 +70,7 @@ Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-fil
 
 ## Running Locally
 
-Prerequisites: Java 21+, Docker (for Kafka, if needed), and the Gradle wrapper.
+Prerequisites: Java 25+, Docker (for Kafka, if needed), and the Gradle wrapper.
 
 1. Start Kafka/Schema Registry (e.g., `docker compose up kafka`). Ensure it listens on `localhost:9092` to match `application-local-staging.yaml`.
 2. Export the local profile:
