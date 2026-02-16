@@ -45,9 +45,9 @@ dependencies {
 
     implementation("io.projectreactor.addons:reactor-extra")
 
-    implementation("no.novari:flyt-kafka:5.1.0-rc-1")
-    implementation("no.novari:flyt-cache:2.1.0-rc-3")
-    implementation("no.novari:flyt-resource-server:6.2.0-rc-1")
+    implementation("no.novari:flyt-kafka:6.0.0")
+    implementation("no.novari:flyt-cache:3.0.0")
+    implementation("no.novari:flyt-resource-server:7.0.0")
 
     implementation("no.fintlabs:fint-model-resource:$findModelResourceVersion")
     implementation("no.fint:fint-arkiv-resource-model-java:$fintResourceModelVersion")
