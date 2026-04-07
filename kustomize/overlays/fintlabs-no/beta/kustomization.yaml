@@ -34,7 +34,7 @@ patches:
         path: "/spec/env/-"
         value:
           name: "novari.flyt.archive.gateway.client.fint-archive.base-url"
-          value: "https://beta.felleskomponent.no"
+          value: "http://fint-arkiv-adapter-simulator:9090"
       - op: add
         path: "/spec/env/-"
         value:
