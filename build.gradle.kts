@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot") version "3.5.13"
     id("io.spring.dependency-management") version "1.1.7"
     java
     id("com.github.ben-manes.versions") version "0.53.0"
@@ -8,7 +8,7 @@ plugins {
 group = "no.fintlabs"
 version = "0.0.1-SNAPSHOT"
 
-var fintResourceModelVersion = "4.0.0"
+var fintResourceModelVersion = "4.0.10"
 
 java {
     toolchain {
