@@ -22,6 +22,23 @@ extra_user_orgs_for_namespace() {
   esac
 }
 
+archive_base_url_for_overlay() {
+  local namespace="$1"
+  local env_path="$2"
+
+  if [[ "$namespace" == "fintlabs-no" && "$env_path" == "beta" ]]; then
+    printf 'http://fint-arkiv-adapter-simulator:9090'
+    return
+  fi
+
+  if [[ "$env_path" == "beta" ]]; then
+    printf 'https://beta.felleskomponent.no'
+    return
+  fi
+
+  printf 'https://api.felleskomponent.no'
+}
+
 render_metrics_patch_block() {
   local metrics_path="$1"
   printf '\n      - op: replace\n'
@@ -85,10 +102,9 @@ while IFS= read -r file; do
     path_prefix="/${env_path}/$namespace"
   fi
 
-  base_url="https://api.felleskomponent.no"
+  base_url="$(archive_base_url_for_overlay "$namespace" "$env_path")"
   onepassword_vault="aks-api-vault"
   if [[ "$env_path" == "beta" ]]; then
-    base_url="https://beta.felleskomponent.no"
     onepassword_vault="aks-beta-vault"
   fi
 
