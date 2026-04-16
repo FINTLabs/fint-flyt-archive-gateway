@@ -41,6 +41,17 @@ class RecordsDispatchServiceTest {
     }
 
     @Test
+    public void givenNullJournalpostDtosShouldReturnAcceptedResultWithNoJournalpostIds() {
+        StepVerifier.create(
+                        recordsDispatchService.dispatch("testCaseId", null)
+                )
+                .expectNext(RecordsDispatchResult.accepted(List.of()))
+                .verifyComplete();
+
+        verifyNoMoreInteractions(recordDispatchService);
+    }
+
+    @Test
     public void givenAcceptedJournalpostDtosShouldReturnAcceptedResultWithAllSuccessfulJournalpostIds() {
         final String caseId = "testCaseId";
         JournalpostDto journalpostDto1 = mock(JournalpostDto.class);
