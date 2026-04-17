@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.arkiv.noark.KorrespondansepartResource;
+import no.novari.fint.model.resource.arkiv.noark.KorrespondansepartResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AdresseDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KontaktinformasjonDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KorrespondansepartDto;

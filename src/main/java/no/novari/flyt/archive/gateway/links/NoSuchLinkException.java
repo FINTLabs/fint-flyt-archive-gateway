@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.links;
 
-import no.fint.model.resource.FintLinks;
+import no.novari.fint.model.resource.FintLinks;
 
 public class NoSuchLinkException extends RuntimeException {
 

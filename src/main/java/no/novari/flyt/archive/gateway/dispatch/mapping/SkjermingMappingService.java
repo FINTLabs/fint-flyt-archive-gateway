@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.SkjermingResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.SkjermingResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto;
 import org.springframework.stereotype.Service;
 

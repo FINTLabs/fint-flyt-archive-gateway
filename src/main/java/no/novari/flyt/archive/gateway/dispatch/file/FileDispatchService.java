@@ -36,7 +36,7 @@ public class FileDispatchService {
                                         e -> e instanceof ReadTimeoutException
                                              || e instanceof CreatedLocationPollTimeoutException,
                                         e -> {
-                                            log.error("File dispatch timed out");
+                                            log.error("File dispatch timed out", e);
                                             return Mono.just(FileDispatchResult.timedOut(fileId));
                                         }
                                 ).onErrorResume(e -> {

@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk;
 
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
-import no.fint.model.felles.kompleksedatatyper.Personnavn;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
-import no.fint.model.resource.arkiv.noark.ArkivressursResource;
-import no.fint.model.resource.felles.PersonResource;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.felles.kompleksedatatyper.Personnavn;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResource;
+import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource;
+import no.novari.fint.model.resource.felles.PersonResource;
 import no.novari.cache.FintCache;
 import no.novari.cache.exceptions.NoSuchCacheEntryException;
 import org.junit.jupiter.api.BeforeEach;

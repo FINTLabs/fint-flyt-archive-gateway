@@ -1,8 +1,8 @@
 package no.novari.flyt.archive.gateway.dispatch.journalpost;
 
 import io.netty.handler.timeout.ReadTimeoutException;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.JournalpostResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource;
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService;
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult;
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult;

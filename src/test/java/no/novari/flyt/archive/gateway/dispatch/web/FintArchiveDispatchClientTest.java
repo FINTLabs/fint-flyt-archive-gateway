@@ -129,7 +129,12 @@ class FintArchiveDispatchClientTest {
         when(responseSpec.toBodilessEntity()).thenAnswer(invocation -> Mono.just(ResponseEntity.noContent().build()));
 
         StepVerifier.create(fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri")))
-                .expectErrorMessage("Reached max total timeout for polling created location from destination")
+                .expectErrorMatches(e -> e instanceof CreatedLocationPollTimeoutException
+                                         && e.getMessage().startsWith(
+                                                 "Reached max total timeout for polling created location from destination"
+                                         )
+                                         && e.getMessage().contains("statusUri=testStatusUri")
+                                         && e.getMessage().contains("lastStatus=204 NO_CONTENT"))
                 .verify();
 
         verify(fintWebClient, atLeast(2)).get();

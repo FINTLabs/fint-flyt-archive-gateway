@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.file;
 
 import lombok.AllArgsConstructor;
-import no.fint.model.resource.Link;
+import no.novari.fint.model.resource.Link;
 import no.novari.flyt.archive.gateway.dispatch.file.result.FileDispatchResult;
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto;

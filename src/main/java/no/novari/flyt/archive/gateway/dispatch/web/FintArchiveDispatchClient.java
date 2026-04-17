@@ -3,9 +3,9 @@ package no.novari.flyt.archive.gateway.dispatch.web;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.JournalpostResource;
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import no.novari.flyt.archive.gateway.WebUtilErrorHandler;
 import no.novari.flyt.archive.gateway.dispatch.model.File;
 import no.novari.flyt.archive.gateway.dispatch.model.JournalpostWrapper;
@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
@@ -97,6 +98,7 @@ public class FintArchiveDispatchClient {
     public Mono<SakResource> postCase(SakResource sakResource) {
         return Mono.defer(() -> {
             Timer.Sample sample = Timer.start(meterRegistry);
+            log.info("Posting case");
             return pollForCaseResult(
                     fintWebClient
                             .post()
@@ -116,6 +118,7 @@ public class FintArchiveDispatchClient {
     public Mono<JournalpostResource> postRecord(String caseId, JournalpostResource journalpostResource) {
         return Mono.defer(() -> {
             Timer.Sample sample = Timer.start(meterRegistry);
+            log.info("Posting record caseId={}", caseId);
             return pollForCaseResult(
                     fintWebClient
                             .put()
@@ -154,20 +157,36 @@ public class FintArchiveDispatchClient {
     private Mono<URI> getStatusLocation(WebClient.ResponseSpec responseSpec) {
         return responseSpec
                 .toBodilessEntity()
+                .doOnNext(entity -> log.debug(
+                        "Received status response status={} location={}",
+                        entity.getStatusCode(),
+                        entity.getHeaders().getLocation()
+                ))
                 .handle((entity, sink) -> {
                             if (HttpStatus.ACCEPTED.equals(entity.getStatusCode())
                                     && entity.getHeaders().getLocation() != null) {
                                 sink.next(entity.getHeaders().getLocation());
                             } else {
-                                sink.error(new RuntimeException("Expected 202 Accepted response with redirect header"));
+                                sink.error(new RuntimeException(
+                                        "Expected 202 Accepted response with redirect header, got status="
+                                        + entity.getStatusCode() + " location=" + entity.getHeaders().getLocation()
+                                ));
                             }
                         }
                 );
     }
 
     protected Mono<URI> pollForCreatedLocation(URI statusUri) {
+        AtomicReference<String> lastStatus = new AtomicReference<>();
         return Mono.defer(() -> {
                             Timer.Sample sample = Timer.start(meterRegistry);
+                            log.info(
+                                    "Polling for created location statusUri={} totalTimeout={} backoffMinDelay={} backoffMaxDelay={}",
+                                    statusUri,
+                                    properties.getCreatedLocationPollTotalTimeout(),
+                                    properties.getCreatedLocationPollBackoffMinDelay(),
+                                    properties.getCreatedLocationPollBackoffMaxDelay()
+                            );
                             return fintWebClient
                                     .get()
                                     .uri(statusUri)
@@ -177,6 +196,15 @@ public class FintArchiveDispatchClient {
                                     })
                                     .retrieve()
                                     .toBodilessEntity()
+                                    .doOnNext(entity -> {
+                                        lastStatus.set(String.valueOf(entity.getStatusCode()));
+                                        log.debug(
+                                                "Poll response statusUri={} status={} location={}",
+                                                statusUri,
+                                                entity.getStatusCode(),
+                                                entity.getHeaders().getLocation()
+                                        );
+                                    })
                                     .doOnError(webUtilErrorHandler::logAndSendError)
                                     .doFinally(entity -> sample.stop(pollForCreationTimer));
                         }
@@ -191,6 +219,17 @@ public class FintArchiveDispatchClient {
                                         properties.getCreatedLocationPollBackoffMaxDelay()
                                 ).timeout(properties.getCreatedLocationPollTotalTimeout())
                 )
-                .switchIfEmpty(Mono.error(new CreatedLocationPollTimeoutException()));
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new CreatedLocationPollTimeoutException(
+                        statusUri,
+                        properties.getCreatedLocationPollTotalTimeout(),
+                        lastStatus.get()
+                ))))
+                .doOnError(CreatedLocationPollTimeoutException.class, webUtilErrorHandler::logAndSendError)
+                .doOnError(CreatedLocationPollTimeoutException.class, e -> log.warn(
+                        "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}",
+                        statusUri,
+                        properties.getCreatedLocationPollTotalTimeout(),
+                        lastStatus.get()
+                ));
     }
 }

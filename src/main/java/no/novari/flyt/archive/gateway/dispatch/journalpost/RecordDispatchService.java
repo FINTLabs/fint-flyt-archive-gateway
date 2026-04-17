@@ -2,8 +2,8 @@ package no.novari.flyt.archive.gateway.dispatch.journalpost;
 
 import io.netty.handler.timeout.ReadTimeoutException;
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.JournalpostResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource;
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService;
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult;
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService;
@@ -92,7 +92,7 @@ public class RecordDispatchService {
                 ).onErrorResume(
                         e -> e instanceof ReadTimeoutException || e instanceof CreatedLocationPollTimeoutException,
                         e -> {
-                            log.error("Record dispatch timed out");
+                            log.error("Record dispatch timed out", e);
                             return Mono.just(RecordDispatchResult.timedOut());
                         }
                 ).onErrorResume(e -> {

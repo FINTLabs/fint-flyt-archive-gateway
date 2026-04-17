@@ -1,5 +1,5 @@
 plugins {
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot") version "3.5.13"
     id("io.spring.dependency-management") version "1.1.7"
     java
     id("com.github.ben-manes.versions") version "0.53.0"
@@ -8,8 +8,7 @@ plugins {
 group = "no.fintlabs"
 version = "0.0.1-SNAPSHOT"
 
-var fintResourceModelVersion = "3.21.10"
-var findModelResourceVersion = "0.5.0"
+var fintResourceModelVersion = "4.0.10"
 
 java {
     toolchain {
@@ -46,9 +45,8 @@ dependencies {
     implementation("no.novari:flyt-cache:2.0.0")
     implementation("no.novari:flyt-resource-server:6.0.0")
 
-    implementation("no.fintlabs:fint-model-resource:$findModelResourceVersion")
-    implementation("no.fint:fint-arkiv-resource-model-java:$fintResourceModelVersion")
-    implementation("no.fint:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
+    implementation("no.novari:fint-arkiv-resource-model-java:$fintResourceModelVersion")
+    implementation("no.novari:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
 
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")

@@ -1,8 +1,8 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping;
 
-import no.fint.model.resource.Link;
-import no.fint.model.resource.arkiv.noark.JournalpostResource;
-import no.fint.model.resource.arkiv.noark.SkjermingResource;
+import no.novari.fint.model.resource.Link;
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource;
+import no.novari.fint.model.resource.arkiv.noark.SkjermingResource;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto;
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KorrespondansepartDto;

@@ -50,6 +50,11 @@ patches:
         value:
           name: "novari.kafka.topic.org-id"
           value: "vlfk-no"
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "logging.level.no.novari.flyt.archive.gateway.dispatch.web"
+          value: "DEBUG"
       - op: replace
         path: "/spec/onePassword/itemPath"
         value: "vaults/aks-beta-vault/items/fint-flyt-v1-slack-webhook"

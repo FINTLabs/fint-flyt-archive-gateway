@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.resource.sak;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.resource.arkiv.noark.SakResource;
+import no.novari.fint.model.resource.arkiv.noark.SakResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

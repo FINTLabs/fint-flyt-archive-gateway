@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk;
 
 import lombok.extern.slf4j.Slf4j;
-import no.fint.model.felles.kompleksedatatyper.Identifikator;
-import no.fint.model.felles.kompleksedatatyper.Personnavn;
-import no.fint.model.resource.administrasjon.personal.PersonalressursResource;
-import no.fint.model.resource.arkiv.noark.ArkivressursResource;
-import no.fint.model.resource.felles.PersonResource;
+import no.novari.fint.model.felles.kompleksedatatyper.Identifikator;
+import no.novari.fint.model.felles.kompleksedatatyper.Personnavn;
+import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResource;
+import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource;
+import no.novari.fint.model.resource.felles.PersonResource;
 import no.novari.cache.FintCache;
 import no.novari.cache.exceptions.NoSuchCacheEntryException;
 import no.novari.cache.exceptions.NoSuchCacheException;

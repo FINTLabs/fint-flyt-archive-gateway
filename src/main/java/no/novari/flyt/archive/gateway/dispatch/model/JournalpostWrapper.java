@@ -2,7 +2,7 @@ package no.novari.flyt.archive.gateway.dispatch.model;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import no.fint.model.resource.arkiv.noark.JournalpostResource;
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource;
 
 import java.util.Collection;
 import java.util.List;
