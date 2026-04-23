@@ -122,12 +122,12 @@ class FintArchiveDispatchClientTest {
         meterRegistry: MeterRegistry,
         webUtilErrorHandler: WebUtilErrorHandler,
     ) : FintArchiveDispatchClient(
-        properties,
-        fintWebClient,
-        fintArchiveResourceClient,
-        meterRegistry,
-        webUtilErrorHandler,
-    ) {
+            properties,
+            fintWebClient,
+            fintArchiveResourceClient,
+            meterRegistry,
+            webUtilErrorHandler,
+        ) {
         fun pollForCreatedLocationPublic(statusUri: URI) = pollForCreatedLocation(statusUri)
     }
 }

@@ -125,7 +125,7 @@ class CaseSearchParametersService(
 
     private fun createKlasseringPrefix(rekkefolge: Int): String {
         val klassifikasjonName =
-            when(rekkefolge) {
+            when (rekkefolge) {
                 1 -> "primar"
                 2 -> "sekundar"
                 3 -> "tertiar"

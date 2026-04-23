@@ -26,7 +26,7 @@ class FilesDispatchService(
             .collectList()
             .map { fileDispatchResults ->
                 val lastResult = fileDispatchResults.last()
-                when(lastResult.status) {
+                when (lastResult.status) {
                     DispatchStatus.ACCEPTED -> {
                         FilesDispatchResult.accepted(
                             fileDispatchResults
