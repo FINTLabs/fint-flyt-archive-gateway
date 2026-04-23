@@ -31,7 +31,7 @@ spec:
       - fint-flyt-auth-forward-sso
   env:
     - name: JAVA_TOOL_OPTIONS
-      value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -Xmx3G -Xms2G'
+      value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0'
   onePassword:
     itemPath: path
   envFrom:
