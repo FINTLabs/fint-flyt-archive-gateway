@@ -39,11 +39,17 @@ archive_base_url_for_overlay() {
   printf 'https://api.felleskomponent.no'
 }
 
-render_metrics_patch_block() {
-  local metrics_path="$1"
-  printf '\n      - op: replace\n'
-  printf '        path: "/spec/observability/metrics/path"\n'
-  printf '        value: "%s"\n' "$metrics_path"
+render_extra_env_patches() {
+  local namespace="$1"
+  local env_path="$2"
+
+  if [[ "$namespace" == "vlfk-no" && "$env_path" == "beta" ]]; then
+    printf '\n      - op: add\n'
+    printf '        path: "/spec/env/-"\n'
+    printf '        value:\n'
+    printf '          name: "logging.level.no.novari.flyt.archive.gateway.dispatch.web"\n'
+    printf '          value: "DEBUG"\n'
+  fi
 }
 
 render_authorized_role_pairs() {
@@ -122,19 +128,15 @@ while IFS= read -r file; do
   export ORG_ID="${namespace//-/.}"
   export APP_INSTANCE_LABEL="${APPLICATION_NAME}_${ns_suffix}"
   export KAFKA_TOPIC="${namespace}.flyt.*"
-  export URL_BASE_PATH="$path_prefix"
   export INGRESS_BASE_PATH="${path_prefix}/api/intern/arkiv"
+  export SERVLET_CONTEXT_PATH="$path_prefix"
   export ARCHIVE_BASE_URL="$base_url"
   export ONEPASSWORD_ITEM_PATH="vaults/${onepassword_vault}/items/fint-flyt-v1-slack-webhook"
   export STARTUP_PATH="${path_prefix}/actuator/health"
   export READINESS_PATH="${path_prefix}/actuator/health/readiness"
   export LIVENESS_PATH="${path_prefix}/actuator/health/liveness"
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
-  metrics_patch_before_ingress=""
-  if [[ "$namespace" != "afk-no" ]]; then
-    metrics_patch_before_ingress="$(render_metrics_patch_block "$METRICS_PATH")"
-  fi
-  export METRICS_PATCH_BEFORE_INGRESS="$metrics_patch_before_ingress"
+  export EXTRA_ENV_PATCHES="$(render_extra_env_patches "$namespace" "$env_path")"
   if ((${#additional_user_orgs[@]})); then
     AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$ORG_ID" "${additional_user_orgs[@]}")"
   else
@@ -149,7 +151,7 @@ while IFS= read -r file; do
   target_dir="$ROOT/kustomize/overlays/$dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
-  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $URL_BASE_PATH $METRICS_PATCH_BEFORE_INGRESS $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID' \
+  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
 done < <(find "$ROOT/kustomize/overlays" -name kustomization.yaml -print | sort)

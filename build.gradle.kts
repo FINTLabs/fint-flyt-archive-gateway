@@ -1,25 +1,19 @@
 plugins {
-    id("org.springframework.boot") version "3.5.13"
+    id("org.springframework.boot") version "3.5.11"
     id("io.spring.dependency-management") version "1.1.7"
-    java
     id("com.github.ben-manes.versions") version "0.53.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.1.0"
+    kotlin("jvm") version "2.3.10"
+    kotlin("plugin.spring") version "2.3.10"
 }
 
-group = "no.fintlabs"
+group = "no.novari"
 version = "0.0.1-SNAPSHOT"
 
 var fintResourceModelVersion = "4.0.10"
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
-
-configurations {
-    compileOnly {
-        extendsFrom(configurations.annotationProcessor.get())
-    }
+kotlin {
+    jvmToolchain(25)
 }
 
 repositories {
@@ -32,37 +26,50 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation("org.springframework.boot:spring-boot-starter-webflux")
+    implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     implementation("io.projectreactor.addons:reactor-extra")
+    implementation("io.projectreactor.netty:reactor-netty-http")
+    implementation("org.springframework:spring-webflux")
 
     implementation("no.novari:flyt-kafka:4.0.0")
     implementation("no.novari:flyt-cache:2.0.0")
-    implementation("no.novari:flyt-resource-server:6.0.0")
+    implementation("no.novari:flyt-web-resource-server:2.0.0")
 
     implementation("no.novari:fint-arkiv-resource-model-java:$fintResourceModelVersion")
     implementation("no.novari:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
 
-    compileOnly("org.projectlombok:lombok")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    annotationProcessor("org.projectlombok:lombok")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
     testImplementation("io.projectreactor:reactor-test")
-    testCompileOnly("org.projectlombok:lombok")
-    testAnnotationProcessor("org.projectlombok:lombok")
 }
 
 tasks.test {
     useJUnitPlatform()
+    jvmArgs("--sun-misc-unsafe-memory-access=allow")
+}
+
+tasks.bootRun {
+    jvmArgs("--sun-misc-unsafe-memory-access=allow")
 }
 
 tasks.jar {
     isEnabled = false
+}
+
+ktlint {
+    version.set("1.8.0")
+}
+
+tasks.named("check") {
+    dependsOn("ktlintCheck")
 }

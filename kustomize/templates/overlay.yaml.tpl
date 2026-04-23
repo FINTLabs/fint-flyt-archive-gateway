@@ -22,11 +22,11 @@ patches:
         path: "/spec/orgId"
         value: "$ORG_ID"
       - op: replace
-        path: "/spec/url/basePath"
-        value: "$URL_BASE_PATH"$METRICS_PATCH_BEFORE_INGRESS
-      - op: replace
         path: "/spec/ingress/basePath"
         value: "$INGRESS_BASE_PATH"
+      - op: replace
+        path: "/spec/observability/metrics/path"
+        value: "$METRICS_PATH"
       - op: add
         path: "/spec/env/-"
         value:
@@ -35,14 +35,19 @@ patches:
       - op: add
         path: "/spec/env/-"
         value:
-          name: "novari.flyt.resource-server.security.api.internal.authorized-org-id-role-pairs-json"
+          name: "novari.flyt.web-resource-server.security.api.internal.authorized-org-id-role-pairs-json"
           value: |
 $AUTHORIZED_ORG_ROLE_PAIRS
       - op: add
         path: "/spec/env/-"
         value:
-          name: "novari.kafka.topic.org-id"
+          name: "novari.kafka.topic.orgId"
           value: "$NOVARI_KAFKA_TOPIC_ORGID"
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "server.servlet.context-path"
+          value: "$SERVLET_CONTEXT_PATH"$EXTRA_ENV_PATCHES
       - op: replace
         path: "/spec/onePassword/itemPath"
         value: "$ONEPASSWORD_ITEM_PATH"
@@ -55,9 +60,6 @@ $AUTHORIZED_ORG_ROLE_PAIRS
       - op: replace
         path: "/spec/probes/liveness/path"
         value: "$LIVENESS_PATH"
-      - op: replace
-        path: "/spec/observability/metrics/path"
-        value: "$METRICS_PATH"
     target:
       kind: Application
       name: $APPLICATION_NAME

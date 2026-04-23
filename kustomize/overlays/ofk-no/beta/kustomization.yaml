@@ -22,14 +22,11 @@ patches:
         path: "/spec/orgId"
         value: "ofk.no"
       - op: replace
-        path: "/spec/url/basePath"
-        value: "/beta/ofk-no"
+        path: "/spec/ingress/basePath"
+        value: "/beta/ofk-no/api/intern/arkiv"
       - op: replace
         path: "/spec/observability/metrics/path"
         value: "/beta/ofk-no/actuator/prometheus"
-      - op: replace
-        path: "/spec/ingress/basePath"
-        value: "/beta/ofk-no/api/intern/arkiv"
       - op: add
         path: "/spec/env/-"
         value:
@@ -38,7 +35,7 @@ patches:
       - op: add
         path: "/spec/env/-"
         value:
-          name: "novari.flyt.resource-server.security.api.internal.authorized-org-id-role-pairs-json"
+          name: "novari.flyt.web-resource-server.security.api.internal.authorized-org-id-role-pairs-json"
           value: |
             {
               "ofk.no":["USER"],
@@ -49,8 +46,13 @@ patches:
       - op: add
         path: "/spec/env/-"
         value:
-          name: "novari.kafka.topic.org-id"
+          name: "novari.kafka.topic.orgId"
           value: "ofk-no"
+      - op: add
+        path: "/spec/env/-"
+        value:
+          name: "server.servlet.context-path"
+          value: "/beta/ofk-no"
       - op: replace
         path: "/spec/onePassword/itemPath"
         value: "vaults/aks-beta-vault/items/fint-flyt-v1-slack-webhook"
@@ -63,9 +65,6 @@ patches:
       - op: replace
         path: "/spec/probes/liveness/path"
         value: "/beta/ofk-no/actuator/health/liveness"
-      - op: replace
-        path: "/spec/observability/metrics/path"
-        value: "/beta/ofk-no/actuator/prometheus"
     target:
       kind: Application
       name: fint-flyt-archive-gateway

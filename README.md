@@ -1,6 +1,6 @@
 # FINT Flyt Archive Gateway
 
-Spring Boot (WebFlux + Kafka) gateway that listens for mapped archive instances, dispatches cases and journal posts against FINT Arkiv adapters, exposes supporting archive metadata over HTTP, and republishes cacheable resources to downstream services.
+Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive instances, dispatches cases and journal posts against FINT Arkiv adapters, exposes supporting archive metadata over HTTP, and republishes cacheable resources to downstream services.
 
 ## Highlights
 
@@ -53,7 +53,7 @@ No other cron-style jobs exist; the dispatch path is fully event-driven.
 
 ## Configuration
 
-Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-resource-server`. Key properties:
+Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-web-resource-server`. Key properties:
 
 | Property | Description |
 |----------|-------------|
@@ -63,14 +63,14 @@ Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-fil
 | `novari.flyt.archive.gateway.dispatch.fint-client.*` | Timeout and polling settings for posting cases, records, and files to the archive adapter. |
 | `novari.flyt.archive.gateway.resource.publishing.*` | Window, offset, and pull cadence for resource caching and topic publishing. |
 | `novari.flyt.archive.gateway.resource.fint-client.*` | Timeouts and retry strategy for resource lookups and case searches. |
-| `novari.flyt.resource-server.security.api.internal.*` | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists. |
+| `novari.flyt.web-resource-server.security.api.internal.*` | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists. |
 | `spring.kafka.bootstrap-servers` | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`). |
 | `server.port` | HTTP port (8301 for local-staging). |
 | `spring.security.oauth2.client.*` | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients. |
 
 ## Running Locally
 
-Prerequisites: Java 21+, Docker (for Kafka, if needed), and the Gradle wrapper.
+Prerequisites: Java 25+, Docker (for Kafka, if needed), and the Gradle wrapper.
 
 1. Start Kafka/Schema Registry (e.g., `docker compose up kafka`). Ensure it listens on `localhost:9092` to match `application-local-staging.yaml`.
 2. Export the local profile:
@@ -83,6 +83,7 @@ Prerequisites: Java 21+, Docker (for Kafka, if needed), and the Gradle wrapper.
    ./gradlew clean build
    ./gradlew bootRun
    ```
+   `bootRun` now adds `--sun-misc-unsafe-memory-access=allow` to suppress the known Netty/JDK 24+ startup warning.
 5. Exercise the APIs:
    ```shell
    curl -H "Authorization: Bearer <token>" \
@@ -140,4 +141,3 @@ and commit both template and regenerated overlay files.
 ———
 
 FINT Flyt Archive Gateway is maintained by the FINT Flyt team. Reach out via the internal Slack channel or open an issue if you need enhancements or run into problems.
-

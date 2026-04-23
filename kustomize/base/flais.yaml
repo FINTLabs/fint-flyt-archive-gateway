@@ -23,7 +23,7 @@ spec:
         topic: 'no-permission'
   url:
     hostname: flyt.vigoiks.no
-    basePath: path
+    basePath: ""
   ingress:
     enabled: true
     basePath: path
@@ -31,7 +31,7 @@ spec:
       - fint-flyt-auth-forward-sso
   env:
     - name: JAVA_TOOL_OPTIONS
-      value: '-XX:+ExitOnOutOfMemoryError -Xmx3G -Xms2G'
+      value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -Xmx3G -Xms2G'
   onePassword:
     itemPath: path
   envFrom:
