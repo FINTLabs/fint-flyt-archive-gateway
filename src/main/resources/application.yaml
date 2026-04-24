@@ -60,7 +60,7 @@ spring:
       - flyt-file-client
       - flyt-kafka
       - flyt-logging
-      - flyt-resource-server
+      - flyt-web-resource-server
 
   output:
     ansi:

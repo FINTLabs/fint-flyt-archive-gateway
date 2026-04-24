@@ -11,7 +11,7 @@ novari:
           fint-archive:
             base-url: https://beta.felleskomponent.no
 
-    resource-server:
+    web-resource-server:
       security:
         api:
           internal:
@@ -19,7 +19,7 @@ novari:
   kafka:
     default-replicas: 1
     topic:
-      org-id: novari-no
+      orgId: novari-no
 
 spring:
   kafka:
