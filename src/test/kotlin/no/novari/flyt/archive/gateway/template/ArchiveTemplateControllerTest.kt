@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
-import org.springframework.http.HttpStatus
 
 @ExtendWith(MockitoExtension::class)
 class ArchiveTemplateControllerTest {
@@ -37,8 +36,7 @@ class ArchiveTemplateControllerTest {
 
         val response = archiveTemplateController.getTemplate()
 
-        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(response.body).isEqualTo(template)
+        assertThat(response).isEqualTo(template)
 
         verify(archiveTemplateService).createTemplate()
         verifyNoMoreInteractions(archiveTemplateService)
