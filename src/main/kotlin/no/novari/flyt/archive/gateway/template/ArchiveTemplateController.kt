@@ -13,5 +13,5 @@ class ArchiveTemplateController(
     private val archiveTemplateService: ArchiveTemplateService,
 ) {
     @GetMapping
-    fun getTemplate(): ResponseEntity<MappingTemplate> = ResponseEntity.ok(archiveTemplateService.createTemplate())
+    fun getTemplate(): MappingTemplate = archiveTemplateService.createTemplate()
 }
