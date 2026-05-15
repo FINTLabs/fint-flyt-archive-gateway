@@ -11,7 +11,7 @@ novari:
               enable: true
         kafka:
           topic:
-            instance-processing-events-retention-time: "4"
+            instance-processing-events-retention-time: "4d"
 
         web-client:
           connection-max-life-time: "30m"
