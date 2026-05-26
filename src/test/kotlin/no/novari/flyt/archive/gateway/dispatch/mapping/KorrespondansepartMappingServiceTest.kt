@@ -30,7 +30,7 @@ class KorrespondansepartMappingServiceTest {
     }
 
     @Test
-    fun testToKorrespondansepartResource() {
+    fun `maps to KorrespondansepartResource`() {
         val korrespondansepartDto =
             KorrespondansepartDto
                 .builder()

@@ -13,7 +13,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenEmptyRefsShouldReturnOptionalEmpty() {
+    fun `given empty refs, returns empty optional`() {
         assertThat(
             dispatchMessageFormattingService.createFunctionalWarningMessage(
                 "testObjectDisplayName",
@@ -24,7 +24,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenSingleRefShouldFormatMessageForSingleRef() {
+    fun `given a single ref, formats the message for a single ref`() {
         assertThat(
             dispatchMessageFormattingService.createFunctionalWarningMessage(
                 "testObjectDisplayName",
@@ -35,7 +35,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenMultipleRefsShouldFormatMessageForMultipleRefs() {
+    fun `given multiple refs, formats the message for multiple refs`() {
         assertThat(
             dispatchMessageFormattingService.createFunctionalWarningMessage(
                 "testObjectDisplayName",
@@ -46,19 +46,19 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenCaseIdWithJournalpostNumbersWhenFormattingThenReturnCaseIdWithJournalpostIds() {
+    fun `given a case id with journalpost numbers, formats it as case id with journalpost ids`() {
         assertThat(dispatchMessageFormattingService.formatCaseIdAndJournalpostIds("testCaseId", listOf(1L)))
             .isEqualTo("testCaseId-[1]")
     }
 
     @Test
-    fun givenCaseIdWithNoJournalpostNumbersWhenFormattingThenReturnCaseId() {
+    fun `given a case id without journalpost numbers, returns only the case id`() {
         assertThat(dispatchMessageFormattingService.formatCaseIdAndJournalpostIds("testCaseId", emptyList()))
             .isEqualTo("testCaseId")
     }
 
     @Test
-    fun givenNewCaseAndWarningMessagesWhenCombiningThenIncludeCaseIdAndWarnings() {
+    fun `given a new case and warning messages, includes the case id and warnings`() {
         assertThat(
             dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
@@ -69,7 +69,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenExistingCaseAndWarningMessagesWhenCombiningThenOnlyIncludeWarnings() {
+    fun `given an existing case and warning messages, only includes the warnings`() {
         assertThat(
             dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
@@ -80,7 +80,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenNewCaseAndNoWarningsWhenCombiningThenReturnCaseMessage() {
+    fun `given a new case and no warnings, returns the case message`() {
         assertThat(
             dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
@@ -91,7 +91,7 @@ class DispatchMessageFormattingServiceTest {
     }
 
     @Test
-    fun givenExistingCaseAndNoWarningsWhenCombiningThenReturnEmptyOptional() {
+    fun `given an existing case and no warnings, returns empty optional`() {
         assertThat(
             dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",

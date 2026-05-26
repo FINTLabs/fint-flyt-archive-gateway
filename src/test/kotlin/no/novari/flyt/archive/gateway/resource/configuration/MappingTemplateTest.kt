@@ -59,7 +59,7 @@ class MappingTemplateTest {
 
     @Test
     @Disabled
-    fun shouldCreateTemplate() {
+    fun `creates a template`() {
         val template = archiveTemplateService.createTemplate()
         validator.validate(template)
         objectMapper.writeValueAsString(template)

@@ -35,10 +35,6 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
-    implementation("io.projectreactor.addons:reactor-extra")
-    implementation("io.projectreactor.netty:reactor-netty-http")
-    implementation("org.springframework:spring-webflux")
-
     implementation("no.novari:flyt-kafka:4.0.0")
     implementation("no.novari:flyt-cache:2.0.0")
     implementation("no.novari:flyt-web-resource-server:2.0.0")
@@ -50,7 +46,6 @@ dependencies {
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
-    testImplementation("io.projectreactor:reactor-test")
 }
 
 tasks.test {

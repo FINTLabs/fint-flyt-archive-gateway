@@ -1,56 +1,60 @@
 package no.novari.flyt.archive.gateway.dispatch.file
 
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
+import no.novari.flyt.archive.gateway.dispatch.file.result.FileDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 
 @Service
 class FilesDispatchService(
     private val fileDispatchService: FileDispatchService,
 ) {
-    fun dispatch(dokumentobjektDtos: Collection<DokumentobjektDto>): Mono<FilesDispatchResult> {
+    fun dispatch(dokumentobjektDtos: Collection<DokumentobjektDto>): FilesDispatchResult {
         if (dokumentobjektDtos.isEmpty()) {
             log.info("No files to dispatch")
-            return Mono.just(FilesDispatchResult.accepted(emptyMap()))
+            return FilesDispatchResult.accepted(emptyMap())
         }
 
         log.info("Dispatching files")
-        return Flux
-            .fromIterable(dokumentobjektDtos)
-            .concatMap(fileDispatchService::dispatch)
-            .takeUntil { fileDispatchResult -> fileDispatchResult.status != DispatchStatus.ACCEPTED }
-            .collectList()
-            .map { fileDispatchResults ->
-                val lastResult = fileDispatchResults.last()
-                when (lastResult.status) {
-                    DispatchStatus.ACCEPTED -> {
-                        FilesDispatchResult.accepted(
-                            fileDispatchResults
-                                .mapNotNull { fileDispatchResult ->
-                                    val fileId = fileDispatchResult.fileId
-                                    val archiveFileLink = fileDispatchResult.archiveFileLink
-                                    if (fileId != null && archiveFileLink != null) {
-                                        fileId to archiveFileLink
-                                    } else {
-                                        null
-                                    }
-                                }.toMap(),
-                        )
-                    }
+        val fileDispatchResults = mutableListOf<FileDispatchResult>()
+        for (dokumentobjektDto in dokumentobjektDtos) {
+            val result = fileDispatchService.dispatch(dokumentobjektDto)
+            fileDispatchResults += result
+            if (result.status != DispatchStatus.ACCEPTED) {
+                break
+            }
+        }
 
-                    DispatchStatus.DECLINED -> {
-                        FilesDispatchResult.declined(lastResult.errorMessage.orEmpty())
-                    }
-
-                    DispatchStatus.FAILED -> {
-                        FilesDispatchResult.failed()
-                    }
+        val lastResult = fileDispatchResults.last()
+        val result =
+            when (lastResult.status) {
+                DispatchStatus.ACCEPTED -> {
+                    FilesDispatchResult.accepted(
+                        fileDispatchResults
+                            .mapNotNull { fileDispatchResult ->
+                                val fileId = fileDispatchResult.fileId
+                                val archiveFileLink = fileDispatchResult.archiveFileLink
+                                if (fileId != null && archiveFileLink != null) {
+                                    fileId to archiveFileLink
+                                } else {
+                                    null
+                                }
+                            }.toMap(),
+                    )
                 }
-            }.doOnNext { result -> log.info("Dispatch result={}", result) }
+
+                DispatchStatus.DECLINED -> {
+                    FilesDispatchResult.declined(lastResult.errorMessage.orEmpty())
+                }
+
+                DispatchStatus.FAILED -> {
+                    FilesDispatchResult.failed()
+                }
+            }
+        log.info("Dispatch result={}", result)
+        return result
     }
 
     companion object {

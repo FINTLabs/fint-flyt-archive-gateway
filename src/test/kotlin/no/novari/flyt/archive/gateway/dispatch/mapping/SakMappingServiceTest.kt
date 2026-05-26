@@ -33,7 +33,7 @@ class SakMappingServiceTest {
     }
 
     @Test
-    fun shouldMapToSakResource() {
+    fun `maps to SakResource`() {
         val skjermingDto: SkjermingDto = mock()
         val skjermingResource: SkjermingResource = mock()
         whenever(skjermingMappingService.toSkjermingResource(skjermingDto)).thenReturn(skjermingResource)
@@ -85,7 +85,7 @@ class SakMappingServiceTest {
     }
 
     @Test
-    fun testToSakResourceWithNullDtoReturnsNull() {
+    fun `given a null dto, throws IllegalArgumentException`() {
         assertThatThrownBy { sakMappingService.toSakResource(null) }
             .isInstanceOf(IllegalArgumentException::class.java)
             .hasMessage("sakDto cannot be null")

@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.journalpost
 
-import io.netty.handler.timeout.ReadTimeoutException
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
@@ -11,6 +10,7 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.Dokumentbeskrivels
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.web.FintArchiveDispatchClient
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -18,9 +18,9 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
-import reactor.test.StepVerifier
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.ResourceAccessException
+import java.net.http.HttpTimeoutException
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -38,7 +38,7 @@ class RecordDispatchServiceTest {
     private lateinit var recordDispatchService: RecordDispatchService
 
     @Test
-    fun givenAcceptedFilesAndAcceptedPostRecordShouldReturnAcceptedResult() {
+    fun `given accepted files and an accepted postRecord, returns an accepted result`() {
         val fileId = UUID.randomUUID()
         val journalpostDto =
             JournalpostDto
@@ -56,21 +56,19 @@ class RecordDispatchServiceTest {
         val resultJournalpostResource: JournalpostResource = mock()
         whenever(resultJournalpostResource.journalPostnummer).thenReturn(1L)
         whenever(filesDispatchService.dispatch(journalpostDto.dokumentbeskrivelse!!.first().dokumentobjekt!!))
-            .thenReturn(Mono.just(FilesDispatchResult.accepted(mapOf(fileId to Link.with("file")))))
+            .thenReturn(FilesDispatchResult.accepted(mapOf(fileId to Link.with("file"))))
         whenever(journalpostMappingService.toJournalpostResource(journalpostDto, mapOf(fileId to Link.with("file"))))
             .thenReturn(journalpostResource)
-        whenever(
-            fintArchiveDispatchClient.postRecord("caseId", journalpostResource),
-        ).thenReturn(Mono.just(resultJournalpostResource))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource))
+            .thenReturn(resultJournalpostResource)
 
-        StepVerifier
-            .create(recordDispatchService.dispatch("caseId", journalpostDto))
-            .expectNext(RecordDispatchResult.accepted(1L))
-            .verifyComplete()
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.accepted(1L))
     }
 
     @Test
-    fun givenDeclinedFilesShouldReturnDeclinedResult() {
+    fun `given declined files, returns a declined result`() {
         val fileId = UUID.randomUUID()
         val journalpostDto =
             JournalpostDto
@@ -85,45 +83,42 @@ class RecordDispatchServiceTest {
                     ),
                 ).build()
         whenever(filesDispatchService.dispatch(journalpostDto.dokumentbeskrivelse!!.first().dokumentobjekt!!))
-            .thenReturn(Mono.just(FilesDispatchResult.declined("bad file")))
+            .thenReturn(FilesDispatchResult.declined("bad file"))
 
-        StepVerifier
-            .create(recordDispatchService.dispatch("caseId", journalpostDto))
-            .expectNext(RecordDispatchResult.declined("Dokumentobjekt declined by destination with message='bad file'"))
-            .verifyComplete()
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result)
+            .isEqualTo(RecordDispatchResult.declined("Dokumentobjekt declined by destination with message='bad file'"))
     }
 
     @Test
-    fun givenWebClientErrorShouldReturnDeclinedResult() {
+    fun `given a RestClientResponseException, returns a declined result`() {
         val journalpostDto = JournalpostDto.builder().build()
         val journalpostResource: JournalpostResource = mock()
-        val error: WebClientResponseException = mock()
+        val error: HttpClientErrorException = mock()
         whenever(error.responseBodyAsString).thenReturn("test response body")
         whenever(
             journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),
         ).thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource)).thenReturn(Mono.error(error))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource)).thenThrow(error)
 
-        StepVerifier
-            .create(recordDispatchService.dispatch("caseId", journalpostDto))
-            .expectNext(RecordDispatchResult.declined("test response body"))
-            .verifyComplete()
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.declined("test response body"))
     }
 
     @Test
-    fun givenTimeoutShouldReturnTimedOutResult() {
+    fun `given a read timeout, returns a timed-out result`() {
         val journalpostDto = JournalpostDto.builder().build()
         val journalpostResource: JournalpostResource = mock()
         whenever(
             journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),
         ).thenReturn(journalpostResource)
-        whenever(
-            fintArchiveDispatchClient.postRecord("caseId", journalpostResource),
-        ).thenReturn(Mono.error(ReadTimeoutException()))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource))
+            .thenThrow(ResourceAccessException("read timeout", HttpTimeoutException("read timeout")))
 
-        StepVerifier
-            .create(recordDispatchService.dispatch("caseId", journalpostDto))
-            .expectNext(RecordDispatchResult.timedOut())
-            .verifyComplete()
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.timedOut())
     }
 }

@@ -3,7 +3,6 @@ package no.novari.flyt.archive.gateway.dispatch
 import no.novari.flyt.archive.gateway.dispatch.journalpost.RecordsDispatchService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
 
 @Service
 class RecordsProcessingService(
@@ -14,47 +13,47 @@ class RecordsProcessingService(
         archiveCaseId: String,
         newCase: Boolean,
         journalpostDtos: List<JournalpostDto>,
-    ): Mono<DispatchResult> =
-        recordsDispatchService.dispatch(archiveCaseId, journalpostDtos).map { recordsDispatchResult ->
-            val functionalWarningMessages =
-                recordsDispatchResult.functionalWarningMessage?.let(::listOf) ?: emptyList()
+    ): DispatchResult {
+        val recordsDispatchResult = recordsDispatchService.dispatch(archiveCaseId, journalpostDtos)
+        val functionalWarningMessages =
+            recordsDispatchResult.functionalWarningMessage?.let(::listOf) ?: emptyList()
 
-            when (recordsDispatchResult.status) {
-                DispatchStatus.ACCEPTED -> {
-                    DispatchResult.accepted(
-                        dispatchMessageFormattingService.formatCaseIdAndJournalpostIds(
-                            archiveCaseId,
-                            recordsDispatchResult.journalpostIds.orEmpty(),
-                        ),
-                    )
-                }
+        return when (recordsDispatchResult.status) {
+            DispatchStatus.ACCEPTED -> {
+                DispatchResult.accepted(
+                    dispatchMessageFormattingService.formatCaseIdAndJournalpostIds(
+                        archiveCaseId,
+                        recordsDispatchResult.journalpostIds.orEmpty(),
+                    ),
+                )
+            }
 
-                DispatchStatus.DECLINED -> {
-                    DispatchResult.declined(
-                        "Journalpost was declined by the destination. " +
-                            dispatchMessageFormattingService
-                                .combineFunctionalWarningMessagesOrNull(
-                                    archiveCaseId,
-                                    newCase,
-                                    functionalWarningMessages,
-                                )?.let { " $it " }
-                                .orEmpty() +
-                            "Error message: '${recordsDispatchResult.errorMessage}'",
-                    )
-                }
+            DispatchStatus.DECLINED -> {
+                DispatchResult.declined(
+                    "Journalpost was declined by the destination. " +
+                        dispatchMessageFormattingService
+                            .combineFunctionalWarningMessagesOrNull(
+                                archiveCaseId,
+                                newCase,
+                                functionalWarningMessages,
+                            )?.let { " $it " }
+                            .orEmpty() +
+                        "Error message: '${recordsDispatchResult.errorMessage}'",
+                )
+            }
 
-                DispatchStatus.FAILED -> {
-                    DispatchResult.failed(
-                        "Journalpost dispatch failed." +
-                            dispatchMessageFormattingService
-                                .combineFunctionalWarningMessagesOrNull(
-                                    archiveCaseId,
-                                    newCase,
-                                    functionalWarningMessages,
-                                )?.let { " $it" }
-                                .orEmpty(),
-                    )
-                }
+            DispatchStatus.FAILED -> {
+                DispatchResult.failed(
+                    "Journalpost dispatch failed." +
+                        dispatchMessageFormattingService
+                            .combineFunctionalWarningMessagesOrNull(
+                                archiveCaseId,
+                                newCase,
+                                functionalWarningMessages,
+                            )?.let { " $it" }
+                            .orEmpty(),
+                )
             }
         }
+    }
 }

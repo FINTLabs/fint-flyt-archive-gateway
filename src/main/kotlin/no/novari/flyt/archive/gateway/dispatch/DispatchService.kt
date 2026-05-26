@@ -8,7 +8,6 @@ import no.novari.flyt.archive.gateway.dispatch.sak.CaseDispatchService
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Mono
 
 @Service
 class DispatchService(
@@ -18,29 +17,24 @@ class DispatchService(
     fun process(
         instanceFlowHeaders: InstanceFlowHeaders,
         @Valid archiveInstance: ArchiveInstance,
-    ): Mono<DispatchResult> {
+    ): DispatchResult {
         log.info("Dispatching instance with headers={}", instanceFlowHeaders)
 
-        return when (archiveInstance.type) {
-            CaseDispatchType.NEW -> {
-                processNew(archiveInstance)
-            }
-
-            CaseDispatchType.BY_ID -> {
-                processById(archiveInstance)
-            }
-
-            CaseDispatchType.BY_SEARCH_OR_NEW -> {
-                processBySearchOrNew(archiveInstance)
-            }
-
-            null -> {
-                Mono.just(DispatchResult.failed("Missing dispatch type"))
-            }
-        }.doOnNext { dispatchResult -> logDispatchResult(instanceFlowHeaders, dispatchResult) }
-            .doOnError { error ->
+        val dispatchResult =
+            try {
+                when (archiveInstance.type) {
+                    CaseDispatchType.NEW -> processNew(archiveInstance)
+                    CaseDispatchType.BY_ID -> processById(archiveInstance)
+                    CaseDispatchType.BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance)
+                    null -> DispatchResult.failed("Missing dispatch type")
+                }
+            } catch (error: Throwable) {
                 log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, error)
+                throw error
             }
+
+        logDispatchResult(instanceFlowHeaders, dispatchResult)
+        return dispatchResult
     }
 
     private fun logDispatchResult(
@@ -65,91 +59,81 @@ class DispatchService(
         }
     }
 
-    private fun processNew(archiveInstance: ArchiveInstance): Mono<DispatchResult> {
-        val newCase = archiveInstance.newCase ?: return Mono.just(DispatchResult.failed("Missing new case"))
+    private fun processNew(archiveInstance: ArchiveInstance): DispatchResult {
+        val newCase = archiveInstance.newCase ?: return DispatchResult.failed("Missing new case")
 
-        return caseDispatchService.dispatch(newCase).flatMap { caseDispatchResult ->
-            when (caseDispatchResult.status) {
-                DispatchStatus.ACCEPTED -> {
-                    newCase.journalpost
-                        ?.let { journalpostDtos ->
-                            recordsProcessingService.processRecords(
-                                caseDispatchResult.archiveCaseId!!,
-                                true,
-                                journalpostDtos,
-                            )
-                        }
-                        ?: Mono.just(DispatchResult.accepted(caseDispatchResult.archiveCaseId!!))
-                }
-
-                DispatchStatus.DECLINED -> {
-                    Mono.just(
-                        DispatchResult.declined(
-                            "Sak was declined by the destination with message='${caseDispatchResult.errorMessage}'",
-                        ),
+        val caseDispatchResult = caseDispatchService.dispatch(newCase)
+        return when (caseDispatchResult.status) {
+            DispatchStatus.ACCEPTED -> {
+                val journalpostDtos = newCase.journalpost
+                if (journalpostDtos != null) {
+                    recordsProcessingService.processRecords(
+                        caseDispatchResult.archiveCaseId!!,
+                        true,
+                        journalpostDtos,
                     )
+                } else {
+                    DispatchResult.accepted(caseDispatchResult.archiveCaseId!!)
                 }
+            }
 
-                DispatchStatus.FAILED -> {
-                    Mono.just(DispatchResult.failed("Sak dispatch failed"))
-                }
+            DispatchStatus.DECLINED -> {
+                DispatchResult.declined(
+                    "Sak was declined by the destination with message='${caseDispatchResult.errorMessage}'",
+                )
+            }
+
+            DispatchStatus.FAILED -> {
+                DispatchResult.failed("Sak dispatch failed")
             }
         }
     }
 
-    private fun processById(archiveInstance: ArchiveInstance): Mono<DispatchResult> =
+    private fun processById(archiveInstance: ArchiveInstance): DispatchResult =
         recordsProcessingService.processRecords(
             archiveInstance.caseId.orEmpty(),
             false,
             archiveInstance.journalpost.orEmpty(),
         )
 
-    private fun processBySearchOrNew(archiveInstance: ArchiveInstance): Mono<DispatchResult> {
-        val newCase = archiveInstance.newCase ?: return Mono.just(DispatchResult.failed("Missing new case"))
+    private fun processBySearchOrNew(archiveInstance: ArchiveInstance): DispatchResult {
+        val newCase = archiveInstance.newCase ?: return DispatchResult.failed("Missing new case")
         val journalpostDtos: List<JournalpostDto>? = newCase.journalpost
 
-        return caseDispatchService.findCasesBySearch(archiveInstance).flatMap { caseSearchResult ->
-            when (caseSearchResult.status) {
-                DispatchStatus.ACCEPTED -> {
-                    val archiveCaseIds = caseSearchResult.archiveCaseIds.orEmpty()
+        val caseSearchResult = caseDispatchService.findCasesBySearch(archiveInstance)
+        return when (caseSearchResult.status) {
+            DispatchStatus.ACCEPTED -> {
+                val archiveCaseIds = caseSearchResult.archiveCaseIds.orEmpty()
 
-                    when {
-                        archiveCaseIds.size > 1 -> {
-                            Mono.just(
-                                DispatchResult.declined("Found multiple cases: ${archiveCaseIds.joinToString(", ")}"),
-                            )
-                        }
+                when {
+                    archiveCaseIds.size > 1 -> {
+                        DispatchResult.declined("Found multiple cases: ${archiveCaseIds.joinToString(", ")}")
+                    }
 
-                        archiveCaseIds.isEmpty() -> {
-                            log.info("Found no cases")
-                            processNew(archiveInstance)
-                        }
+                    archiveCaseIds.isEmpty() -> {
+                        log.info("Found no cases")
+                        processNew(archiveInstance)
+                    }
 
-                        else -> {
-                            val archiveCaseId = archiveCaseIds.first()
-                            log.info("Found case with id='{}'", archiveCaseId)
+                    else -> {
+                        val archiveCaseId = archiveCaseIds.first()
+                        log.info("Found case with id='{}'", archiveCaseId)
 
-                            journalpostDtos
-                                ?.takeIf { it.isNotEmpty() }
-                                ?.let {
-                                    recordsProcessingService.processRecords(
-                                        archiveCaseId,
-                                        false,
-                                        it,
-                                    )
-                                }
-                                ?: Mono.just(DispatchResult.accepted(archiveCaseId))
+                        if (!journalpostDtos.isNullOrEmpty()) {
+                            recordsProcessingService.processRecords(archiveCaseId, false, journalpostDtos)
+                        } else {
+                            DispatchResult.accepted(archiveCaseId)
                         }
                     }
                 }
+            }
 
-                DispatchStatus.DECLINED -> {
-                    Mono.just(DispatchResult.declined(caseSearchResult.errorMessage.orEmpty()))
-                }
+            DispatchStatus.DECLINED -> {
+                DispatchResult.declined(caseSearchResult.errorMessage.orEmpty())
+            }
 
-                DispatchStatus.FAILED -> {
-                    Mono.just(DispatchResult.failed())
-                }
+            DispatchStatus.FAILED -> {
+                DispatchResult.failed()
             }
         }
     }

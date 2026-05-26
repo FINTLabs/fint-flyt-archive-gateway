@@ -2,10 +2,10 @@ package no.novari.flyt.archive.gateway.slack
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 
 @Configuration
 class SlackConfig {
-    @Bean("slackWebClient")
-    fun slackWebClient(webClientBuilder: WebClient.Builder): WebClient = webClientBuilder.build()
+    @Bean("slackRestClient")
+    fun slackRestClient(restClientBuilder: RestClient.Builder): RestClient = restClientBuilder.build()
 }

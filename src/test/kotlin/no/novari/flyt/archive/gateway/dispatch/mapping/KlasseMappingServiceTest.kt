@@ -23,12 +23,12 @@ class KlasseMappingServiceTest {
     }
 
     @Test
-    fun testToKlasseWithNullInput() {
+    fun `given a null input, returns null`() {
         assertThat(klasseMappingService.toKlasse(null)).isNull()
     }
 
     @Test
-    fun testToKlasseWithValidInput() {
+    fun `given a valid input, maps to KlasseResources`() {
         val skjermingDto =
             SkjermingDto
                 .builder()

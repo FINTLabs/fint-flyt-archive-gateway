@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.client.reactive.ClientHttpConnector
+import org.springframework.http.client.ClientHttpRequestFactory
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
@@ -13,13 +13,12 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository
-import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
-import org.springframework.web.reactive.function.client.ExchangeStrategies
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.security.oauth2.client.web.client.OAuth2ClientHttpRequestInterceptor
+import org.springframework.web.client.RestClient
 
 @Configuration
 @ConfigurationProperties(prefix = "novari.flyt.archive.gateway.client.fint-archive")
-class FintArchiveWebClientConfiguration {
+class FintArchiveRestClientConfiguration {
     var baseUrl: String? = null
     var username: String? = null
     var password: String? = null
@@ -57,27 +56,20 @@ class FintArchiveWebClientConfiguration {
     }
 
     @Bean
-    fun fintWebClient(
-        webClientBuilder: WebClient.Builder,
+    fun fintRestClient(
+        restClientBuilder: RestClient.Builder,
+        clientHttpRequestFactory: ClientHttpRequestFactory,
         @Qualifier("fintArchiveAuthorizedClientManager")
         authorizedClientManager: OAuth2AuthorizedClientManager?,
-        clientHttpConnector: ClientHttpConnector,
-    ): WebClient {
-        val exchangeStrategies =
-            ExchangeStrategies
-                .builder()
-                .codecs { it.defaultCodecs().maxInMemorySize(-1) }
-                .build()
-
+    ): RestClient {
         authorizedClientManager?.let { manager ->
-            val filter = ServletOAuth2AuthorizedClientExchangeFilterFunction(manager)
-            filter.setDefaultClientRegistrationId(requireNotNull(registrationId))
-            webClientBuilder.filter(filter)
+            val interceptor = OAuth2ClientHttpRequestInterceptor(manager)
+            interceptor.setClientRegistrationIdResolver { requireNotNull(registrationId) }
+            restClientBuilder.requestInterceptor(interceptor)
         }
 
-        return webClientBuilder
-            .clientConnector(clientHttpConnector)
-            .exchangeStrategies(exchangeStrategies)
+        return restClientBuilder
+            .requestFactory(clientHttpRequestFactory)
             .baseUrl(requireNotNull(baseUrl))
             .build()
     }

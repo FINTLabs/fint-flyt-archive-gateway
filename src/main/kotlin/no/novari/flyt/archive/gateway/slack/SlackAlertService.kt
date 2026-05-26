@@ -3,13 +3,12 @@ package no.novari.flyt.archive.gateway.slack
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
+import org.springframework.web.client.RestClient
 
 @Service
 class SlackAlertService(
-    @param:Qualifier("slackWebClient")
-    private val webClient: WebClient,
+    @param:Qualifier("slackRestClient")
+    private val restClient: RestClient,
 ) {
     @Value("\${fint.org-id}")
     private lateinit var orgId: String
@@ -20,15 +19,15 @@ class SlackAlertService(
     @Value("\${slack.webhook.url}")
     private lateinit var slackWebhookUrl: String
 
-    fun sendMessage(message: String): Mono<Void> {
+    fun sendMessage(message: String) {
         val payload = mapOf("text" to formatMessageWithPrefix(message))
 
-        return webClient
+        restClient
             .post()
             .uri(slackWebhookUrl)
-            .bodyValue(payload)
+            .body(payload)
             .retrieve()
-            .bodyToMono(Void::class.java)
+            .toBodilessEntity()
     }
 
     private fun formatMessageWithPrefix(message: String): String = "$orgId-$applicationId-$message"

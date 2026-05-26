@@ -14,7 +14,7 @@ class AdresseMappingServiceTest {
     }
 
     @Test
-    fun toAdresseResource() {
+    fun `maps to AdresseResource`() {
         val adresseLinjer = listOf("Linje 1", "Linje 2")
         val adresseDto =
             AdresseDto
@@ -32,7 +32,7 @@ class AdresseMappingServiceTest {
     }
 
     @Test
-    fun toAdresseResourceNullFields() {
+    fun `given a dto with null fields, maps to an AdresseResource with null fields`() {
         val adresseResource = adresseMappingService.toAdresseResource(AdresseDto.builder().build())
 
         assertThat(adresseResource.adresselinje).isNull()

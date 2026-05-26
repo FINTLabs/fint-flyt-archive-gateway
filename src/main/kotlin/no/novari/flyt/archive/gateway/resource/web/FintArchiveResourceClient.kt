@@ -13,19 +13,17 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
-import reactor.netty.http.client.HttpClientRequest
-import reactor.util.retry.Retry
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RestClient
+import org.springframework.web.client.RestClientResponseException
+import org.springframework.web.client.body
 import java.net.URI
 
 @Component
 class FintArchiveResourceClient(
     private val properties: FintArchiveResourceClientProperties,
-    @param:Qualifier("fintWebClient")
-    private val fintWebClient: WebClient,
+    @param:Qualifier("fintRestClient")
+    private val fintRestClient: RestClient,
     private val meterRegistry: MeterRegistry,
     private val webUtilErrorHandler: WebUtilErrorHandler,
 ) {
@@ -41,93 +39,103 @@ class FintArchiveResourceClient(
             .description("Time to fetch cases with filter")
             .register(meterRegistry)
 
-    fun getLastUpdated(urlResourcePath: String): Mono<Long> {
+    fun getLastUpdated(urlResourcePath: String): Long? {
         val sample = Timer.start(meterRegistry)
-        return fintWebClient
-            .get()
-            .uri("$urlResourcePath/last-updated")
-            .httpRequest { clientHttpRequest ->
-                val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                reactorRequest.responseTimeout(requireNotNull(properties.getResourcesLastUpdatedTimeout))
-            }.retrieve()
-            .bodyToMono(LastUpdated::class.java)
-            .map { it.lastUpdated }
-            .doFinally { sample.stop(lastUpdatedTimer) }
+        try {
+            return fintRestClient
+                .get()
+                .uri("$urlResourcePath/last-updated")
+                .retrieve()
+                .body<LastUpdated>()
+                ?.lastUpdated
+        } finally {
+            sample.stop(lastUpdatedTimer)
+        }
     }
 
     fun <T> getResourcesSince(
         urlResourcePath: String,
         resourceClass: Class<T>,
         sinceTimestamp: Long,
-    ): Flux<T> =
-        fintWebClient
-            .get()
-            .uri { uriBuilder ->
-                uriBuilder
-                    .path(urlResourcePath)
-                    .queryParam("sinceTimeStamp", sinceTimestamp)
-                    .build()
-            }.retrieve()
-            .bodyToMono(object : ParameterizedTypeReference<ResourceCollection>() {})
-            .flatMapIterable(AbstractCollectionResources<Any>::getContent)
-            .map { resource -> objectMapper.convertValue(resource, resourceClass) }
-            .doOnError { error ->
-                if (error is WebClientResponseException) {
-                    log.error("{} body={}", error, error.responseBodyAsString)
-                } else {
-                    log.error("Error fetching resources since {}", sinceTimestamp, error)
-                }
-            }
+    ): List<T> =
+        try {
+            val collection =
+                fintRestClient
+                    .get()
+                    .uri { uriBuilder ->
+                        uriBuilder
+                            .path(urlResourcePath)
+                            .queryParam("sinceTimeStamp", sinceTimestamp)
+                            .build()
+                    }.retrieve()
+                    .body(object : ParameterizedTypeReference<ResourceCollection>() {})
 
-    fun findCasesWithFilter(caseFilter: String): Mono<List<SakResource>> =
-        Mono
-            .defer {
-                val sample = Timer.start(meterRegistry)
-                fintWebClient
-                    .post()
-                    .uri("/arkiv/noark/sak/\$query")
-                    .headers { it.contentType = MediaType.TEXT_PLAIN }
-                    .httpRequest { clientHttpRequest ->
-                        val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                        reactorRequest.responseTimeout(requireNotNull(properties.findCasesWithFilterTimeout))
-                    }.bodyValue(caseFilter)
-                    .retrieve()
-                    .bodyToMono(SakResources::class.java)
-                    .map { sakResources ->
-                        val content: List<SakResource> = sakResources.content?.toList() ?: emptyList()
-                        content
-                    }.onErrorReturn(WebClientResponseException.NotFound::class.java, emptyList())
-                    .doOnError(webUtilErrorHandler::logAndSendError)
-                    .doFinally { sample.stop(findCasesTimer) }
-            }.retryWhen(
-                Retry
-                    .backoff(
-                        requireNotNull(properties.findCasesWithFilterMaxAttempts) - 1,
-                        requireNotNull(properties.findCasesWithFilterBackoffRetryMinDelay),
-                    ).maxBackoff(requireNotNull(properties.findCasesWithFilterBackoffRetryMaxDelay))
-                    .doBeforeRetry { retrySignal ->
-                        log.warn(
-                            "Encountered error when finding cases with filter -- performing retry {}",
-                            retrySignal.totalRetries() + 1,
-                            retrySignal.failure(),
-                        )
-                    },
-            )
+            collection
+                ?.let(AbstractCollectionResources<Any>::getContent)
+                .orEmpty()
+                .map { resource -> objectMapper.convertValue(resource, resourceClass) }
+        } catch (error: Exception) {
+            if (error is RestClientResponseException) {
+                log.error("{} body={}", error, error.responseBodyAsString)
+            } else {
+                log.error("Error fetching resources since {}", sinceTimestamp, error)
+            }
+            throw error
+        }
+
+    fun findCasesWithFilter(caseFilter: String): List<SakResource> {
+        val maxAttempts = requireNotNull(properties.findCasesWithFilterMaxAttempts)
+        val minDelay = requireNotNull(properties.findCasesWithFilterBackoffRetryMinDelay)
+        val maxDelay = requireNotNull(properties.findCasesWithFilterBackoffRetryMaxDelay)
+
+        var attempt = 0L
+        var delay = minDelay
+        while (true) {
+            val sample = Timer.start(meterRegistry)
+            try {
+                val sakResources =
+                    fintRestClient
+                        .post()
+                        .uri("/arkiv/noark/sak/\$query")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .body(caseFilter)
+                        .retrieve()
+                        .body<SakResources>()
+                return sakResources?.content?.toList().orEmpty()
+            } catch (_: HttpClientErrorException.NotFound) {
+                return emptyList()
+            } catch (error: Throwable) {
+                webUtilErrorHandler.logAndSendError(error)
+                attempt++
+                if (attempt >= maxAttempts) {
+                    throw error
+                }
+                log.warn(
+                    "Encountered error when finding cases with filter -- performing retry {}",
+                    attempt,
+                    error,
+                )
+                Thread.sleep(delay.toMillis())
+                delay = minOf(delay.multipliedBy(2), maxDelay)
+            } finally {
+                sample.stop(findCasesTimer)
+            }
+        }
+    }
 
     fun <T> getResource(
         endpoint: String,
         clazz: Class<T>,
-    ): Mono<T> =
-        fintWebClient
-            .get()
-            .uri(endpoint)
-            .httpRequest { clientHttpRequest ->
-                val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                reactorRequest.responseTimeout(requireNotNull(properties.getResourceTimeout))
-            }.retrieve()
-            .bodyToMono(clazz)
+    ): T =
+        requireNotNull(
+            fintRestClient
+                .get()
+                .uri(endpoint)
+                .retrieve()
+                .body(clazz),
+        ) { "Empty response body from $endpoint" }
 
-    fun getCase(uri: URI): Mono<SakResource> = getResource(uri.path, SakResource::class.java)
+    fun getCase(uri: URI): SakResource = getResource(uri.path, SakResource::class.java)
 
     data class LastUpdated(
         val lastUpdated: Long,

@@ -8,6 +8,7 @@ import no.novari.flyt.archive.gateway.dispatch.sak.CaseDispatchService
 import no.novari.flyt.archive.gateway.dispatch.sak.result.CaseDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.sak.result.CaseSearchResult
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -15,8 +16,6 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import reactor.core.publisher.Mono
-import reactor.test.StepVerifier
 
 @ExtendWith(MockitoExtension::class)
 class DispatchServiceTest {
@@ -33,7 +32,7 @@ class DispatchServiceTest {
     private lateinit var dispatchService: DispatchService
 
     @Test
-    fun givenCaseTypeNewAndAcceptedCaseDispatchWithNoJournalpostShouldReturnAcceptedResultWithCaseId() {
+    fun `given case type NEW with no journalpost and an accepted dispatch, returns an accepted result with case id`() {
         val sakDto = SakDto.builder().build()
         val archiveInstance =
             ArchiveInstance
@@ -41,16 +40,15 @@ class DispatchServiceTest {
                 .type(CaseDispatchType.NEW)
                 .newCase(sakDto)
                 .build()
-        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(Mono.just(CaseDispatchResult.accepted("testCaseId")))
+        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
 
-        StepVerifier
-            .create(dispatchService.process(instanceFlowHeaders, archiveInstance))
-            .expectNext(DispatchResult.accepted("testCaseId"))
-            .verifyComplete()
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(DispatchResult.accepted("testCaseId"))
     }
 
     @Test
-    fun givenCaseTypeNewAndAcceptedCaseDispatchShouldCallRecordsProcessingServiceAndReturnResult() {
+    fun `given case type NEW and an accepted dispatch, calls records processing service and returns its result`() {
         val journalpostDto = mock<JournalpostDto>()
         val sakDto = SakDto.builder().journalpost(listOf(journalpostDto)).build()
         val archiveInstance =
@@ -59,18 +57,17 @@ class DispatchServiceTest {
                 .type(CaseDispatchType.NEW)
                 .newCase(sakDto)
                 .build()
-        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(Mono.just(CaseDispatchResult.accepted("testCaseId")))
+        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
         whenever(recordsProcessingService.processRecords("testCaseId", true, listOf(journalpostDto)))
-            .thenReturn(Mono.just(DispatchResult.accepted("testCaseId")))
+            .thenReturn(DispatchResult.accepted("testCaseId"))
 
-        StepVerifier
-            .create(dispatchService.process(instanceFlowHeaders, archiveInstance))
-            .expectNext(DispatchResult.accepted("testCaseId"))
-            .verifyComplete()
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(DispatchResult.accepted("testCaseId"))
     }
 
     @Test
-    fun givenCaseTypeByIdShouldCallRecordsProcessingServiceWithNewCaseFalse() {
+    fun `given case type BY_ID, calls records processing service with newCase=false`() {
         val journalpostDto = mock<JournalpostDto>()
         val archiveInstance =
             ArchiveInstance
@@ -80,16 +77,15 @@ class DispatchServiceTest {
                 .journalpost(listOf(journalpostDto))
                 .build()
         whenever(recordsProcessingService.processRecords("testCaseId", false, listOf(journalpostDto)))
-            .thenReturn(Mono.just(DispatchResult.accepted("testCaseId")))
+            .thenReturn(DispatchResult.accepted("testCaseId"))
 
-        StepVerifier
-            .create(dispatchService.process(instanceFlowHeaders, archiveInstance))
-            .expectNext(DispatchResult.accepted("testCaseId"))
-            .verifyComplete()
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(DispatchResult.accepted("testCaseId"))
     }
 
     @Test
-    fun givenCaseTypeBySearchOrNewWithMultipleCasesShouldReturnDeclinedResult() {
+    fun `given case type BY_SEARCH_OR_NEW with multiple matching cases, returns a declined result`() {
         val journalpostDto = mock<JournalpostDto>()
         val sakDto = SakDto.builder().journalpost(listOf(journalpostDto)).build()
         val archiveInstance =
@@ -99,16 +95,15 @@ class DispatchServiceTest {
                 .newCase(sakDto)
                 .build()
         whenever(caseDispatchService.findCasesBySearch(archiveInstance))
-            .thenReturn(Mono.just(CaseSearchResult.accepted(listOf("caseId1", "caseId2"))))
+            .thenReturn(CaseSearchResult.accepted(listOf("caseId1", "caseId2")))
 
-        StepVerifier
-            .create(dispatchService.process(instanceFlowHeaders, archiveInstance))
-            .expectNext(DispatchResult.declined("Found multiple cases: caseId1, caseId2"))
-            .verifyComplete()
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(DispatchResult.declined("Found multiple cases: caseId1, caseId2"))
     }
 
     @Test
-    fun givenCaseTypeBySearchOrNewAndNoCasesFoundShouldDelegateToProcessNew() {
+    fun `given case type BY_SEARCH_OR_NEW and no cases found, delegates to processNew`() {
         val sakDto = SakDto.builder().build()
         val archiveInstance =
             ArchiveInstance
@@ -116,14 +111,12 @@ class DispatchServiceTest {
                 .type(CaseDispatchType.BY_SEARCH_OR_NEW)
                 .newCase(sakDto)
                 .build()
-        whenever(
-            caseDispatchService.findCasesBySearch(archiveInstance),
-        ).thenReturn(Mono.just(CaseSearchResult.accepted(emptyList())))
-        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(Mono.just(CaseDispatchResult.accepted("testCaseId")))
+        whenever(caseDispatchService.findCasesBySearch(archiveInstance))
+            .thenReturn(CaseSearchResult.accepted(emptyList()))
+        whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
 
-        StepVerifier
-            .create(dispatchService.process(instanceFlowHeaders, archiveInstance))
-            .expectNext(DispatchResult.accepted("testCaseId"))
-            .verifyComplete()
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(DispatchResult.accepted("testCaseId"))
     }
 }

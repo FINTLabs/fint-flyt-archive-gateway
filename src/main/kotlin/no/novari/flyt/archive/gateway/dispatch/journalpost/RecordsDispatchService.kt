@@ -7,8 +7,6 @@ import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordsDispatc
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 
 @Service
 class RecordsDispatchService(
@@ -18,18 +16,22 @@ class RecordsDispatchService(
     fun dispatch(
         caseId: String,
         journalpostDtos: List<JournalpostDto>,
-    ): Mono<RecordsDispatchResult> {
+    ): RecordsDispatchResult {
         log.info("Dispatching records")
         if (journalpostDtos.isEmpty()) {
-            return Mono.just(RecordsDispatchResult.accepted(emptyList()))
+            return RecordsDispatchResult.accepted(emptyList())
         }
 
-        return Flux
-            .fromIterable(journalpostDtos)
-            .concatMap { journalpostDto -> recordDispatchService.dispatch(caseId, journalpostDto) }
-            .takeUntil { recordDispatchResult -> recordDispatchResult.status != DispatchStatus.ACCEPTED }
-            .collectList()
-            .map { recordDispatchResults ->
+        val recordDispatchResults = mutableListOf<RecordDispatchResult>()
+        val result =
+            try {
+                for (journalpostDto in journalpostDtos) {
+                    val recordResult = recordDispatchService.dispatch(caseId, journalpostDto)
+                    recordDispatchResults += recordResult
+                    if (recordResult.status != DispatchStatus.ACCEPTED) {
+                        break
+                    }
+                }
                 val lastResult: RecordDispatchResult = recordDispatchResults.last()
                 val lastStatus = lastResult.status
 
@@ -61,15 +63,15 @@ class RecordsDispatchService(
                         )
                     }
                 }
-            }.doOnError { error -> log.error("Journalposts dispatch failed", error) }
-            .onErrorResume {
-                Mono.just(
-                    RecordsDispatchResult.failed(
-                        "Journalposts dispatch failed",
-                        "possible journalposts with unknown ids",
-                    ),
+            } catch (error: Throwable) {
+                log.error("Journalposts dispatch failed", error)
+                RecordsDispatchResult.failed(
+                    "Journalposts dispatch failed",
+                    "possible journalposts with unknown ids",
                 )
-            }.doOnNext { result -> log.info("Dispatch result={}", result.toString()) }
+            }
+        log.info("Dispatch result={}", result)
+        return result
     }
 
     private fun createFunctionalWarningMessages(idsOfSuccessfullyDispatchedRecords: List<Long>): String? =

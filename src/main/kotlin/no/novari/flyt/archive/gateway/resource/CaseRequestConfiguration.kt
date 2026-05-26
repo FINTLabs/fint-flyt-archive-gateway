@@ -126,9 +126,7 @@ class CaseRequestConfiguration(
     private fun handleCaseRequestByMappeId(mappeId: String): ReplyProducerRecord<SakResource> =
         try {
             val sakResource =
-                fintArchiveResourceClient
-                    .getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
-                    .block()
+                fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
             ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
         } catch (error: RuntimeException) {
             log.error("Could not find case with id={}", mappeId, error)
@@ -139,18 +137,17 @@ class CaseRequestConfiguration(
         val caseAndJournalpostIds = extractCaseAndJournalpostIds(archiveInstanceId)
         return try {
             val sakResource =
-                fintArchiveResourceClient
-                    .getResource("/arkiv/noark/sak/mappeid/${caseAndJournalpostIds.caseId}", SakResource::class.java)
-                    .block()
+                fintArchiveResourceClient.getResource(
+                    "/arkiv/noark/sak/mappeid/${caseAndJournalpostIds.caseId}",
+                    SakResource::class.java,
+                )
 
-            sakResource?.let { resource ->
-                val journalposts: List<JournalpostResource> = resource.journalpost?.toList() ?: emptyList()
-                val filteredJournalposts =
-                    journalposts.filter { journalpostResource ->
-                        caseAndJournalpostIds.journalpostIds.contains(journalpostResource.journalPostnummer)
-                    }
-                resource.journalpost = filteredJournalposts
-            }
+            val journalposts: List<JournalpostResource> = sakResource.journalpost?.toList() ?: emptyList()
+            val filteredJournalposts =
+                journalposts.filter { journalpostResource ->
+                    caseAndJournalpostIds.journalpostIds.contains(journalpostResource.journalPostnummer)
+                }
+            sakResource.journalpost = filteredJournalposts
 
             ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
         } catch (error: RuntimeException) {

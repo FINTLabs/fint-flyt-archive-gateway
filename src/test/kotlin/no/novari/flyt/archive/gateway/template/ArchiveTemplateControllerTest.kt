@@ -25,7 +25,7 @@ class ArchiveTemplateControllerTest {
     }
 
     @Test
-    fun getTemplateShouldReturn200WithArchiveTemplate() {
+    fun `getTemplate returns the archive template`() {
         val template =
             MappingTemplate
                 .builder()
