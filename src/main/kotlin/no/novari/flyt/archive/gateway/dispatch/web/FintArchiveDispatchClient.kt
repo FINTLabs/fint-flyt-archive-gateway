@@ -118,6 +118,9 @@ class FintArchiveDispatchClient(
                 }.maxByOrNull { (journalpostId, _) -> journalpostId }
                 ?.second
                 ?: throw NoSuchElementException("Journalpost is missing journalpostNummer for case $caseId")
+        } catch (error: Throwable) {
+            webUtilErrorHandler.logAndSendError(error)
+            throw error
         } finally {
             sample.stop(postRecordTimer)
         }
@@ -132,12 +135,7 @@ class FintArchiveDispatchClient(
 
     private fun pollForCaseResult(initialResponse: ResponseEntity<Void>): SakResource {
         val createdLocation = pollAfterAcceptedResponse(initialResponse)
-        return try {
-            fintArchiveResourceClient.getCase(createdLocation)
-        } catch (error: Throwable) {
-            webUtilErrorHandler.logAndSendError(error)
-            throw error
-        }
+        return fintArchiveResourceClient.getCase(createdLocation)
     }
 
     private fun pollAfterAcceptedResponse(initialResponse: ResponseEntity<Void>): URI {
@@ -199,9 +197,6 @@ class FintArchiveDispatchClient(
                 if (entity.statusCode == HttpStatus.CREATED && location != null) {
                     return location
                 }
-            } catch (error: Throwable) {
-                webUtilErrorHandler.logAndSendError(error)
-                throw error
             } finally {
                 sample.stop(pollForCreationTimer)
             }
@@ -213,15 +208,13 @@ class FintArchiveDispatchClient(
             delay = minOf(delay.multipliedBy(2), maxDelay)
         }
 
-        val timeoutException = CreatedLocationPollTimeoutException(statusUri, totalTimeout, lastStatus)
-        webUtilErrorHandler.logAndSendError(timeoutException)
         log.warn(
             "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}",
             statusUri,
             totalTimeout,
             lastStatus,
         )
-        throw timeoutException
+        throw CreatedLocationPollTimeoutException(statusUri, totalTimeout, lastStatus)
     }
 
     companion object {

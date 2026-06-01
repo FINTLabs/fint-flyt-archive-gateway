@@ -2,12 +2,16 @@ package no.novari.flyt.archive.gateway
 
 import no.novari.flyt.archive.gateway.slack.SlackAlertService
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
+import java.util.concurrent.Executor
 
 @Service
 class WebUtilErrorHandler(
     private val slackAlertService: SlackAlertService,
+    @param:Qualifier("slackAlertExecutor")
+    private val slackAlertExecutor: Executor,
 ) {
     fun logAndSendError(error: Throwable) {
         val errorMessage =
@@ -20,10 +24,12 @@ class WebUtilErrorHandler(
                 error.toString()
             }
 
-        try {
-            slackAlertService.sendMessage(errorMessage)
-        } catch (sendError: Throwable) {
-            log.warn("Failed to send Slack alert", sendError)
+        slackAlertExecutor.execute {
+            try {
+                slackAlertService.sendMessage(errorMessage)
+            } catch (sendError: Throwable) {
+                log.warn("Failed to send Slack alert", sendError)
+            }
         }
     }
 

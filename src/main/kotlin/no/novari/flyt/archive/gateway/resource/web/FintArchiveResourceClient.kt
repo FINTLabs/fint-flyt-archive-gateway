@@ -105,9 +105,9 @@ class FintArchiveResourceClient(
             } catch (_: HttpClientErrorException.NotFound) {
                 return emptyList()
             } catch (error: Throwable) {
-                webUtilErrorHandler.logAndSendError(error)
                 attempt++
                 if (attempt >= maxAttempts) {
+                    webUtilErrorHandler.logAndSendError(error)
                     throw error
                 }
                 log.warn(
