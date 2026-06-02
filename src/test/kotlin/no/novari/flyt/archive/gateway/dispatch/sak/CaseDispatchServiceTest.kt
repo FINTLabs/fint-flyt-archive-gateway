@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.sak
 
-import io.netty.handler.timeout.ReadTimeoutException
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.dispatch.mapping.SakMappingService
@@ -15,6 +14,7 @@ import no.novari.flyt.archive.gateway.resource.web.CaseSearchParametersService
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import no.novari.flyt.archive.gateway.resource.web.exceptions.KlasseOrderOutOfBoundsException
 import no.novari.flyt.archive.gateway.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
@@ -22,9 +22,9 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
-import reactor.test.StepVerifier
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.ResourceAccessException
+import java.net.http.HttpTimeoutException
 
 @ExtendWith(MockitoExtension::class)
 class CaseDispatchServiceTest {
@@ -44,7 +44,7 @@ class CaseDispatchServiceTest {
     private lateinit var caseDispatchService: CaseDispatchService
 
     @Test
-    fun givenAcceptedCaseShouldReturnAcceptedResultWithCaseId() {
+    fun `given an accepted case, returns an accepted result with case id`() {
         val sakDto = SakDto.builder().build()
         val sakResource: SakResource = mock()
         val sakResourceResult: SakResource = mock()
@@ -52,59 +52,55 @@ class CaseDispatchServiceTest {
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
         whenever(sakResourceResult.mappeId).thenReturn(identifikator)
         whenever(identifikator.identifikatorverdi).thenReturn("testArchiveCaseId")
-        whenever(fintArchiveDispatchClient.postCase(sakResource)).thenReturn(Mono.just(sakResourceResult))
+        whenever(fintArchiveDispatchClient.postCase(sakResource)).thenReturn(sakResourceResult)
 
-        StepVerifier
-            .create(caseDispatchService.dispatch(sakDto))
-            .expectNext(CaseDispatchResult.accepted("testArchiveCaseId"))
-            .verifyComplete()
+        val result = caseDispatchService.dispatch(sakDto)
+
+        assertThat(result).isEqualTo(CaseDispatchResult.accepted("testArchiveCaseId"))
     }
 
     @Test
-    fun givenWebclientResponseExceptionFromPostCaseShouldReturnDeclinedResultWithErrorMessage() {
+    fun `given a RestClientResponseException from postCase, returns a declined result with error message`() {
         val sakDto = SakDto.builder().build()
         val sakResource: SakResource = mock()
-        val error: WebClientResponseException = mock()
+        val error: HttpClientErrorException = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
         whenever(error.responseBodyAsString).thenReturn("test response body")
-        whenever(fintArchiveDispatchClient.postCase(sakResource)).thenReturn(Mono.error(error))
+        whenever(fintArchiveDispatchClient.postCase(sakResource)).thenThrow(error)
 
-        StepVerifier
-            .create(caseDispatchService.dispatch(sakDto))
-            .expectNext(CaseDispatchResult.declined("test response body"))
-            .verifyComplete()
+        val result = caseDispatchService.dispatch(sakDto)
+
+        assertThat(result).isEqualTo(CaseDispatchResult.declined("test response body"))
     }
 
     @Test
-    fun givenTimeoutFromPostCaseShouldReturnTimedOutResult() {
+    fun `given a read timeout from postCase, returns a timed-out result`() {
         val sakDto = SakDto.builder().build()
         val sakResource: SakResource = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
-        whenever(fintArchiveDispatchClient.postCase(sakResource)).thenReturn(Mono.error(ReadTimeoutException()))
+        whenever(fintArchiveDispatchClient.postCase(sakResource))
+            .thenThrow(ResourceAccessException("read timeout", HttpTimeoutException("read timeout")))
 
-        StepVerifier
-            .create(caseDispatchService.dispatch(sakDto))
-            .expectNext(CaseDispatchResult.timedOut())
-            .verifyComplete()
+        val result = caseDispatchService.dispatch(sakDto)
+
+        assertThat(result).isEqualTo(CaseDispatchResult.timedOut())
     }
 
     @Test
-    fun givenCreatedLocationTimeoutFromPostCaseShouldReturnTimedOutResult() {
+    fun `given a CreatedLocationPollTimeoutException from postCase, returns a timed-out result`() {
         val sakDto = SakDto.builder().build()
         val sakResource: SakResource = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
-        whenever(
-            fintArchiveDispatchClient.postCase(sakResource),
-        ).thenReturn(Mono.error(CreatedLocationPollTimeoutException()))
+        whenever(fintArchiveDispatchClient.postCase(sakResource))
+            .thenThrow(CreatedLocationPollTimeoutException())
 
-        StepVerifier
-            .create(caseDispatchService.dispatch(sakDto))
-            .expectNext(CaseDispatchResult.timedOut())
-            .verifyComplete()
+        val result = caseDispatchService.dispatch(sakDto)
+
+        assertThat(result).isEqualTo(CaseDispatchResult.timedOut())
     }
 
     @Test
-    fun findCasesBySearchShouldCreateFilterAndCallClient() {
+    fun `findCasesBySearch creates a filter and calls the client`() {
         val archiveInstance =
             ArchiveInstance
                 .builder()
@@ -117,16 +113,15 @@ class CaseDispatchServiceTest {
                 archiveInstance.caseSearchParameters!!,
             ),
         ).thenReturn("test case filter")
-        whenever(fintArchiveResourceClient.findCasesWithFilter("test case filter")).thenReturn(Mono.just(emptyList()))
+        whenever(fintArchiveResourceClient.findCasesWithFilter("test case filter")).thenReturn(emptyList())
 
-        StepVerifier
-            .create(caseDispatchService.findCasesBySearch(archiveInstance))
-            .expectNext(CaseSearchResult.accepted(emptyList()))
-            .verifyComplete()
+        val result = caseDispatchService.findCasesBySearch(archiveInstance)
+
+        assertThat(result).isEqualTo(CaseSearchResult.accepted(emptyList()))
     }
 
     @Test
-    fun givenKlasseOrderOutOfBoundsExceptionFromSearchParameterServiceShouldReturnDeclinedResultWithMessage() {
+    fun `given a KlasseOrderOutOfBoundsException, returns a declined result with message`() {
         val archiveInstance =
             ArchiveInstance
                 .builder()
@@ -140,14 +135,13 @@ class CaseDispatchServiceTest {
             ),
         ).thenThrow(KlasseOrderOutOfBoundsException(1))
 
-        StepVerifier
-            .create(caseDispatchService.findCasesBySearch(archiveInstance))
-            .expectNext(CaseSearchResult.declined(KlasseOrderOutOfBoundsException(1).message!!))
-            .verifyComplete()
+        val result = caseDispatchService.findCasesBySearch(archiveInstance)
+
+        assertThat(result).isEqualTo(CaseSearchResult.declined(KlasseOrderOutOfBoundsException(1).message!!))
     }
 
     @Test
-    fun givenSearchKlasseOrderNotFoundInCaseExceptionShouldReturnDeclinedResultWithMessage() {
+    fun `given a SearchKlasseOrderNotFoundInCaseException, returns a declined result with message`() {
         val archiveInstance =
             ArchiveInstance
                 .builder()
@@ -161,9 +155,9 @@ class CaseDispatchServiceTest {
             ),
         ).thenThrow(SearchKlasseOrderNotFoundInCaseException(listOf(1, 2), 3))
 
-        StepVerifier
-            .create(caseDispatchService.findCasesBySearch(archiveInstance))
-            .expectNext(CaseSearchResult.declined(SearchKlasseOrderNotFoundInCaseException(listOf(1, 2), 3).message!!))
-            .verifyComplete()
+        val result = caseDispatchService.findCasesBySearch(archiveInstance)
+
+        assertThat(result)
+            .isEqualTo(CaseSearchResult.declined(SearchKlasseOrderNotFoundInCaseException(listOf(1, 2), 3).message!!))
     }
 }

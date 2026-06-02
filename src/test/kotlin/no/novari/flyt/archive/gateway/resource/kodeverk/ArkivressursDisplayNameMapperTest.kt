@@ -38,7 +38,7 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    fun findPersonNavnGivenFirstMiddleAndLastNameShouldReturnFullName() {
+    fun `findPersonNavn given first, middle and last name, returns the full name`() {
         val personnavn: Personnavn = mock()
         whenever(personnavn.fornavn).thenReturn("testFornavn")
         whenever(personnavn.mellomnavn).thenReturn("testMellomnavn")
@@ -51,7 +51,7 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    fun findPersonNavnGivenNullNameShouldThrowIllegalStateException() {
+    fun `findPersonNavn given a null name, throws IllegalStateException`() {
         val arkivressursResource = setupMocksForPersonnavn(null)
 
         val error =
@@ -63,7 +63,7 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    fun givenNoMatchingPersonalressursInCacheWhenFindPersonNavnShouldReturnEmpty() {
+    fun `findPersonNavn given no matching personalressurs in cache, returns empty`() {
         val arkivressursResource: ArkivressursResource = mock()
         whenever(arkivressursResource.personalressurs).thenReturn(listOf(Link.with("a/b/c/testPersonalressursLink1")))
         whenever(personalressursResourceCache.get("a/b/c/testPersonalressursLink1"))
@@ -73,7 +73,7 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    fun whenFindPersonNavnShouldUseFirstLinksToGetFromCache() {
+    fun `findPersonNavn uses the first links to look up in the cache`() {
         val arkivressursResource: ArkivressursResource = mock()
         whenever(arkivressursResource.personalressurs)
             .thenReturn(
@@ -104,7 +104,7 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
-    fun givenMatchingPersonalressursInCacheGetPersonalressursBrukernavnShouldReturnIdentifikator() {
+    fun `findPersonalressursBrukernavn given a matching personalressurs in the cache, returns the identifikator`() {
         val arkivressursResource = setupMocksForPersonBrukernavn()
 
         assertThat(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource)).contains("12345")

@@ -14,12 +14,12 @@ class KontaktinformasjonMappingServiceTest {
     }
 
     @Test
-    fun testToKontaktinformasjonWithNullInput() {
+    fun `given a null input, returns null`() {
         assertThat(kontaktinformasjonMappingService.toKontaktinformasjon(null)).isNull()
     }
 
     @Test
-    fun testToKontaktinformasjonWithValidInput() {
+    fun `given a valid input, maps to Kontaktinformasjon`() {
         val dto =
             KontaktinformasjonDto
                 .builder()

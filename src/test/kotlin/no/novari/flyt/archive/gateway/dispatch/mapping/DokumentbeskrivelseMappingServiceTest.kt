@@ -13,7 +13,7 @@ class DokumentbeskrivelseMappingServiceTest {
         )
 
     @Test
-    fun toDokumentbeskrivelseResource() {
+    fun `maps to DokumentbeskrivelseResource`() {
         val dto =
             DokumentbeskrivelseDto
                 .builder()

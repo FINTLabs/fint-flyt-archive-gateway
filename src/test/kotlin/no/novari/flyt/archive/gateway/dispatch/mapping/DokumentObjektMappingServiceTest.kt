@@ -16,7 +16,7 @@ class DokumentObjektMappingServiceTest {
     }
 
     @Test
-    fun testToDokumentobjektResource() {
+    fun `maps to DokumentobjektResource`() {
         val fileId = UUID.randomUUID()
         val dto =
             DokumentobjektDto
@@ -36,7 +36,7 @@ class DokumentObjektMappingServiceTest {
     }
 
     @Test
-    fun testToDokumentobjektResourceList() {
+    fun `maps a list of dtos to a list of DokumentobjektResources`() {
         val fileId1 = UUID.randomUUID()
         val fileId2 = UUID.randomUUID()
         val dto1 = DokumentobjektDto.builder().fileId(fileId1).build()

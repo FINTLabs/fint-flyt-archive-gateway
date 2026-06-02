@@ -32,7 +32,7 @@ class CaseControllerTest {
     }
 
     @Test
-    fun getCaseTitleGivenFoundCaseShouldReturn200WithCaseTitle() {
+    fun `getCaseTitle returns 200 with case title when case is found`() {
         whenever(sakResource.tittel).thenReturn("Test tittel")
         whenever(caseRequestService.getByMappeId("2023/102")).thenReturn(sakResource)
 
@@ -47,7 +47,7 @@ class CaseControllerTest {
     }
 
     @Test
-    fun getCaseTitleGivenNoFoundCaseShouldReturn404() {
+    fun `getCaseTitle returns 404 when case is not found`() {
         whenever(caseRequestService.getByMappeId("2023/101")).thenReturn(null)
 
         assertThatThrownBy { caseController.getCaseTitle("2023", "101") }

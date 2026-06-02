@@ -45,7 +45,7 @@ class MappingTemplateSerializationTest {
         )
 
     @Test
-    fun createTemplateShouldBeSerializable() {
+    fun `the created template is serializable`() {
         val template = archiveTemplateService.createTemplate()
 
         assertThatCode { objectMapper.writeValueAsString(template) }.doesNotThrowAnyException()

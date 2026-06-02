@@ -56,7 +56,7 @@ class CaseSearchParametersServiceTest {
     }
 
     @Test
-    fun shouldCreateFilterQueryParamValueForArkivdel() {
+    fun `creates a filter query param value for arkivdel`() {
         val arkivdel =
             ArkivdelResource().apply {
                 systemId = Identifikator().apply { identifikatorverdi = "arkivdelId" }
@@ -72,7 +72,7 @@ class CaseSearchParametersServiceTest {
     }
 
     @Test
-    fun shouldCreateFilterQueryParamValueForAdministrativEnhetAndTilgangsrestriksjon() {
+    fun `creates a filter query param value for administrativEnhet and tilgangsrestriksjon`() {
         val administrativEnhetResource =
             AdministrativEnhetResource().apply {
                 systemId =
@@ -105,7 +105,7 @@ class CaseSearchParametersServiceTest {
     }
 
     @Test
-    fun shouldCreateFilterQueryParamValueForKlasseringKlassifikasjonssystem() {
+    fun `creates a filter query param value for klassering klassifikasjonssystem`() {
         val klassifikasjonssystemResource =
             KlassifikasjonssystemResource().apply {
                 systemId =
@@ -141,7 +141,7 @@ class CaseSearchParametersServiceTest {
     }
 
     @Test
-    fun givenKlasseringRekkefolgeOutOfBoundsShouldThrowKlasseOrderOutOfBoundsException() {
+    fun `given klassering rekkefolge out of bounds, throws KlasseOrderOutOfBoundsException`() {
         val sakDto =
             SakDto
                 .builder()
@@ -168,7 +168,7 @@ class CaseSearchParametersServiceTest {
     }
 
     @Test
-    fun givenMissingKlasseringOrderShouldThrowSearchKlasseOrderNotFoundInCaseException() {
+    fun `given a missing klassering order, throws SearchKlasseOrderNotFoundInCaseException`() {
         val sakDto =
             SakDto
                 .builder()

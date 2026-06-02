@@ -17,7 +17,7 @@ import org.springframework.scheduling.config.CronTask
 import org.springframework.scheduling.config.IntervalTask
 import org.springframework.scheduling.config.ScheduledTaskRegistrar
 import org.springframework.scheduling.support.CronTrigger
-import org.springframework.web.reactive.function.client.WebClientException
+import org.springframework.web.client.RestClientException
 import java.time.Duration
 import java.time.LocalTime
 import java.util.Random
@@ -164,7 +164,7 @@ class FintResourcePublishingConfiguration(
         resourceClass: Class<Any>,
     ): List<Any> =
         try {
-            val lastUpdatedTimestampFromServer = fintArchiveResourceClient.getLastUpdated(urlResourcePath).block()
+            val lastUpdatedTimestampFromServer = fintArchiveResourceClient.getLastUpdated(urlResourcePath)
             if (lastUpdatedTimestampFromServer == null) {
                 log.warn("Last-updated response was null for {}", urlResourcePath)
                 return emptyList()
@@ -179,13 +179,10 @@ class FintResourcePublishingConfiguration(
             val resources =
                 fintArchiveResourceClient
                     .getResourcesSince(urlResourcePath, resourceClass, lastUpdatedTimestampForPulledResources)
-                    .collectList()
-                    .block()
-                    .orEmpty()
 
             lastUpdatedTimestampForPulledResourcesPerResourcePath[urlResourcePath] = lastUpdatedTimestampFromServer
             resources
-        } catch (error: WebClientException) {
+        } catch (error: RestClientException) {
             log.error("Could not pull entities from url resource path={}", urlResourcePath, error)
             emptyList()
         }

@@ -25,12 +25,12 @@ class PartMappingServiceTest {
     private lateinit var partMappingService: PartMappingService
 
     @Test
-    fun testToPartResourceNullDto() {
+    fun `given a null dto, returns null`() {
         assertThat(partMappingService.toPartResource(null)).isNull()
     }
 
     @Test
-    fun testToPartResource() {
+    fun `maps to PartResource`() {
         val partDto =
             PartDto
                 .builder()

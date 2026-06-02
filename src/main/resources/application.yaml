@@ -13,29 +13,18 @@ novari:
           topic:
             instance-processing-events-retention-time: "4d"
 
-        web-client:
-          connection-max-life-time: "30m"
-          connection-max-idle-time: "3m"
+        http-client:
           connect-timeout: "2m"
           default-response-timeout: "130s"
 
         dispatch:
           fint-client:
-            post-file-timeout: "130s"
-            post-case-timeout: "130s"
-            post-record-timeout: "130s"
-            get-status-timeout: "130s"
             created-location-poll-total-timeout: "30m"
             created-location-poll-backoff-min-delay: "1s"
             created-location-poll-backoff-max-delay: "10s"
-          flyt-file-client:
-            get-file-timeout: "2m"
 
         resource:
           fint-client:
-            get-resource-timeout: "130s"
-            get-resources-last-updated-timeout: "130s"
-            find-cases-with-filter-timeout: "130s"
             find-cases-with-filter-max-attempts: 10
             find-cases-with-filter-backoff-retry-min-delay: "5s"
             find-cases-with-filter-backoff-retry-max-delay: "60s"

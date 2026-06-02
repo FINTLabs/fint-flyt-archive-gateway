@@ -14,12 +14,12 @@ class SkjermingMappingServiceTest {
     }
 
     @Test
-    fun toSkjermingResourceNullDtoReturnsNull() {
+    fun `given a null dto, returns null`() {
         assertThat(skjermingMappingService.toSkjermingResource(null)).isNull()
     }
 
     @Test
-    fun toSkjermingResourceValidDtoReturnsResource() {
+    fun `given a valid dto, maps to SkjermingResource`() {
         val skjermingDto =
             SkjermingDto
                 .builder()

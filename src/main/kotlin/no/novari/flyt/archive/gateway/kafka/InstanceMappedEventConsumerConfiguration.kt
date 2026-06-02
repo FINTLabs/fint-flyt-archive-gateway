@@ -39,34 +39,35 @@ class InstanceMappedEventConsumerConfiguration {
                         consumerRecord.key(),
                         instanceFlowConsumerRecord.instanceFlowHeaders,
                     )
-                    dispatchService
-                        .process(instanceFlowConsumerRecord.instanceFlowHeaders, consumerRecord.value())
-                        .doOnNext { dispatchResult ->
-                            when (dispatchResult.status) {
-                                DispatchStatus.ACCEPTED -> {
-                                    instanceDispatchedEventProducerService.publish(
-                                        instanceFlowConsumerRecord.instanceFlowHeaders
-                                            .toBuilder()
-                                            .archiveInstanceId(dispatchResult.archiveCaseAndRecordsIds)
-                                            .build(),
-                                    )
-                                }
+                    val dispatchResult =
+                        dispatchService.process(
+                            instanceFlowConsumerRecord.instanceFlowHeaders,
+                            consumerRecord.value(),
+                        )
+                    when (dispatchResult.status) {
+                        DispatchStatus.ACCEPTED -> {
+                            instanceDispatchedEventProducerService.publish(
+                                instanceFlowConsumerRecord.instanceFlowHeaders
+                                    .toBuilder()
+                                    .archiveInstanceId(dispatchResult.archiveCaseAndRecordsIds)
+                                    .build(),
+                            )
+                        }
 
-                                DispatchStatus.DECLINED -> {
-                                    instanceDispatchingErrorProducerService.publishInstanceDispatchDeclinedErrorEvent(
-                                        instanceFlowConsumerRecord.instanceFlowHeaders,
-                                        dispatchResult.errorMessage,
-                                    )
-                                }
+                        DispatchStatus.DECLINED -> {
+                            instanceDispatchingErrorProducerService.publishInstanceDispatchDeclinedErrorEvent(
+                                instanceFlowConsumerRecord.instanceFlowHeaders,
+                                dispatchResult.errorMessage,
+                            )
+                        }
 
-                                DispatchStatus.FAILED -> {
-                                    instanceDispatchingErrorProducerService.publishGeneralSystemErrorEvent(
-                                        instanceFlowConsumerRecord.instanceFlowHeaders,
-                                        dispatchResult.errorMessage,
-                                    )
-                                }
-                            }
-                        }.block()
+                        DispatchStatus.FAILED -> {
+                            instanceDispatchingErrorProducerService.publishGeneralSystemErrorEvent(
+                                instanceFlowConsumerRecord.instanceFlowHeaders,
+                                dispatchResult.errorMessage,
+                            )
+                        }
+                    }
                 },
                 ListenerConfiguration
                     .stepBuilder()

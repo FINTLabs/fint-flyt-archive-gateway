@@ -14,21 +14,18 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpStatus
 import org.springframework.http.InvalidMediaTypeException
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import reactor.core.publisher.Mono
-import reactor.netty.http.client.HttpClientRequest
-import reactor.retry.Repeat
+import org.springframework.web.client.RestClient
 import java.net.URI
-import java.time.Duration
+import java.time.Instant
 import java.util.NoSuchElementException
-import java.util.concurrent.atomic.AtomicReference
 
 @Service
 class FintArchiveDispatchClient(
     private val properties: FintArchiveDispatchClientConfigurationProperties,
-    @param:Qualifier("fintWebClient")
-    private val fintWebClient: WebClient,
+    @param:Qualifier("fintRestClient")
+    private val fintRestClient: RestClient,
     private val fintArchiveResourceClient: FintArchiveResourceClient,
     private val meterRegistry: MeterRegistry,
     private val webUtilErrorHandler: WebUtilErrorHandler,
@@ -54,71 +51,80 @@ class FintArchiveDispatchClient(
             .description("Timing poll for created location")
             .register(meterRegistry)
 
-    fun postFile(file: File): Mono<Link> =
-        Mono.defer {
-            val sample = Timer.start(meterRegistry)
+    fun postFile(file: File): Link {
+        val sample = Timer.start(meterRegistry)
+        try {
             log.info("Posting file")
-            pollForCreatedLocation(
-                fintWebClient
+            val response =
+                fintRestClient
                     .post()
                     .uri("/arkiv/noark/dokumentfil")
-                    .httpRequest { clientHttpRequest ->
-                        val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                        reactorRequest.responseTimeout(requireNotNull(properties.postFileTimeout))
-                    }.contentType(getMediaType(file.type ?: MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                    .bodyValue(requireNotNull(file.contents) { "File contents are required for dispatch" })
+                    .contentType(getMediaType(file.type ?: MediaType.APPLICATION_OCTET_STREAM_VALUE))
                     .header("Content-Disposition", "attachment; filename=${file.name.orEmpty()}")
-                    .retrieve(),
-            ).map(URI::toString)
-                .map(Link::with)
-                .doOnNext { uri -> log.info("Successfully posted file name={} uri={}", file.name, uri) }
-                .doOnError(webUtilErrorHandler::logAndSendError)
-                .doFinally { sample.stop(postFileTimer) }
+                    .body(requireNotNull(file.contents) { "File contents are required for dispatch" })
+                    .retrieve()
+                    .toBodilessEntity()
+            val createdLocation = pollAfterAcceptedResponse(response)
+            val link = Link.with(createdLocation.toString())
+            log.info("Successfully posted file name={} uri={}", file.name, createdLocation)
+            return link
+        } catch (error: Throwable) {
+            webUtilErrorHandler.logAndSendError(error)
+            throw error
+        } finally {
+            sample.stop(postFileTimer)
         }
+    }
 
-    fun postCase(sakResource: SakResource): Mono<SakResource> =
-        Mono.defer {
-            val sample = Timer.start(meterRegistry)
+    fun postCase(sakResource: SakResource): SakResource {
+        val sample = Timer.start(meterRegistry)
+        try {
             log.info("Posting case")
-            pollForCaseResult(
-                fintWebClient
+            val response =
+                fintRestClient
                     .post()
                     .uri("/arkiv/noark/sak")
-                    .httpRequest { clientHttpRequest ->
-                        val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                        reactorRequest.responseTimeout(requireNotNull(properties.postCaseTimeout))
-                    }.bodyValue(sakResource)
-                    .retrieve(),
-            ).doOnError(webUtilErrorHandler::logAndSendError)
-                .doFinally { sample.stop(postCaseTimer) }
+                    .body(sakResource)
+                    .retrieve()
+                    .toBodilessEntity()
+            return pollForCaseResult(response)
+        } catch (error: Throwable) {
+            webUtilErrorHandler.logAndSendError(error)
+            throw error
+        } finally {
+            sample.stop(postCaseTimer)
         }
+    }
 
     fun postRecord(
         caseId: String,
         journalpostResource: JournalpostResource,
-    ): Mono<JournalpostResource> =
-        Mono.defer {
-            val sample = Timer.start(meterRegistry)
+    ): JournalpostResource {
+        val sample = Timer.start(meterRegistry)
+        try {
             log.info("Posting record caseId={}", caseId)
-            pollForCaseResult(
-                fintWebClient
+            val response =
+                fintRestClient
                     .put()
                     .uri("/arkiv/noark/sak/mappeid/$caseId")
-                    .httpRequest { clientHttpRequest ->
-                        val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                        reactorRequest.responseTimeout(requireNotNull(properties.postRecordTimeout))
-                    }.bodyValue(JournalpostWrapper(journalpostResource))
-                    .retrieve(),
-            ).map { sak ->
-                val journalposts: List<JournalpostResource> = sak.journalpost?.toList() ?: emptyList()
-                journalposts
-                    .mapNotNull { journalpost ->
-                        journalpost.journalPostnummer?.let { journalpostId -> journalpostId to journalpost }
-                    }.maxByOrNull { (journalpostId, _) -> journalpostId }
-                    ?.second
-                    ?: throw NoSuchElementException("Journalpost is missing journalpostNummer for case $caseId")
-            }.doFinally { sample.stop(postRecordTimer) }
+                    .body(JournalpostWrapper(journalpostResource))
+                    .retrieve()
+                    .toBodilessEntity()
+            val sak = pollForCaseResult(response)
+            val journalposts: List<JournalpostResource> = sak.journalpost?.toList() ?: emptyList()
+            return journalposts
+                .mapNotNull { journalpost ->
+                    journalpost.journalPostnummer?.let { journalpostId -> journalpostId to journalpost }
+                }.maxByOrNull { (journalpostId, _) -> journalpostId }
+                ?.second
+                ?: throw NoSuchElementException("Journalpost is missing journalpostNummer for case $caseId")
+        } catch (error: Throwable) {
+            webUtilErrorHandler.logAndSendError(error)
+            throw error
+        } finally {
+            sample.stop(postRecordTimer)
         }
+    }
 
     private fun getMediaType(mediaType: String): MediaType =
         try {
@@ -127,102 +133,88 @@ class FintArchiveDispatchClient(
             MediaType.APPLICATION_OCTET_STREAM
         }
 
-    private fun pollForCaseResult(responseSpec: WebClient.ResponseSpec): Mono<SakResource> =
-        pollForCreatedLocation(responseSpec)
-            .flatMap(fintArchiveResourceClient::getCase)
-            .doOnError(webUtilErrorHandler::logAndSendError)
+    private fun pollForCaseResult(initialResponse: ResponseEntity<Void>): SakResource {
+        val createdLocation = pollAfterAcceptedResponse(initialResponse)
+        return fintArchiveResourceClient.getCase(createdLocation)
+    }
 
-    private fun pollForCreatedLocation(responseSpec: WebClient.ResponseSpec): Mono<URI> =
-        getStatusLocation(responseSpec)
-            .delayElement(Duration.ofMillis(200))
-            .flatMap(this::pollForCreatedLocation)
+    private fun pollAfterAcceptedResponse(initialResponse: ResponseEntity<Void>): URI {
+        val statusLocation = getStatusLocation(initialResponse)
+        Thread.sleep(200)
+        return pollForCreatedLocation(statusLocation)
+    }
 
-    private fun getStatusLocation(responseSpec: WebClient.ResponseSpec): Mono<URI> =
-        responseSpec
-            .toBodilessEntity()
-            .doOnNext { entity ->
+    private fun getStatusLocation(entity: ResponseEntity<Void>): URI {
+        log.debug(
+            "Received status response status={} location={}",
+            entity.statusCode,
+            entity.headers.location,
+        )
+        val location = entity.headers.location
+        if (entity.statusCode == HttpStatus.ACCEPTED && location != null) {
+            return location
+        }
+        throw RuntimeException(
+            "Expected 202 Accepted response with redirect header, got status=" +
+                "${entity.statusCode} location=${entity.headers.location}",
+        )
+    }
+
+    protected fun pollForCreatedLocation(statusUri: URI): URI {
+        val totalTimeout = requireNotNull(properties.createdLocationPollTotalTimeout)
+        val minDelay = requireNotNull(properties.createdLocationPollBackoffMinDelay)
+        val maxDelay = requireNotNull(properties.createdLocationPollBackoffMaxDelay)
+
+        log.info(
+            "Polling for created location statusUri={} totalTimeout={} backoffMinDelay={} backoffMaxDelay={}",
+            statusUri,
+            totalTimeout,
+            minDelay,
+            maxDelay,
+        )
+
+        val deadline = Instant.now().plus(totalTimeout)
+        var delay = minDelay
+        var lastStatus: String? = null
+
+        while (true) {
+            val sample = Timer.start(meterRegistry)
+            try {
+                val entity =
+                    fintRestClient
+                        .get()
+                        .uri(statusUri)
+                        .retrieve()
+                        .toBodilessEntity()
+                lastStatus = entity.statusCode.toString()
                 log.debug(
-                    "Received status response status={} location={}",
+                    "Poll response statusUri={} status={} location={}",
+                    statusUri,
                     entity.statusCode,
                     entity.headers.location,
                 )
-            }.handle<URI> { entity, sink ->
-                val location = entity.headers.location
-                if (entity.statusCode == HttpStatus.ACCEPTED && location != null) {
-                    sink.next(location)
-                } else {
-                    sink.error(
-                        RuntimeException(
-                            "Expected 202 Accepted response with redirect header, got status=" +
-                                "${entity.statusCode} location=${entity.headers.location}",
-                        ),
-                    )
-                }
-            }
-
-    protected fun pollForCreatedLocation(statusUri: URI): Mono<URI> {
-        val lastStatus = AtomicReference<String>()
-        return Mono
-            .defer {
-                val sample = Timer.start(meterRegistry)
-                log.info(
-                    "Polling for created location statusUri={} totalTimeout={} backoffMinDelay={} backoffMaxDelay={}",
-                    statusUri,
-                    properties.createdLocationPollTotalTimeout,
-                    properties.createdLocationPollBackoffMinDelay,
-                    properties.createdLocationPollBackoffMaxDelay,
-                )
-                fintWebClient
-                    .get()
-                    .uri(statusUri)
-                    .httpRequest { clientHttpRequest ->
-                        val reactorRequest = clientHttpRequest.getNativeRequest<HttpClientRequest>()
-                        reactorRequest.responseTimeout(requireNotNull(properties.getStatusTimeout))
-                    }.retrieve()
-                    .toBodilessEntity()
-                    .doOnNext { entity ->
-                        lastStatus.set(entity.statusCode.toString())
-                        log.debug(
-                            "Poll response statusUri={} status={} location={}",
-                            statusUri,
-                            entity.statusCode,
-                            entity.headers.location,
-                        )
-                    }.doOnError(webUtilErrorHandler::logAndSendError)
-                    .doFinally { sample.stop(pollForCreationTimer) }
-            }.handle<URI> { entity, sink ->
                 val location = entity.headers.location
                 if (entity.statusCode == HttpStatus.CREATED && location != null) {
-                    sink.next(location)
-                } else {
-                    sink.complete()
+                    return location
                 }
-            }.repeatWhenEmpty(
-                Repeat
-                    .times<URI>(Long.MAX_VALUE)
-                    .exponentialBackoff(
-                        requireNotNull(properties.createdLocationPollBackoffMinDelay),
-                        requireNotNull(properties.createdLocationPollBackoffMaxDelay),
-                    ).timeout(requireNotNull(properties.createdLocationPollTotalTimeout)),
-            ).switchIfEmpty(
-                Mono.defer<URI> {
-                    Mono.error(
-                        CreatedLocationPollTimeoutException(
-                            statusUri,
-                            requireNotNull(properties.createdLocationPollTotalTimeout),
-                            lastStatus.get(),
-                        ),
-                    )
-                },
-            ).doOnError(CreatedLocationPollTimeoutException::class.java, webUtilErrorHandler::logAndSendError)
-            .doOnError(CreatedLocationPollTimeoutException::class.java) {
-                log.warn(
-                    "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}",
-                    statusUri,
-                    properties.createdLocationPollTotalTimeout,
-                    lastStatus.get(),
-                )
+            } finally {
+                sample.stop(pollForCreationTimer)
             }
+
+            if (Instant.now().isAfter(deadline)) {
+                break
+            }
+            Thread.sleep(delay.toMillis())
+            delay = minOf(delay.multipliedBy(2), maxDelay)
+        }
+
+        log.warn(
+            "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}",
+            statusUri,
+            totalTimeout,
+            lastStatus,
+        )
+        throw CreatedLocationPollTimeoutException(statusUri, totalTimeout, lastStatus)
     }
 
     companion object {

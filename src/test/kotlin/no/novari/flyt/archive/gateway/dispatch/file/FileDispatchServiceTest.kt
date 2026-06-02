@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.file
 
-import io.netty.handler.timeout.ReadTimeoutException
 import no.novari.fint.model.resource.Link
 import no.novari.flyt.archive.gateway.dispatch.file.result.FileDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.model.File
@@ -8,6 +7,7 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.web.CreatedLocationPollTimeoutException
 import no.novari.flyt.archive.gateway.dispatch.web.FintArchiveDispatchClient
 import no.novari.flyt.archive.gateway.dispatch.web.flytfile.FlytFileClient
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -16,9 +16,9 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import reactor.core.publisher.Mono
-import reactor.test.StepVerifier
+import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.ResourceAccessException
+import java.net.http.HttpTimeoutException
 import java.util.Random
 import java.util.UUID
 
@@ -41,66 +41,61 @@ class FileDispatchServiceTest {
     }
 
     @Test
-    fun givenSuccessFromGetFileAndSuccessFromPostFileShouldReturnAcceptedResult() {
+    fun `given a successful getFile and a successful postFile, returns an accepted result`() {
         val fileMock = mockFile()
-        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(Mono.just(fileMock.file))
-        whenever(fintArchiveDispatchClient.postFile(fileMock.file)).thenReturn(Mono.just(fileMock.archiveLink))
+        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(fileMock.file)
+        whenever(fintArchiveDispatchClient.postFile(fileMock.file)).thenReturn(fileMock.archiveLink)
 
-        StepVerifier
-            .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
-            .expectNext(FileDispatchResult.accepted(fileMock.fileId, fileMock.archiveLink))
-            .verifyComplete()
+        val result = fileDispatchService.dispatch(fileMock.dokumentobjektDto)
+
+        assertThat(result).isEqualTo(FileDispatchResult.accepted(fileMock.fileId, fileMock.archiveLink))
     }
 
     @Test
-    fun givenErrorFromGetFileShouldReturnFailedCouldNotBeRetrievedResult() {
+    fun `given an error from getFile, returns a couldNotBeRetrieved result`() {
         val fileId = getUuid()
-        whenever(flytFileClient.getFile(fileId)).thenReturn(Mono.error(RuntimeException()))
+        whenever(flytFileClient.getFile(fileId)).thenThrow(RuntimeException())
 
-        StepVerifier
-            .create(fileDispatchService.dispatch(DokumentobjektDto.builder().fileId(fileId).build()))
-            .expectNext(FileDispatchResult.couldNotBeRetrieved(fileId))
-            .verifyComplete()
+        val result = fileDispatchService.dispatch(DokumentobjektDto.builder().fileId(fileId).build())
+
+        assertThat(result).isEqualTo(FileDispatchResult.couldNotBeRetrieved(fileId))
     }
 
     @Test
-    fun givenWebClientResponseExceptionFromPostFileShouldReturnDeclinedResult() {
+    fun `given a RestClientResponseException from postFile, returns a declined result`() {
         val fileMock = mockFile()
-        val error: WebClientResponseException = mock()
+        val error: HttpClientErrorException = mock()
         whenever(error.responseBodyAsString).thenReturn("test response body")
-        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(Mono.just(fileMock.file))
-        whenever(fintArchiveDispatchClient.postFile(fileMock.file)).thenReturn(Mono.error(error))
+        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(fileMock.file)
+        whenever(fintArchiveDispatchClient.postFile(fileMock.file)).thenThrow(error)
 
-        StepVerifier
-            .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
-            .expectNext(FileDispatchResult.declined(fileMock.fileId, "test response body"))
-            .verifyComplete()
+        val result = fileDispatchService.dispatch(fileMock.dokumentobjektDto)
+
+        assertThat(result).isEqualTo(FileDispatchResult.declined(fileMock.fileId, "test response body"))
     }
 
     @Test
-    fun givenTimeoutFromDispatchClientShouldReturnTimedOutResult() {
+    fun `given a read timeout from the dispatch client, returns a timed-out result`() {
         val fileMock = mockFile()
-        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(Mono.just(fileMock.file))
-        whenever(fintArchiveDispatchClient.postFile(fileMock.file)).thenReturn(Mono.error(ReadTimeoutException()))
+        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(fileMock.file)
+        whenever(fintArchiveDispatchClient.postFile(fileMock.file))
+            .thenThrow(ResourceAccessException("read timeout", HttpTimeoutException("read timeout")))
 
-        StepVerifier
-            .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
-            .expectNext(FileDispatchResult.timedOut(fileMock.fileId))
-            .verifyComplete()
+        val result = fileDispatchService.dispatch(fileMock.dokumentobjektDto)
+
+        assertThat(result).isEqualTo(FileDispatchResult.timedOut(fileMock.fileId))
     }
 
     @Test
-    fun givenCreatedLocationTimeoutFromDispatchClientShouldReturnTimedOutResult() {
+    fun `given a CreatedLocationPollTimeoutException from the dispatch client, returns a timed-out result`() {
         val fileMock = mockFile()
-        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(Mono.just(fileMock.file))
-        whenever(
-            fintArchiveDispatchClient.postFile(fileMock.file),
-        ).thenReturn(Mono.error(CreatedLocationPollTimeoutException()))
+        whenever(flytFileClient.getFile(fileMock.fileId)).thenReturn(fileMock.file)
+        whenever(fintArchiveDispatchClient.postFile(fileMock.file))
+            .thenThrow(CreatedLocationPollTimeoutException())
 
-        StepVerifier
-            .create(fileDispatchService.dispatch(fileMock.dokumentobjektDto))
-            .expectNext(FileDispatchResult.timedOut(fileMock.fileId))
-            .verifyComplete()
+        val result = fileDispatchService.dispatch(fileMock.dokumentobjektDto)
+
+        assertThat(result).isEqualTo(FileDispatchResult.timedOut(fileMock.fileId))
     }
 
     private fun mockFile(): FileMock {

@@ -21,7 +21,7 @@ class JournalpostMappingServiceTest {
         )
 
     @Test
-    fun testToJournalpostResource() {
+    fun `maps to JournalpostResource`() {
         val skjermingDto =
             SkjermingDto
                 .builder()
