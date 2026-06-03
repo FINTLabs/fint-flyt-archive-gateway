@@ -11,6 +11,8 @@ import no.novari.flyt.archive.gateway.dispatch.model.JournalpostWrapper
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.http.ContentDisposition
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.InvalidMediaTypeException
 import org.springframework.http.MediaType
@@ -18,6 +20,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
 import java.net.URI
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.util.NoSuchElementException
 
@@ -60,7 +63,7 @@ class FintArchiveDispatchClient(
                     .post()
                     .uri("/arkiv/noark/dokumentfil")
                     .contentType(getMediaType(file.type ?: MediaType.APPLICATION_OCTET_STREAM_VALUE))
-                    .header("Content-Disposition", "attachment; filename=${file.name.orEmpty()}")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDispositionHeader(file.name.orEmpty()))
                     .body(requireNotNull(file.contents) { "File contents are required for dispatch" })
                     .retrieve()
                     .toBodilessEntity()
@@ -160,7 +163,7 @@ class FintArchiveDispatchClient(
         )
     }
 
-    protected fun pollForCreatedLocation(statusUri: URI): URI {
+    internal fun pollForCreatedLocation(statusUri: URI): URI {
         val totalTimeout = requireNotNull(properties.createdLocationPollTotalTimeout)
         val minDelay = requireNotNull(properties.createdLocationPollBackoffMinDelay)
         val maxDelay = requireNotNull(properties.createdLocationPollBackoffMaxDelay)
@@ -175,7 +178,7 @@ class FintArchiveDispatchClient(
 
         val deadline = Instant.now().plus(totalTimeout)
         var delay = minDelay
-        var lastStatus: String? = null
+        var lastStatus: String?
 
         while (true) {
             val sample = Timer.start(meterRegistry)
@@ -221,3 +224,10 @@ class FintArchiveDispatchClient(
         private val log = LoggerFactory.getLogger(FintArchiveDispatchClient::class.java)
     }
 }
+
+internal fun contentDispositionHeader(fileName: String): String =
+    ContentDisposition
+        .attachment()
+        .filename(fileName, StandardCharsets.UTF_8)
+        .build()
+        .toString()

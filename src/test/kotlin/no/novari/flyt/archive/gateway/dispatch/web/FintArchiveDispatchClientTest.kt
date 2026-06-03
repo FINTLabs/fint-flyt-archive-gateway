@@ -16,6 +16,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.http.ContentDisposition
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestClient
@@ -25,7 +26,7 @@ import java.time.Duration
 class FintArchiveDispatchClientTest {
     private lateinit var fintRestClient: RestClient
     private lateinit var fintArchiveResourceClient: FintArchiveResourceClient
-    private lateinit var fintArchiveDispatchClient: TestableFintArchiveDispatchClient
+    private lateinit var fintArchiveDispatchClient: FintArchiveDispatchClient
     private lateinit var meterRegistry: MeterRegistry
     private lateinit var webUtilErrorHandler: WebUtilErrorHandler
 
@@ -42,7 +43,7 @@ class FintArchiveDispatchClientTest {
                 createdLocationPollTotalTimeout = Duration.ofMillis(1000L)
             }
         fintArchiveDispatchClient =
-            TestableFintArchiveDispatchClient(
+            FintArchiveDispatchClient(
                 properties,
                 fintRestClient,
                 fintArchiveResourceClient,
@@ -55,7 +56,7 @@ class FintArchiveDispatchClientTest {
     fun `given a created location on the first poll, returns without repeating`() {
         mockGetReturning(ResponseEntity.created(URI.create("testCreatedUri")).build())
 
-        val result = fintArchiveDispatchClient.pollForCreatedLocationPublic(URI.create("testStatusUri"))
+        val result = fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri"))
 
         assertThat(result).isEqualTo(URI.create("testCreatedUri"))
         verify(fintRestClient, times(1)).get()
@@ -65,7 +66,7 @@ class FintArchiveDispatchClientTest {
     fun `given the max polling time is exceeded, throws CreatedLocationPollTimeoutException`() {
         mockGetReturning(ResponseEntity.noContent().build())
 
-        assertThatThrownBy { fintArchiveDispatchClient.pollForCreatedLocationPublic(URI.create("testStatusUri")) }
+        assertThatThrownBy { fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri")) }
             .isInstanceOf(CreatedLocationPollTimeoutException::class.java)
             .hasMessageContaining("statusUri=testStatusUri")
             .hasMessageContaining("lastStatus=204 NO_CONTENT")
@@ -77,9 +78,21 @@ class FintArchiveDispatchClientTest {
     fun `given an error response, propagates the exception`() {
         mockGetThrowing(ResourceAccessException("test message"))
 
-        assertThatThrownBy { fintArchiveDispatchClient.pollForCreatedLocationPublic(URI.create("testStatusUri")) }
+        assertThatThrownBy { fintArchiveDispatchClient.pollForCreatedLocation(URI.create("testStatusUri")) }
             .isInstanceOf(ResourceAccessException::class.java)
             .hasMessage("test message")
+    }
+
+    @Test
+    fun `content disposition header encodes non ascii filenames as utf8`() {
+        val fileName = "Innregistrering - FIKTIVÅS TEST AS.pdf"
+
+        val header = contentDispositionHeader(fileName)
+
+        assertThat(header).contains("filename*=UTF-8''")
+        assertThat(header).contains("FIKTIV%C3%85S")
+        assertThat(header).doesNotContain("FIKTIVÅS")
+        assertThat(ContentDisposition.parse(header).filename).isEqualTo(fileName)
     }
 
     private fun mockGetReturning(response: ResponseEntity<Void>) {
@@ -100,21 +113,5 @@ class FintArchiveDispatchClientTest {
         doReturn(headersSpec).whenever(uriSpec).uri(any<URI>())
         whenever(headersSpec.retrieve()).thenReturn(responseSpec)
         doThrow(error).whenever(responseSpec).toBodilessEntity()
-    }
-
-    private class TestableFintArchiveDispatchClient(
-        properties: FintArchiveDispatchClientConfigurationProperties,
-        fintRestClient: RestClient,
-        fintArchiveResourceClient: FintArchiveResourceClient,
-        meterRegistry: MeterRegistry,
-        webUtilErrorHandler: WebUtilErrorHandler,
-    ) : FintArchiveDispatchClient(
-            properties,
-            fintRestClient,
-            fintArchiveResourceClient,
-            meterRegistry,
-            webUtilErrorHandler,
-        ) {
-        fun pollForCreatedLocationPublic(statusUri: URI) = pollForCreatedLocation(statusUri)
     }
 }
