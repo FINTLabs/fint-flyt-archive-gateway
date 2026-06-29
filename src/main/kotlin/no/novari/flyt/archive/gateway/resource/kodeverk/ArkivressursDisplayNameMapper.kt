@@ -55,8 +55,7 @@ class ArkivressursDisplayNameMapper(
         val personResource = personResourceCache.get(personResourceHref)
 
         val personnavn = personResource.navn ?: throw IllegalStateException("Person resource contains no name")
-        return listOf(personnavn.fornavn, personnavn.mellomnavn, personnavn.etternavn)
-            .filterNotNull()
+        return listOfNotNull(personnavn.fornavn, personnavn.mellomnavn, personnavn.etternavn)
             .joinToString(" ")
     }
 

@@ -12,25 +12,25 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 
 ## Architecture Overview
 
-| Component | Responsibility |
-|-----------|----------------|
-| `DispatchService` | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
-| `InstanceMappedEventConsumerConfiguration` | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services. |
-| `FintResourcePublishingConfiguration` | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics. |
-| `CaseController`/`CaseRequestService` | Serves `/internal/api/arkiv/saker/{year}/{number}/tittel`, issuing Kafka request/reply lookups against the archive adapter. |
-| `CodelistController` | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON. |
-| `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls. |
+| Component                                                      | Responsibility                                                                                                                                    |
+|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DispatchService`                                              | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
+| `InstanceMappedEventConsumerConfiguration`                     | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services.        |
+| `FintResourcePublishingConfiguration`                          | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics.        |
+| `CaseController`/`CaseRequestService`                          | Serves `/internal/api/arkiv/saker/{year}/{number}/tittel`, issuing Kafka request/reply lookups against the archive adapter.                       |
+| `CodelistController`                                           | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON.       |
+| `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls.                           |
 
 ## HTTP API
 
 Base path: `/internal/api/arkiv`
 
-| Method | Path | Description | Request body | Response |
-|--------|------|-------------|--------------|----------|
-| `GET` | `/saker/{caseYear}/{caseNumber}/tittel` | Fetches the case title for the given Noark `mappeId`. | – | `200 OK` with `{ "value": "<title>" }`; `404` if unknown. |
-| `GET` | `/kodeverk/{type}` | Returns cached kodeverk entries (administrativEnhet, arkivdel, dokumentstatus, journalposttype, etc.). | – | `200 OK` array of `ResourceReference { "id": "<selfLink>", "displayName": "[code] Name #systemId" }`. |
-| `GET` | `/kodeverk/klassifikasjonssystem` | Lists all klassifikasjonssystemer with their IDs and titles. | – | `200 OK` array. |
-| `GET` | `/kodeverk/klasse?klassifikasjonssystemLink=<link>` | Lists classes that belong to a klassifikasjonssystem link. | – | `200 OK` array; `404` if the system is missing. |
+| Method | Path                                                | Description                                                                                            | Request body | Response                                                                                              |
+|--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------|
+| `GET`  | `/saker/{caseYear}/{caseNumber}/tittel`             | Fetches the case title for the given Noark `mappeId`.                                                  | –            | `200 OK` with `{ "value": "<title>" }`; `404` if unknown.                                             |
+| `GET`  | `/kodeverk/{type}`                                  | Returns cached kodeverk entries (administrativEnhet, arkivdel, dokumentstatus, journalposttype, etc.). | –            | `200 OK` array of `ResourceReference { "id": "<selfLink>", "displayName": "[code] Name #systemId" }`. |
+| `GET`  | `/kodeverk/klassifikasjonssystem`                   | Lists all klassifikasjonssystemer with their IDs and titles.                                           | –            | `200 OK` array.                                                                                       |
+| `GET`  | `/kodeverk/klasse?klassifikasjonssystemLink=<link>` | Lists classes that belong to a klassifikasjonssystem link.                                             | –            | `200 OK` array; `404` if the system is missing.                                                       |
 
 Kodeverk endpoints share the same response contract; each list is distinct (administrativEnhet, arkivdel, arkivressurs, partrolle, korrespondanseparttype, tilknyttetregistreringsom, sakstatus, skjermingshjemmel, tilgangsrestriksjon, dokumentstatus, dokumenttype, journalstatus, journalposttype, saksmappetype, variantformat, format, tilgangsgruppe).
 
@@ -55,18 +55,18 @@ No other cron-style jobs exist; the dispatch path is fully event-driven.
 
 Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-web-resource-server`. Key properties:
 
-| Property | Description |
-|----------|-------------|
-| `fint.application-id` | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`). |
-| `fint.org-id` | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`). |
-| `novari.kafka.topic.instance-processing-events-retention-time` | Retention (hours) applied to instance-processing topics when provisioning. |
-| `novari.flyt.archive.gateway.dispatch.fint-client.*` | Timeout and polling settings for posting cases, records, and files to the archive adapter. |
-| `novari.flyt.archive.gateway.resource.publishing.*` | Window, offset, and pull cadence for resource caching and topic publishing. |
-| `novari.flyt.archive.gateway.resource.fint-client.*` | Timeouts and retry strategy for resource lookups and case searches. |
-| `novari.flyt.web-resource-server.security.api.internal.*` | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists. |
-| `spring.kafka.bootstrap-servers` | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`). |
-| `server.port` | HTTP port (8301 for local-staging). |
-| `spring.security.oauth2.client.*` | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients. |
+| Property                                                       | Description                                                                                           |
+|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| `fint.application-id`                                          | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`). |
+| `fint.org-id`                                                  | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).   |
+| `novari.kafka.topic.instance-processing-events-retention-time` | Retention (hours) applied to instance-processing topics when provisioning.                            |
+| `novari.flyt.archive.gateway.dispatch.fint-client.*`           | Timeout and polling settings for posting cases, records, and files to the archive adapter.            |
+| `novari.flyt.archive.gateway.resource.publishing.*`            | Window, offset, and pull cadence for resource caching and topic publishing.                           |
+| `novari.flyt.archive.gateway.resource.fint-client.*`           | Timeouts and retry strategy for resource lookups and case searches.                                   |
+| `novari.flyt.web-resource-server.security.api.internal.*`      | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.    |
+| `spring.kafka.bootstrap-servers`                               | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                    |
+| `server.port`                                                  | HTTP port (8301 for local-staging).                                                                   |
+| `spring.security.oauth2.client.*`                              | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                        |
 
 ## Running Locally
 

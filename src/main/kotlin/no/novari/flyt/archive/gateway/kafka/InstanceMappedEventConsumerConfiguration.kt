@@ -3,7 +3,7 @@ package no.novari.flyt.archive.gateway.kafka
 import no.novari.flyt.archive.gateway.dispatch.DispatchService
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
-import no.novari.flyt.archive.gateway.kafka.error.InstanceDispatchingErrorProducerService
+import no.novari.flyt.archive.gateway.kafka.error.InstanceErrorEventProducerService
 import no.novari.flyt.kafka.instanceflow.consuming.InstanceFlowListenerFactoryService
 import no.novari.kafka.consuming.ErrorHandlerConfiguration
 import no.novari.kafka.consuming.ErrorHandlerFactory
@@ -23,7 +23,7 @@ class InstanceMappedEventConsumerConfiguration {
         instanceFlowListenerFactoryService: InstanceFlowListenerFactoryService,
         dispatchService: DispatchService,
         instanceDispatchedEventProducerService: InstanceDispatchedEventProducerService,
-        instanceDispatchingErrorProducerService: InstanceDispatchingErrorProducerService,
+        instanceErrorEventProducerService: InstanceErrorEventProducerService,
         errorHandlerFactory: ErrorHandlerFactory,
     ): ConcurrentMessageListenerContainer<String, ArchiveInstance> =
         instanceFlowListenerFactoryService
@@ -55,14 +55,14 @@ class InstanceMappedEventConsumerConfiguration {
                         }
 
                         DispatchStatus.DECLINED -> {
-                            instanceDispatchingErrorProducerService.publishInstanceDispatchDeclinedErrorEvent(
+                            instanceErrorEventProducerService.publishInstanceDispatchDeclinedErrorEvent(
                                 instanceFlowConsumerRecord.instanceFlowHeaders,
                                 dispatchResult.errorMessage,
                             )
                         }
 
                         DispatchStatus.FAILED -> {
-                            instanceDispatchingErrorProducerService.publishGeneralSystemErrorEvent(
+                            instanceErrorEventProducerService.publishGeneralSystemErrorEvent(
                                 instanceFlowConsumerRecord.instanceFlowHeaders,
                                 dispatchResult.errorMessage,
                             )
