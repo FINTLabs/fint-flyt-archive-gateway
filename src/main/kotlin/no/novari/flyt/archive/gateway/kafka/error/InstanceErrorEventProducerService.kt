@@ -7,6 +7,8 @@ import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplate
 import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplateFactory
 import no.novari.flyt.kafka.model.Error
 import no.novari.flyt.kafka.model.ErrorCollection
+import no.novari.flyt.kafka.model.InstanceErrorEvent
+import no.novari.flyt.kafka.model.InstanceErrorOrigin
 import no.novari.kafka.topic.ErrorEventTopicService
 import no.novari.kafka.topic.configuration.EventCleanupFrequency
 import no.novari.kafka.topic.configuration.EventTopicConfiguration
@@ -15,7 +17,7 @@ import no.novari.kafka.topic.name.TopicNamePrefixParameters
 import org.springframework.stereotype.Service
 
 @Service
-class InstanceDispatchingErrorProducerService(
+class InstanceErrorEventProducerService(
     instanceFlowTemplateFactory: InstanceFlowTemplateFactory,
     errorEventTopicService: ErrorEventTopicService,
     kafkaTopicProperties: KafkaTopicProperties,
@@ -29,10 +31,10 @@ class InstanceDispatchingErrorProducerService(
                     .orgIdApplicationDefault()
                     .domainContextApplicationDefault()
                     .build(),
-            ).errorEventName("instance-dispatching-error")
+            ).errorEventName("instance-error")
             .build()
-    private val instanceFlowTemplate: InstanceFlowTemplate<ErrorCollection> =
-        instanceFlowTemplateFactory.createTemplate(ErrorCollection::class.java)
+    private val instanceFlowTemplate: InstanceFlowTemplate<InstanceErrorEvent> =
+        instanceFlowTemplateFactory.createTemplate(InstanceErrorEvent::class.java)
 
     init {
         errorEventTopicService.createOrModifyTopic(
@@ -50,25 +52,16 @@ class InstanceDispatchingErrorProducerService(
         instanceFlowHeaders: InstanceFlowHeaders,
         errorMessage: String?,
     ) {
-        instanceFlowTemplate.send(
-            InstanceFlowProducerRecord
-                .builder<ErrorCollection>()
-                .instanceFlowHeaders(instanceFlowHeaders)
-                .topicNameParameters(errorEventTopicNameParameters)
-                .value(
-                    ErrorCollection(
-                        Error
-                            .builder()
-                            .errorCode(ErrorCode.INSTANCE_DISPATCH_DECLINED_ERROR.getCode())
-                            .args(mapOf("errorMessage" to errorMessage))
-                            .build(),
-                    ),
-                ).build(),
+        publish(
+            instanceFlowHeaders,
+            ErrorCollection(
+                Error
+                    .builder()
+                    .errorCode(ErrorCode.INSTANCE_DISPATCH_DECLINED_ERROR.getCode())
+                    .args(mapOf("errorMessage" to errorMessage))
+                    .build(),
+            ),
         )
-    }
-
-    fun publishGeneralSystemErrorEvent(instanceFlowHeaders: InstanceFlowHeaders) {
-        publishGeneralSystemErrorEvent(instanceFlowHeaders, "")
     }
 
     fun publishGeneralSystemErrorEvent(
@@ -76,21 +69,29 @@ class InstanceDispatchingErrorProducerService(
         errorMessage: String?,
     ) {
         val safeErrorMessage = if (!errorMessage.isNullOrEmpty()) errorMessage else "Unknown error occurred"
+        publish(
+            instanceFlowHeaders,
+            ErrorCollection(
+                Error
+                    .builder()
+                    .errorCode(ErrorCode.GENERAL_SYSTEM_ERROR.getCode())
+                    .args(mapOf("errorMessage" to safeErrorMessage))
+                    .build(),
+            ),
+        )
+    }
 
+    private fun publish(
+        instanceFlowHeaders: InstanceFlowHeaders,
+        errors: ErrorCollection,
+    ) {
         instanceFlowTemplate.send(
             InstanceFlowProducerRecord
-                .builder<ErrorCollection>()
+                .builder<InstanceErrorEvent>()
                 .instanceFlowHeaders(instanceFlowHeaders)
                 .topicNameParameters(errorEventTopicNameParameters)
-                .value(
-                    ErrorCollection(
-                        Error
-                            .builder()
-                            .errorCode(ErrorCode.GENERAL_SYSTEM_ERROR.getCode())
-                            .args(mapOf("errorMessage" to safeErrorMessage))
-                            .build(),
-                    ),
-                ).build(),
+                .value(InstanceErrorEvent(name = InstanceErrorOrigin.DISPATCHING, errors = errors))
+                .build(),
         )
     }
 

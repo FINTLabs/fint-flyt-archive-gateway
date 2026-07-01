@@ -5,7 +5,7 @@ import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext
 import org.hibernate.validator.internal.util.CollectionHelper
 
-class UniqueKeysValidator : HibernateConstraintValidator<UniqueKeys, ObjectTemplate> {
+open class UniqueKeysValidator : HibernateConstraintValidator<UniqueKeys, ObjectTemplate> {
     override fun isValid(
         value: ObjectTemplate?,
         hibernateConstraintValidatorContext: HibernateConstraintValidatorContext,
@@ -35,7 +35,6 @@ class UniqueKeysValidator : HibernateConstraintValidator<UniqueKeys, ObjectTempl
             value.objectTemplates,
             value.objectCollectionTemplates,
         ).flatMap { it.asSequence() }
-            .filterNotNull()
             .mapNotNull(ElementTemplate<*>::elementConfig)
             .mapNotNull { it.key }
             .filterNot(checkedKeys::add)
