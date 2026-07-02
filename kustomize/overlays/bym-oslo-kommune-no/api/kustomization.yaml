@@ -7,14 +7,14 @@ resources:
 
 labels:
   - pairs:
-      app.kubernetes.io/instance: fint-flyt-archive-gateway_bym-oslo-kommune-no
+      app.kubernetes.io/instance: fint-flyt-archive-gateway_bym_oslo_kommune_no
       fintlabs.no/org-id: bym.oslo.kommune.no
 
 patches:
   - patch: |-
       - op: replace
         path: "/metadata/labels/app.kubernetes.io~1instance"
-        value: "fint-archive-gateway_bym-oslo-kommune-no"
+        value: "fint-archive-gateway_bym_oslo_kommune_no"
       - op: replace
         path: "/spec/kafka/acls/0/topic"
         value: "bym-oslo-kommune-no.flyt.*"
@@ -22,7 +22,10 @@ patches:
         path: "/spec/orgId"
         value: "bym.oslo.kommune.no"
       - op: replace
-        path: "/spec/ingress/basePath"
+        path: "/spec/ingress/routes/0/path"
+        value: "/bym-oslo-kommune-no/api/intern/arkiv"
+      - op: replace
+        path: "/spec/ingress/routes/1/path"
         value: "/bym-oslo-kommune-no/api/intern/arkiv"
       - op: replace
         path: "/spec/observability/metrics/path"
@@ -71,7 +74,7 @@ patches:
   - patch: |-
       - op: replace
         path: "/metadata/labels/app.kubernetes.io~1instance"
-        value: "fint-flyt-archive-fint-client_bym-oslo-kommune-no"
+        value: "fint-flyt-archive-fint-client_bym_oslo_kommune_no"
       - op: replace
         path: "/spec/orgId"
         value: "bym.oslo.kommune.no"

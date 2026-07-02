@@ -25,10 +25,15 @@ spec:
     hostname: flyt.vigoiks.no
     basePath: ""
   ingress:
-    enabled: true
-    basePath: path
-    middlewares:
-      - fint-flyt-auth-forward-sso
+    routes:
+      - host: flyt.vigoiks.no
+        path: path
+        headers:
+          Authorization: "re:.+"
+      - host: flyt.vigoiks.no
+        path: path
+        middlewares:
+          - fint-flyt-auth-forward-sso
   env:
     - name: JAVA_TOOL_OPTIONS
       value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0'

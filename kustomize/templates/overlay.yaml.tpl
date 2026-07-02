@@ -22,7 +22,10 @@ patches:
         path: "/spec/orgId"
         value: "$ORG_ID"
       - op: replace
-        path: "/spec/ingress/basePath"
+        path: "/spec/ingress/routes/0/path"
+        value: "$INGRESS_BASE_PATH"
+      - op: replace
+        path: "/spec/ingress/routes/1/path"
         value: "$INGRESS_BASE_PATH"
       - op: replace
         path: "/spec/observability/metrics/path"
