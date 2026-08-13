@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.resource
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePipeline
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePublishingConfigurationProperties
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
@@ -9,7 +10,6 @@ import no.novari.kafka.producing.ParameterizedTemplateFactory
 import no.novari.kafka.topic.EntityTopicService
 import no.novari.kafka.topic.configuration.EntityCleanupFrequency
 import no.novari.kafka.topic.configuration.EntityTopicConfiguration
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.scheduling.annotation.SchedulingConfigurer
@@ -77,12 +77,15 @@ class FintResourcePublishingConfiguration(
             CronTask(
                 {
                     lastUpdatedTimestampForPulledResourcesPerResourcePath.clear()
-                    log.info("Reset last updated timestamp")
+                    log.info { "Reset last updated timestamp" }
                 },
                 cronTrigger,
             ),
         )
-        log.info("Scheduled reset of last updated timestamp at {}", timeOfDayToReset)
+        log.atInfo {
+            message = "Scheduled reset of last updated timestamp at {}"
+            arguments = arrayOf(timeOfDayToReset)
+        }
 
         taskRegistrar.addFixedDelayTask(
             IntervalTask(
@@ -114,9 +117,9 @@ class FintResourcePublishingConfiguration(
     }
 
     private fun pullAllUpdatedResources() {
-        log.info("Starting pulling resources")
+        log.info { "Starting pulling resources" }
         resourcePipelines.forEach(::pullUpdatedResources)
-        log.info("Completed pulling resources")
+        log.info { "Completed pulling resources" }
     }
 
     private fun pullUpdatedResources(resourcePipeline: ResourcePipeline<Any>) {
@@ -129,13 +132,22 @@ class FintResourcePublishingConfiguration(
 
             updatedResources.forEach { resource -> handleResource(resource, resourcePipeline) }
             resourcePipeline.cacheProperties?.let { cacheProperties ->
-                log.info("{} entities cached in {}", updatedResources.size, cacheProperties.cache.alias)
+                log.atInfo {
+                    message = "{} entities cached in {}"
+                    arguments = arrayOf(updatedResources.size, cacheProperties.cache.alias)
+                }
             }
             resourcePipeline.kafkaProperties?.let { kafkaProperties ->
-                log.info("{} entities sent to {}", updatedResources.size, kafkaProperties.topicNameParameters)
+                log.atInfo {
+                    message = "{} entities sent to {}"
+                    arguments = arrayOf(updatedResources.size, kafkaProperties.topicNameParameters)
+                }
             }
         } catch (error: Exception) {
-            log.error("An error occurred processing entities", error)
+            log.atError {
+                message = "An error occurred processing entities"
+                cause = error
+            }
         }
     }
 
@@ -166,7 +178,10 @@ class FintResourcePublishingConfiguration(
         try {
             val lastUpdatedTimestampFromServer = fintArchiveResourceClient.getLastUpdated(urlResourcePath)
             if (lastUpdatedTimestampFromServer == null) {
-                log.warn("Last-updated response was null for {}", urlResourcePath)
+                log.atWarn {
+                    message = "Last-updated response was null for {}"
+                    arguments = arrayOf(urlResourcePath)
+                }
                 return emptyList()
             }
 
@@ -183,12 +198,16 @@ class FintResourcePublishingConfiguration(
             lastUpdatedTimestampForPulledResourcesPerResourcePath[urlResourcePath] = lastUpdatedTimestampFromServer
             resources
         } catch (error: RestClientException) {
-            log.error("Could not pull entities from url resource path={}", urlResourcePath, error)
+            log.atError {
+                message = "Could not pull entities from url resource path={}"
+                arguments = arrayOf(urlResourcePath)
+                cause = error
+            }
             emptyList()
         }
 
     companion object {
-        private val log = LoggerFactory.getLogger(FintResourcePublishingConfiguration::class.java)
+        private val log = KotlinLogging.logger {}
         private const val PARTITIONS = 1
     }
 }
