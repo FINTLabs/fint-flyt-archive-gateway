@@ -10,6 +10,21 @@ FINT_CLIENT_NAME="fint-flyt-archive-fint-client"
 USER_ROLE="USER"
 DEVELOPER_ROLE="DEVELOPER"
 
+OTEL_ENDPOINT_BETA="http://alloy.flais-system.svc.cluster.local:4318"
+
+# Base-URL uten /v1/traces: telemetry-starter legger på signal-stien selv.
+# Settes manuelt inntil flaiserator har støtte for det, og kun i beta der Alloy kjører.
+build_otel_env_patch() {
+  local env_path="$1"
+
+  if [[ "$env_path" != "beta" ]]; then
+    return
+  fi
+
+  printf '\n      - op: add\n        path: "/spec/env/-"\n        value:\n          name: "OTEL_EXPORTER_OTLP_ENDPOINT"\n          value: "%s"' \
+    "$OTEL_ENDPOINT_BETA"
+}
+
 extra_user_orgs_for_namespace() {
   local namespace="$1"
   case "$namespace" in
@@ -137,6 +152,7 @@ while IFS= read -r file; do
   export LIVENESS_PATH="${path_prefix}/actuator/health/liveness"
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
   export EXTRA_ENV_PATCHES="$(render_extra_env_patches "$namespace" "$env_path")"
+  export OTEL_ENV_PATCH="$(build_otel_env_patch "$env_path")"
   if ((${#additional_user_orgs[@]})); then
     AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$ORG_ID" "${additional_user_orgs[@]}")"
   else
@@ -151,7 +167,7 @@ while IFS= read -r file; do
   target_dir="$ROOT/kustomize/overlays/$dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
-  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES' \
+  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES $OTEL_ENV_PATCH' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
 done < <(find "$ROOT/kustomize/overlays" -name kustomization.yaml -print | sort)
