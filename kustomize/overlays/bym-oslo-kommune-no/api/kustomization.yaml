@@ -79,7 +79,7 @@ patches:
   - patch: |-
       - op: replace
         path: "/metadata/labels/app.kubernetes.io~1instance"
-        value: "int-flyt-archive-fint-client_bym-oslo-kommune-no"
+        value: "fint-flyt-archive-fint-client_bym-oslo-kommune-no"
       - op: replace
         path: "/spec/orgId"
         value: "bym.oslo.kommune.no"
