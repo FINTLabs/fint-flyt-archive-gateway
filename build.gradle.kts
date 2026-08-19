@@ -10,7 +10,7 @@ plugins {
 group = "no.novari"
 version = "0.0.1-SNAPSHOT"
 
-var fintResourceModelVersion = "4.0.10"
+var fintResourceModelVersion = "4.1.0"
 
 kotlin {
     jvmToolchain(25)
