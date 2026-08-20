@@ -22,6 +22,18 @@ extra_user_orgs_for_namespace() {
   esac
 }
 
+app_instance_suffix() {
+  local namespace="$1"
+  case "$namespace" in
+    bym-oslo-kommune-no)
+      printf '%s' "$namespace"
+      ;;
+    *)
+      printf '%s' "${namespace//-/_}"
+      ;;
+  esac
+}
+
 archive_base_url_for_overlay() {
   local namespace="$1"
   local env_path="$2"
@@ -102,7 +114,7 @@ while IFS= read -r file; do
     env_path=""
   fi
 
-  ns_suffix="${namespace//-/_}"
+  ns_suffix="$(app_instance_suffix "$namespace")"
   path_prefix="/$namespace"
   if [[ -n "$env_path" && "$env_path" != "api" ]]; then
     path_prefix="/${env_path}/$namespace"
