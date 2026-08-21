@@ -22,6 +22,27 @@ extra_user_orgs_for_namespace() {
   esac
 }
 
+app_instance_suffix() {
+  local namespace="$1"
+  case "$namespace" in
+    bym-oslo-kommune-no)
+      printf '%s' "$namespace"
+      ;;
+    *)
+      printf '%s' "${namespace//-/_}"
+      ;;
+  esac
+}
+
+authorized_org_id() {
+  local namespace="$1"
+  case "$namespace" in
+    *)
+      printf '%s' "${namespace//-/.}"
+      ;;
+  esac
+}
+
 archive_base_url_for_overlay() {
   local namespace="$1"
   local env_path="$2"
@@ -102,7 +123,7 @@ while IFS= read -r file; do
     env_path=""
   fi
 
-  ns_suffix="${namespace//-/_}"
+  ns_suffix="$(app_instance_suffix "$namespace")"
   path_prefix="/$namespace"
   if [[ -n "$env_path" && "$env_path" != "api" ]]; then
     path_prefix="/${env_path}/$namespace"
@@ -138,9 +159,9 @@ while IFS= read -r file; do
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
   export EXTRA_ENV_PATCHES="$(render_extra_env_patches "$namespace" "$env_path")"
   if ((${#additional_user_orgs[@]})); then
-    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$ORG_ID" "${additional_user_orgs[@]}")"
+    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$(authorized_org_id "$namespace")" "${additional_user_orgs[@]}")"
   else
-    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$ORG_ID")"
+    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$(authorized_org_id "$namespace")")"
   fi
   export AUTHORIZED_ORG_ROLE_PAIRS
   export FINT_CLIENT_NAME
