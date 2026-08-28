@@ -5,6 +5,7 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -16,7 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.doThrow
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResourceAccessException
@@ -89,6 +92,31 @@ class RecordDispatchServiceTest {
 
         assertThat(result)
             .isEqualTo(RecordDispatchResult.declined("Dokumentobjekt declined by destination with message='bad file'"))
+    }
+
+    @Test
+    fun `given invalid dokumentetsDato, returns a declined result before dispatching files`() {
+        val fileId = UUID.randomUUID()
+        val journalpostDto =
+            JournalpostDto
+                .builder()
+                .dokumentetsDato("not a date")
+                .dokumentbeskrivelse(
+                    listOf(
+                        DokumentbeskrivelseDto
+                            .builder()
+                            .dokumentobjekt(
+                                listOf(DokumentobjektDto.builder().fileId(fileId).build()),
+                            ).build(),
+                    ),
+                ).build()
+        val error = InvalidDokumentetsDatoException("not a date")
+        doThrow(error).whenever(journalpostMappingService).validate(journalpostDto)
+
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, fintArchiveDispatchClient)
     }
 
     @Test
