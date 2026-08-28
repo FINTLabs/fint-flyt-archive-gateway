@@ -1,11 +1,13 @@
 package no.novari.flyt.archive.gateway
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.ClientHttpRequestFactory
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
@@ -59,9 +61,11 @@ class FintArchiveRestClientConfiguration {
     fun fintRestClient(
         restClientBuilder: RestClient.Builder,
         clientHttpRequestFactory: ClientHttpRequestFactory,
+        objectMapper: ObjectMapper,
         @Qualifier("fintArchiveAuthorizedClientManager")
         authorizedClientManager: OAuth2AuthorizedClientManager?,
     ): RestClient {
+        val fintObjectMapper = FintArchiveObjectMapperFactory.create(objectMapper)
         authorizedClientManager?.let { manager ->
             val interceptor = OAuth2ClientHttpRequestInterceptor(manager)
             interceptor.setClientRegistrationIdResolver { requireNotNull(registrationId) }
@@ -70,7 +74,17 @@ class FintArchiveRestClientConfiguration {
 
         return restClientBuilder
             .requestFactory(clientHttpRequestFactory)
-            .baseUrl(requireNotNull(baseUrl))
+            .messageConverters { converters ->
+                converters.replaceAll { converter ->
+                    if (converter is MappingJackson2HttpMessageConverter) {
+                        MappingJackson2HttpMessageConverter(fintObjectMapper).apply {
+                            supportedMediaTypes = converter.supportedMediaTypes
+                        }
+                    } else {
+                        converter
+                    }
+                }
+            }.baseUrl(requireNotNull(baseUrl))
             .build()
     }
 }
