@@ -7,6 +7,8 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.Korrespondansepart
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.sql.Date
+import java.time.LocalDate
 
 class JournalpostMappingServiceTest {
     private val journalpostMappingService =
@@ -38,6 +40,7 @@ class JournalpostMappingServiceTest {
                 .administrativEnhet("Administrativ enhet")
                 .saksbehandler("Saksbehandler")
                 .journalstatus("Journalstatus")
+                .dokumentetsDato(LocalDate.of(2026, 8, 28))
                 .tilgangsgruppe("Tilgangsgruppe")
                 .skjerming(skjermingDto)
                 .korrespondansepart(listOf(KorrespondansepartDto.builder().korrespondanseparttype("type").build()))
@@ -52,6 +55,7 @@ class JournalpostMappingServiceTest {
         assertThat(mappedResource.administrativEnhet.first().href).isEqualTo("Administrativ enhet")
         assertThat(mappedResource.saksbehandler.first().href).isEqualTo("Saksbehandler")
         assertThat(mappedResource.journalstatus.first().href).isEqualTo("Journalstatus")
+        assertThat(mappedResource.dokumentetsDato).isEqualTo(Date.valueOf(LocalDate.of(2026, 8, 28)))
         assertThat(mappedResource.tilgangsgruppe.first().href).isEqualTo("Tilgangsgruppe")
         assertThat(mappedResource.skjerming.tilgangsrestriksjon).contains(Link.with("Tilgangsrestriksjon"))
         assertThat(mappedResource.skjerming.skjermingshjemmel).contains(Link.with("Skjermingshjemmel"))

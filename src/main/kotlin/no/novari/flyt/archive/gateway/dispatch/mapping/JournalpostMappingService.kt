@@ -4,6 +4,8 @@ import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import org.springframework.stereotype.Service
+import java.sql.Date
+import java.time.LocalDate
 import java.util.UUID
 
 @Service
@@ -24,6 +26,7 @@ class JournalpostMappingService(
             journalpostDto.saksbehandler?.let(Link::with)?.let(::addSaksbehandler)
             journalpostDto.journalposttype?.let(Link::with)?.let(::addJournalposttype)
             journalpostDto.administrativEnhet?.let(Link::with)?.let(::addAdministrativEnhet)
+            journalpostDto.dokumentetsDato?.let(::toDate)?.let(::setDokumentetsDato)
             journalpostDto.skjerming?.let(skjermingMappingService::toSkjermingResource)?.let(::setSkjerming)
             journalpostDto.korrespondansepart
                 ?.let(korrespondansepartMappingService::toKorrespondansepartResource)
@@ -32,4 +35,6 @@ class JournalpostMappingService(
                 ?.let { dokumentbeskrivelseMappingService.toDokumentbeskrivelseResource(it, fileArchiveLinkPerFileId) }
                 ?.let(::setDokumentbeskrivelse)
         }
+
+    private fun toDate(localDate: LocalDate): Date = Date.valueOf(localDate)
 }

@@ -23,6 +23,7 @@ class MappingTemplateSerializationTest {
                         DokumentobjektTemplateService(),
                         SkjermingTemplateService(),
                     ),
+                    DokumentetsDatoTemplateService(),
                     SkjermingTemplateService(),
                 ),
                 PartTemplateService(
@@ -40,6 +41,7 @@ class MappingTemplateSerializationTest {
                     DokumentobjektTemplateService(),
                     SkjermingTemplateService(),
                 ),
+                DokumentetsDatoTemplateService(),
                 SkjermingTemplateService(),
             ),
         )

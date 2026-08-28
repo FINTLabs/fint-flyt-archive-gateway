@@ -2,6 +2,7 @@ package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
+import java.time.LocalDate
 import java.util.Optional
 import kotlin.jvm.JvmName
 
@@ -18,6 +19,8 @@ data class JournalpostDto(
     val saksbehandler: String? = null,
     @get:JvmName("getJournalstatusOrNull")
     val journalstatus: String? = null,
+    @get:JvmName("getDokumentetsDatoOrNull")
+    val dokumentetsDato: LocalDate? = null,
     @get:JvmName("getTilgangsgruppeOrNull")
     val tilgangsgruppe: String? = null,
     @get:JvmName("getSkjermingOrNull")
@@ -38,6 +41,8 @@ data class JournalpostDto(
     fun getOffentligTittel(): Optional<String> = Optional.ofNullable(offentligTittel)
 
     fun getJournalstatus(): Optional<String> = Optional.ofNullable(journalstatus)
+
+    fun getDokumentetsDato(): Optional<LocalDate> = Optional.ofNullable(dokumentetsDato)
 
     fun getTilgangsgruppe(): Optional<String> = Optional.ofNullable(tilgangsgruppe)
 
@@ -66,6 +71,7 @@ data class JournalpostDto(
         private var administrativEnhet: String? = null
         private var saksbehandler: String? = null
         private var journalstatus: String? = null
+        private var dokumentetsDato: LocalDate? = null
         private var tilgangsgruppe: String? = null
         private var skjerming: SkjermingDto? = null
         private var korrespondansepart: Collection<KorrespondansepartDto>? = null
@@ -82,6 +88,8 @@ data class JournalpostDto(
         fun saksbehandler(saksbehandler: String?) = apply { this.saksbehandler = saksbehandler }
 
         fun journalstatus(journalstatus: String?) = apply { this.journalstatus = journalstatus }
+
+        fun dokumentetsDato(dokumentetsDato: LocalDate?) = apply { this.dokumentetsDato = dokumentetsDato }
 
         fun tilgangsgruppe(tilgangsgruppe: String?) = apply { this.tilgangsgruppe = tilgangsgruppe }
 
@@ -105,6 +113,7 @@ data class JournalpostDto(
                 administrativEnhet = administrativEnhet,
                 saksbehandler = saksbehandler,
                 journalstatus = journalstatus,
+                dokumentetsDato = dokumentetsDato,
                 tilgangsgruppe = tilgangsgruppe,
                 skjerming = skjerming,
                 korrespondansepart = korrespondansepart,

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 class JournalpostTemplateService(
     private val korrespondansepartTemplateService: KorrespondansepartTemplateService,
     private val dokumentbeskrivelseTemplateService: DokumentbeskrivelseTemplateService,
+    private val dokumentetsDatoTemplateService: DokumentetsDatoTemplateService,
     private val skjermingTemplateService: SkjermingTemplateService,
 ) {
     fun createTemplate(): ObjectTemplate =
@@ -89,6 +90,14 @@ class JournalpostTemplateService(
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalstatus").build()),
                     ).build(),
+            ).addTemplate(
+                ElementConfig
+                    .builder()
+                    .key("dokumentetsDato")
+                    .displayName("Dokumentets dato")
+                    .description("Dato som er påført selve dokumentet")
+                    .build(),
+                dokumentetsDatoTemplateService.createTemplate(),
             ).addTemplate(
                 ElementConfig
                     .builder()
