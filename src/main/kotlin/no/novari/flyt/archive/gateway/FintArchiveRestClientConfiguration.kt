@@ -7,7 +7,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.ClientHttpRequestFactory
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizationContext
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
@@ -65,7 +64,6 @@ class FintArchiveRestClientConfiguration {
         @Qualifier("fintArchiveAuthorizedClientManager")
         authorizedClientManager: OAuth2AuthorizedClientManager?,
     ): RestClient {
-        val fintObjectMapper = FintArchiveObjectMapperFactory.create(objectMapper)
         authorizedClientManager?.let { manager ->
             val interceptor = OAuth2ClientHttpRequestInterceptor(manager)
             interceptor.setClientRegistrationIdResolver { requireNotNull(registrationId) }
@@ -74,17 +72,7 @@ class FintArchiveRestClientConfiguration {
 
         return restClientBuilder
             .requestFactory(clientHttpRequestFactory)
-            .messageConverters { converters ->
-                converters.replaceAll { converter ->
-                    if (converter is MappingJackson2HttpMessageConverter) {
-                        MappingJackson2HttpMessageConverter(fintObjectMapper).apply {
-                            supportedMediaTypes = converter.supportedMediaTypes
-                        }
-                    } else {
-                        converter
-                    }
-                }
-            }.baseUrl(requireNotNull(baseUrl))
+            .baseUrl(requireNotNull(baseUrl))
             .build()
     }
 }
