@@ -32,7 +32,7 @@ class JournalpostDtoDeserializationTest {
     }
 
     @Test
-    fun `deserializes invalid dokumentetsDato without failing kafka deserialization`() {
+    fun `deserializes dokumentetsDato without parsing it`() {
         val journalpostDto =
             objectMapper.readValue<JournalpostDto>(
                 """

@@ -6,7 +6,6 @@ import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
-import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -29,13 +28,6 @@ class RecordDispatchService(
         journalpostDto: JournalpostDto,
     ): RecordDispatchResult {
         log.info("Dispatching record")
-
-        try {
-            journalpostMappingService.validate(journalpostDto)
-        } catch (error: InvalidDokumentetsDatoException) {
-            log.info("Record dispatch declined due to invalid dokumentetsDato", error)
-            return RecordDispatchResult.declined(error.message.orEmpty())
-        }
 
         val dokumentobjektDtos = journalpostDto.dokumentbeskrivelse?.flatMap(this::getDokumentObjektDtos).orEmpty()
         val result =
@@ -74,11 +66,13 @@ class RecordDispatchService(
         return try {
             val journalpostResource: JournalpostResource =
                 journalpostMappingService.toJournalpostResource(journalpostDto, archiveFileLinkPerFileId)
-            val resultJournalpost = fintArchiveDispatchClient.postRecord(caseId, journalpostResource)
+            val resultJournalpost =
+                fintArchiveDispatchClient.postRecord(
+                    caseId,
+                    journalpostResource,
+                    journalpostDto.dokumentetsDato,
+                )
             RecordDispatchResult.accepted(resultJournalpost.journalPostnummer)
-        } catch (error: InvalidDokumentetsDatoException) {
-            log.info("Record dispatch declined due to invalid dokumentetsDato", error)
-            RecordDispatchResult.declined(error.message.orEmpty())
         } catch (error: RestClientResponseException) {
             RecordDispatchResult.declined(error.responseBodyAsString)
         } catch (error: CreatedLocationPollTimeoutException) {

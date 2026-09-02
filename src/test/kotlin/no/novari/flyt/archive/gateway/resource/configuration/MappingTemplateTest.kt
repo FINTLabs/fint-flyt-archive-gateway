@@ -6,7 +6,6 @@ import jakarta.validation.Validator
 import no.novari.flyt.archive.gateway.template.AdresseTemplateService
 import no.novari.flyt.archive.gateway.template.ArchiveTemplateService
 import no.novari.flyt.archive.gateway.template.DokumentbeskrivelseTemplateService
-import no.novari.flyt.archive.gateway.template.DokumentetsDatoTemplateService
 import no.novari.flyt.archive.gateway.template.DokumentobjektTemplateService
 import no.novari.flyt.archive.gateway.template.JournalpostTemplateService
 import no.novari.flyt.archive.gateway.template.KlasseringTemplateService
@@ -33,7 +32,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
         ArchiveTemplateService::class,
         SearchParametersTemplateService::class,
         DokumentbeskrivelseTemplateService::class,
-        DokumentetsDatoTemplateService::class,
         DokumentobjektTemplateService::class,
         JournalpostTemplateService::class,
         KlasseringTemplateService::class,

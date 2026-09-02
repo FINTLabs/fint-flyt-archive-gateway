@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -60,7 +59,6 @@ class FintArchiveRestClientConfiguration {
     fun fintRestClient(
         restClientBuilder: RestClient.Builder,
         clientHttpRequestFactory: ClientHttpRequestFactory,
-        objectMapper: ObjectMapper,
         @Qualifier("fintArchiveAuthorizedClientManager")
         authorizedClientManager: OAuth2AuthorizedClientManager?,
     ): RestClient {

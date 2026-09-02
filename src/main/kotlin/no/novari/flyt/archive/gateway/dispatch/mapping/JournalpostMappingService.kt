@@ -11,12 +11,7 @@ class JournalpostMappingService(
     private val skjermingMappingService: SkjermingMappingService,
     private val korrespondansepartMappingService: KorrespondansepartMappingService,
     private val dokumentbeskrivelseMappingService: DokumentbeskrivelseMappingService,
-    private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
 ) {
-    fun validate(journalpostDto: JournalpostDto) {
-        journalpostDto.dokumentetsDato?.let(dokumentetsDatoMappingService::toDate)
-    }
-
     fun toJournalpostResource(
         journalpostDto: JournalpostDto,
         fileArchiveLinkPerFileId: Map<UUID, Link>,
@@ -29,7 +24,6 @@ class JournalpostMappingService(
             journalpostDto.saksbehandler?.let(Link::with)?.let(::addSaksbehandler)
             journalpostDto.journalposttype?.let(Link::with)?.let(::addJournalposttype)
             journalpostDto.administrativEnhet?.let(Link::with)?.let(::addAdministrativEnhet)
-            journalpostDto.dokumentetsDato?.let(dokumentetsDatoMappingService::toDate)?.let(::setDokumentetsDato)
             journalpostDto.skjerming?.let(skjermingMappingService::toSkjermingResource)?.let(::setSkjerming)
             journalpostDto.korrespondansepart
                 ?.let(korrespondansepartMappingService::toKorrespondansepartResource)
