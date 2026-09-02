@@ -75,7 +75,7 @@ class CodelistControllerTest {
     }
 
     @Test
-    fun `getArkivressurs returns technical id when no resource match is found`() {
+    fun `getArkivressurs returns empty split display name fields when no resource match is found`() {
         val arkivressurs =
             arkivressurs(
                 selfLink = "https://beta.felleskomponent.no/arkiv/noark/arkivressurs/systemid/18699",
@@ -94,6 +94,8 @@ class CodelistControllerTest {
                 ResourceReference(
                     id = "https://beta.felleskomponent.no/arkiv/noark/arkivressurs/systemid/18699",
                     displayName = "#18699",
+                    functionalId = "",
+                    name = "",
                     technicalId = "18699",
                 ),
             )

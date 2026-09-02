@@ -151,9 +151,9 @@ class CodelistController(
                     ResourceReference(
                         id = ResourceLinkUtil.getFirstSelfLink(arkivressurs),
                         displayName = displayNameBuilder.build(),
-                        functionalId = functionalId,
-                        name = name,
-                        technicalId = technicalId,
+                        functionalId = functionalId.orEmpty(),
+                        name = name.orEmpty(),
+                        technicalId = technicalId.orEmpty(),
                     )
                 },
         )
