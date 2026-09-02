@@ -48,8 +48,7 @@ class ArkivressursDisplayNameMapper(
     }
 
     private fun getPersonNavn(arkivressursResource: ArkivressursResource): String {
-        val personalressursResourceHref = getPersonalressursResourceHref(arkivressursResource)
-        val personalressursResource = personalressursResourceCache.get(personalressursResourceHref)
+        val personalressursResource = getPersonalressursResource(arkivressursResource)
 
         val personResourceHref = getPersonResourceHref(personalressursResource)
         val personResource = personResourceCache.get(personResourceHref)
@@ -60,18 +59,82 @@ class ArkivressursDisplayNameMapper(
     }
 
     private fun getPersonalressursBrukernavn(arkivressursResource: ArkivressursResource): String {
-        val personalressursResourceHref = getPersonalressursResourceHref(arkivressursResource)
+        val personalressursResourceHref = getPersonalressursResourceHrefOrNull(arkivressursResource)
+
+        if (personalressursResourceHref != null) {
+            return personalressursResourceCache
+                .getOptional(personalressursResourceHref)
+                .map(PersonalressursResource::getBrukernavn)
+                .map(Identifikator::getIdentifikatorverdi)
+                .orElseGet {
+                    findPersonalressursResourceByAnsattnummerFromKildesystemId(arkivressursResource)
+                        ?.let(::getPersonalressursBrukernavnOrNull)
+                        ?: personalressursResourceHref.substringAfterLast('/')
+                }
+        }
+
+        return findPersonalressursResourceByAnsattnummerFromKildesystemId(arkivressursResource)
+            ?.let(::getPersonalressursBrukernavnOrNull)
+            ?: throw NoSuchLinkException.noLink(arkivressursResource, "Personalressurs")
+    }
+
+    private fun getPersonalressursResource(arkivressursResource: ArkivressursResource): PersonalressursResource {
+        val personalressursResourceHref = getPersonalressursResourceHrefOrNull(arkivressursResource)
+
+        if (personalressursResourceHref != null) {
+            return getPersonalressursResourceFromCacheOrNull(personalressursResourceHref)
+                ?: findPersonalressursResourceByAnsattnummerFromKildesystemId(arkivressursResource)
+                ?: throw NoSuchCacheEntryException(personalressursResourceHref)
+        }
+
+        return findPersonalressursResourceByAnsattnummerFromKildesystemId(arkivressursResource)
+            ?: throw NoSuchLinkException.noLink(arkivressursResource, "Personalressurs")
+    }
+
+    private fun getPersonalressursResourceFromCacheOrNull(
+        personalressursResourceHref: String,
+    ): PersonalressursResource? =
+        try {
+            personalressursResourceCache.get(personalressursResourceHref)
+        } catch (_: NoSuchCacheException) {
+            null
+        } catch (_: NoSuchCacheEntryException) {
+            null
+        }
+
+    private fun findPersonalressursResourceByAnsattnummerFromKildesystemId(
+        arkivressursResource: ArkivressursResource,
+    ): PersonalressursResource? {
+        val ansattnummer = findAnsattnummerInKildesystemId(arkivressursResource) ?: return null
 
         return personalressursResourceCache
-            .getOptional(personalressursResourceHref)
-            .map(PersonalressursResource::getBrukernavn)
-            .map(Identifikator::getIdentifikatorverdi)
-            .orElseGet { personalressursResourceHref.substringAfterLast('/') }
+            .getAllDistinct()
+            .firstOrNull { personalressursResource ->
+                personalressursResource.ansattnummer?.identifikatorverdi == ansattnummer
+            }
     }
 
     private fun getPersonalressursResourceHref(arkivressursResource: ArkivressursResource): String =
         ResourceLinkUtil.getFirstLink(arkivressursResource::getPersonalressurs, arkivressursResource, "Personalressurs")
 
+    private fun getPersonalressursResourceHrefOrNull(arkivressursResource: ArkivressursResource): String? =
+        try {
+            getPersonalressursResourceHref(arkivressursResource)
+        } catch (_: NoSuchLinkException) {
+            null
+        }
+
     private fun getPersonResourceHref(personalressursResource: PersonalressursResource): String =
         ResourceLinkUtil.getFirstLink(personalressursResource::getPerson, personalressursResource, "Person")
+
+    private fun getPersonalressursBrukernavnOrNull(personalressursResource: PersonalressursResource): String? =
+        personalressursResource.brukernavn?.identifikatorverdi
+            ?: personalressursResource.ansattnummer?.identifikatorverdi
+
+    private fun findAnsattnummerInKildesystemId(arkivressursResource: ArkivressursResource): String? =
+        arkivressursResource.kildesystemId
+            ?.identifikatorverdi
+            ?.takeIf { it.contains('_') }
+            ?.substringBefore('_')
+            ?.takeIf(String::isNotBlank)
 }

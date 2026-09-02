@@ -104,10 +104,35 @@ class ArkivressursDisplayNameMapperTest {
     }
 
     @Test
+    fun `findPersonNavn uses ansattnummer from kildesystemId when personalressurs link is missing`() {
+        val personnavn: Personnavn = mock()
+        whenever(personnavn.fornavn).thenReturn("testFornavn")
+        whenever(personnavn.etternavn).thenReturn("testEtternavn")
+
+        val arkivressursResource = setupMocksForPersonnavnFromKildesystemId(personnavn)
+
+        assertThat(arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource))
+            .contains("testFornavn testEtternavn")
+    }
+
+    @Test
     fun `findPersonalressursBrukernavn given a matching personalressurs in the cache, returns the identifikator`() {
         val arkivressursResource = setupMocksForPersonBrukernavn()
 
         assertThat(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource)).contains("12345")
+    }
+
+    @Test
+    fun `findPersonalressursBrukernavn uses ansattnummer from kildesystemId when personalressurs link is missing`() {
+        val arkivressursResource = setupArkivressursResourceWithKildesystemId()
+
+        val personalressursResource: PersonalressursResource = mock()
+        whenever(personalressursResource.ansattnummer).thenReturn(identifikator("96298"))
+        whenever(personalressursResource.brukernavn).thenReturn(identifikator("AFK01114"))
+        whenever(personalressursResourceCache.getAllDistinct()).thenReturn(listOf(personalressursResource))
+
+        assertThat(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource))
+            .contains("AFK01114")
     }
 
     private fun setupMocksForPersonnavn(personnavn: Personnavn?): ArkivressursResource {
@@ -116,6 +141,21 @@ class ArkivressursDisplayNameMapperTest {
 
         val personalressursResource: PersonalressursResource = mock()
         whenever(personalressursResourceCache.get("a/b/c/testPersonalressursLink1")).thenReturn(personalressursResource)
+        whenever(personalressursResource.person).thenReturn(listOf(Link.with("a/b/c/testPersonLink1")))
+
+        val personResource: PersonResource = mock()
+        whenever(personResourceCache.get("a/b/c/testPersonLink1")).thenReturn(personResource)
+        whenever(personResource.navn).thenReturn(personnavn)
+
+        return arkivressursResource
+    }
+
+    private fun setupMocksForPersonnavnFromKildesystemId(personnavn: Personnavn?): ArkivressursResource {
+        val arkivressursResource = setupArkivressursResourceWithKildesystemId()
+
+        val personalressursResource: PersonalressursResource = mock()
+        whenever(personalressursResource.ansattnummer).thenReturn(identifikator("96298"))
+        whenever(personalressursResourceCache.getAllDistinct()).thenReturn(listOf(personalressursResource))
         whenever(personalressursResource.person).thenReturn(listOf(Link.with("a/b/c/testPersonLink1")))
 
         val personResource: PersonResource = mock()
@@ -139,4 +179,16 @@ class ArkivressursDisplayNameMapperTest {
 
         return arkivressursResource
     }
+
+    private fun setupArkivressursResourceWithKildesystemId(): ArkivressursResource {
+        val arkivressursResource: ArkivressursResource = mock()
+        whenever(arkivressursResource.personalressurs).thenReturn(emptyList())
+        whenever(arkivressursResource.kildesystemId).thenReturn(identifikator("96298_AFK_C"))
+        return arkivressursResource
+    }
+
+    private fun identifikator(identifikatorverdi: String): Identifikator =
+        Identifikator().apply {
+            this.identifikatorverdi = identifikatorverdi
+        }
 }
