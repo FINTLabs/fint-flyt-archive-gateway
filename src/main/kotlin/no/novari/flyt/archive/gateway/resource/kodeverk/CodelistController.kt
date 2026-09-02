@@ -133,16 +133,28 @@ class CodelistController(
             arkivressursResourceCache
                 .getAllDistinct()
                 .map { arkivressurs ->
-                    val displayNameBuilder = ResourceReferenceDisplayNameBuilder().technicalId(arkivressurs.systemId)
-                    arkivressursDisplayNameMapper
-                        .findPersonalressursBrukernavn(arkivressurs)
-                        .orElse(null)
-                        ?.let(displayNameBuilder::functionalId)
-                    arkivressursDisplayNameMapper
-                        .findPersonNavn(arkivressurs)
-                        .orElse(null)
-                        ?.let(displayNameBuilder::name)
-                    mapToResourceReference(arkivressurs, displayNameBuilder)
+                    val functionalId =
+                        arkivressursDisplayNameMapper
+                            .findPersonalressursBrukernavn(arkivressurs)
+                            .orElse(null)
+                    val name =
+                        arkivressursDisplayNameMapper
+                            .findPersonNavn(arkivressurs)
+                            .orElse(null)
+                    val technicalId = arkivressurs.systemId?.identifikatorverdi
+                    val displayNameBuilder =
+                        ResourceReferenceDisplayNameBuilder()
+                            .technicalId(technicalId)
+                            .functionalId(functionalId)
+                            .name(name)
+
+                    ResourceReference(
+                        id = ResourceLinkUtil.getFirstSelfLink(arkivressurs),
+                        displayName = displayNameBuilder.build(),
+                        functionalId = functionalId,
+                        name = name,
+                        technicalId = technicalId,
+                    )
                 },
         )
 
