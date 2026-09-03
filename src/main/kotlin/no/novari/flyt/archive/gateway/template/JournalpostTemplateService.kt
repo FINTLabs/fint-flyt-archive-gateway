@@ -35,6 +35,16 @@ class JournalpostTemplateService(
             ).addTemplate(
                 ElementConfig
                     .builder()
+                    .key("dokumentetsDato")
+                    .displayName("Dokumentets dato")
+                    .description(
+                        "Dato som er påført selve dokumentet. Bruk ISO 8601 dato, f.eks. 1990-03-29. " +
+                            "Sendes videre som 1990-03-29T12:00:00Z.",
+                    ).build(),
+                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+            ).addTemplate(
+                ElementConfig
+                    .builder()
                     .key("journalposttype")
                     .displayName("Journalposttype")
                     .description("Navn på type journalpost. Tilsvarer \"Noark dokumenttype\" i Noark 4")

@@ -42,6 +42,10 @@ server:
   max-http-request-header-size: 40KB
 
 spring:
+  jackson:
+    date-format: yyyy-MM-dd'T'HH:mm:ssX
+    time-zone: UTC
+
   profiles:
     include:
       - fint-client

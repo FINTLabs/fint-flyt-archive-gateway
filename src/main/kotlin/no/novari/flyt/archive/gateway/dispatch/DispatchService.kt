@@ -1,6 +1,8 @@
 package no.novari.flyt.archive.gateway.dispatch
 
 import jakarta.validation.Valid
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service
 class DispatchService(
     private val caseDispatchService: CaseDispatchService,
     private val recordsProcessingService: RecordsProcessingService,
+    private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
 ) {
     fun process(
         instanceFlowHeaders: InstanceFlowHeaders,
@@ -22,12 +25,13 @@ class DispatchService(
 
         val dispatchResult =
             try {
-                when (archiveInstance.type) {
-                    CaseDispatchType.NEW -> processNew(archiveInstance)
-                    CaseDispatchType.BY_ID -> processById(archiveInstance)
-                    CaseDispatchType.BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance)
-                    null -> DispatchResult.failed("Missing dispatch type")
-                }
+                validateDokumentetsDato(archiveInstance)
+                    ?: when (archiveInstance.type) {
+                        CaseDispatchType.NEW -> processNew(archiveInstance)
+                        CaseDispatchType.BY_ID -> processById(archiveInstance)
+                        CaseDispatchType.BY_SEARCH_OR_NEW -> processBySearchOrNew(archiveInstance)
+                        null -> DispatchResult.failed("Missing dispatch type")
+                    }
             } catch (error: Throwable) {
                 log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, error)
                 throw error
@@ -58,6 +62,24 @@ class DispatchService(
             }
         }
     }
+
+    private fun validateDokumentetsDato(archiveInstance: ArchiveInstance): DispatchResult? {
+        for (journalpostDto in archiveInstance.getJournalpostDtosForValidation()) {
+            try {
+                dokumentetsDatoMappingService.toDokumentetsDatoDateOrNull(journalpostDto.dokumentetsDato)
+            } catch (error: InvalidDokumentetsDatoException) {
+                return DispatchResult.declined(error.message.orEmpty())
+            }
+        }
+        return null
+    }
+
+    private fun ArchiveInstance.getJournalpostDtosForValidation(): Sequence<JournalpostDto> =
+        when (type) {
+            CaseDispatchType.NEW, CaseDispatchType.BY_SEARCH_OR_NEW -> newCase?.journalpost.orEmpty().asSequence()
+            CaseDispatchType.BY_ID -> journalpost.orEmpty().asSequence()
+            null -> emptySequence()
+        }
 
     private fun processNew(archiveInstance: ArchiveInstance): DispatchResult {
         val newCase = archiveInstance.newCase ?: return DispatchResult.failed("Missing new case")

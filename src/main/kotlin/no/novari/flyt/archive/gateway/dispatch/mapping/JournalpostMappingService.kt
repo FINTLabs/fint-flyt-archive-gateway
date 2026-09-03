@@ -11,6 +11,7 @@ class JournalpostMappingService(
     private val skjermingMappingService: SkjermingMappingService,
     private val korrespondansepartMappingService: KorrespondansepartMappingService,
     private val dokumentbeskrivelseMappingService: DokumentbeskrivelseMappingService,
+    private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
 ) {
     fun toJournalpostResource(
         journalpostDto: JournalpostDto,
@@ -19,6 +20,9 @@ class JournalpostMappingService(
         JournalpostResource().apply {
             journalpostDto.tittel?.let(::setTittel)
             journalpostDto.offentligTittel?.let(::setOffentligTittel)
+            journalpostDto.dokumentetsDato
+                ?.let(dokumentetsDatoMappingService::toDokumentetsDatoDateOrNull)
+                ?.let(::setDokumentetsDato)
             journalpostDto.journalstatus?.let(Link::with)?.let(::addJournalstatus)
             journalpostDto.tilgangsgruppe?.let(Link::with)?.let(::addTilgangsgruppe)
             journalpostDto.saksbehandler?.let(Link::with)?.let(::addSaksbehandler)

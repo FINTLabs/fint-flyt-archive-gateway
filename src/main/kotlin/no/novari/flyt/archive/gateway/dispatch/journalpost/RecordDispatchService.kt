@@ -6,6 +6,7 @@ import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -63,12 +64,13 @@ class RecordDispatchService(
         journalpostDto: JournalpostDto,
         archiveFileLinkPerFileId: Map<UUID, Link>,
     ): RecordDispatchResult {
-        val journalpostResource: JournalpostResource =
-            journalpostMappingService.toJournalpostResource(journalpostDto, archiveFileLinkPerFileId)
-
         return try {
+            val journalpostResource: JournalpostResource =
+                journalpostMappingService.toJournalpostResource(journalpostDto, archiveFileLinkPerFileId)
             val resultJournalpost = fintArchiveDispatchClient.postRecord(caseId, journalpostResource)
             RecordDispatchResult.accepted(resultJournalpost.journalPostnummer)
+        } catch (error: InvalidDokumentetsDatoException) {
+            RecordDispatchResult.declined(error.message.orEmpty())
         } catch (error: RestClientResponseException) {
             RecordDispatchResult.declined(error.responseBodyAsString)
         } catch (error: CreatedLocationPollTimeoutException) {

@@ -7,6 +7,8 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.Korrespondansepart
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
+import java.util.Date
 
 class JournalpostMappingServiceTest {
     private val journalpostMappingService =
@@ -18,6 +20,7 @@ class JournalpostMappingServiceTest {
                 SkjermingMappingService(),
             ),
             DokumentbeskrivelseMappingService(DokumentObjektMappingService(), SkjermingMappingService()),
+            DokumentetsDatoMappingService(),
         )
 
     @Test
@@ -34,6 +37,7 @@ class JournalpostMappingServiceTest {
                 .builder()
                 .tittel("Tittel")
                 .offentligTittel("Offentlig tittel")
+                .dokumentetsDato("1990-03-29")
                 .journalposttype("Journalpost Type")
                 .administrativEnhet("Administrativ enhet")
                 .saksbehandler("Saksbehandler")
@@ -48,6 +52,7 @@ class JournalpostMappingServiceTest {
 
         assertThat(mappedResource.tittel).isEqualTo("Tittel")
         assertThat(mappedResource.offentligTittel).isEqualTo("Offentlig tittel")
+        assertThat(mappedResource.dokumentetsDato).isEqualTo(Date.from(Instant.parse("1990-03-29T12:00:00Z")))
         assertThat(mappedResource.journalposttype.first().href).isEqualTo("Journalpost Type")
         assertThat(mappedResource.administrativEnhet.first().href).isEqualTo("Administrativ enhet")
         assertThat(mappedResource.saksbehandler.first().href).isEqualTo("Saksbehandler")

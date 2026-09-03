@@ -5,6 +5,7 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -17,6 +18,7 @@ import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.ResourceAccessException
@@ -105,6 +107,24 @@ class RecordDispatchServiceTest {
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
 
         assertThat(result).isEqualTo(RecordDispatchResult.declined("test response body"))
+    }
+
+    @Test
+    fun `given invalid dokumentetsDato, returns a declined result`() {
+        val journalpostDto = JournalpostDto.builder().dokumentetsDato("not-a-date").build()
+        whenever(
+            journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),
+        ).thenThrow(InvalidDokumentetsDatoException("not-a-date"))
+
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(
+            RecordDispatchResult.declined(
+                "Invalid dokumentetsDato='not-a-date'. Expected ISO 8601 date " +
+                    "'yyyy-MM-dd' or date-time 'yyyy-MM-dd'T'HH:mm:ssZ'.",
+            ),
+        )
+        verifyNoInteractions(fintArchiveDispatchClient)
     }
 
     @Test

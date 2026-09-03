@@ -10,6 +10,8 @@ data class JournalpostDto(
     val tittel: String? = null,
     @get:JvmName("getOffentligTittelOrNull")
     val offentligTittel: String? = null,
+    @get:JvmName("getDokumentetsDatoOrNull")
+    val dokumentetsDato: String? = null,
     @get:JvmName("getJournalposttypeOrNull")
     val journalposttype: String? = null,
     @get:JvmName("getAdministrativEnhetOrNull")
@@ -37,6 +39,8 @@ data class JournalpostDto(
 
     fun getOffentligTittel(): Optional<String> = Optional.ofNullable(offentligTittel)
 
+    fun getDokumentetsDato(): Optional<String> = Optional.ofNullable(dokumentetsDato)
+
     fun getJournalstatus(): Optional<String> = Optional.ofNullable(journalstatus)
 
     fun getTilgangsgruppe(): Optional<String> = Optional.ofNullable(tilgangsgruppe)
@@ -62,6 +66,7 @@ data class JournalpostDto(
     class Builder {
         private var tittel: String? = null
         private var offentligTittel: String? = null
+        private var dokumentetsDato: String? = null
         private var journalposttype: String? = null
         private var administrativEnhet: String? = null
         private var saksbehandler: String? = null
@@ -74,6 +79,8 @@ data class JournalpostDto(
         fun tittel(tittel: String?) = apply { this.tittel = tittel }
 
         fun offentligTittel(offentligTittel: String?) = apply { this.offentligTittel = offentligTittel }
+
+        fun dokumentetsDato(dokumentetsDato: String?) = apply { this.dokumentetsDato = dokumentetsDato }
 
         fun journalposttype(journalposttype: String?) = apply { this.journalposttype = journalposttype }
 
@@ -101,6 +108,7 @@ data class JournalpostDto(
             JournalpostDto(
                 tittel = tittel,
                 offentligTittel = offentligTittel,
+                dokumentetsDato = dokumentetsDato,
                 journalposttype = journalposttype,
                 administrativEnhet = administrativEnhet,
                 saksbehandler = saksbehandler,
