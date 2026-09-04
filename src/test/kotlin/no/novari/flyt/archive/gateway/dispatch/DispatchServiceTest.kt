@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch
 
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -9,12 +10,15 @@ import no.novari.flyt.archive.gateway.dispatch.sak.result.CaseDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.sak.result.CaseSearchResult
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
 
 @ExtendWith(MockitoExtension::class)
@@ -28,8 +32,17 @@ class DispatchServiceTest {
     @Mock
     private lateinit var recordsProcessingService: RecordsProcessingService
 
-    @InjectMocks
     private lateinit var dispatchService: DispatchService
+
+    @BeforeEach
+    fun setup() {
+        dispatchService =
+            DispatchService(
+                caseDispatchService,
+                recordsProcessingService,
+                DokumentetsDatoFormattingService(),
+            )
+    }
 
     @Test
     fun `given case type NEW with no journalpost and an accepted dispatch, returns an accepted result with case id`() {
@@ -118,5 +131,54 @@ class DispatchServiceTest {
         val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
 
         assertThat(result).isEqualTo(DispatchResult.accepted("testCaseId"))
+    }
+
+    @Test
+    fun `given invalid dokumentetsDato for new case, returns declined result before dispatching case`() {
+        val sakDto =
+            SakDto
+                .builder()
+                .journalpost(listOf(JournalpostDto.builder().dokumentetsDato("not a date").build()))
+                .build()
+        val archiveInstance =
+            ArchiveInstance
+                .builder()
+                .type(CaseDispatchType.NEW)
+                .newCase(sakDto)
+                .build()
+
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(
+            DispatchResult.declined(
+                "Ugyldig dokumentetsDato='not a date'. Feltet må være på ISO 8601-format " +
+                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+            ),
+        )
+        verify(caseDispatchService, never()).dispatch(sakDto)
+        verifyNoInteractions(recordsProcessingService)
+    }
+
+    @Test
+    fun `given invalid dokumentetsDato for existing case, returns declined result before dispatching journalpost`() {
+        val journalpostDto = JournalpostDto.builder().dokumentetsDato("2026-02-30T09:12:48Z").build()
+        val archiveInstance =
+            ArchiveInstance
+                .builder()
+                .type(CaseDispatchType.BY_ID)
+                .caseId("testCaseId")
+                .journalpost(listOf(journalpostDto))
+                .build()
+
+        val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
+
+        assertThat(result).isEqualTo(
+            DispatchResult.declined(
+                "Ugyldig dokumentetsDato='2026-02-30T09:12:48Z'. Feltet må være på ISO 8601-format " +
+                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+            ),
+        )
+        verifyNoInteractions(caseDispatchService)
+        verify(recordsProcessingService, never()).processRecords("testCaseId", false, listOf(journalpostDto))
     }
 }

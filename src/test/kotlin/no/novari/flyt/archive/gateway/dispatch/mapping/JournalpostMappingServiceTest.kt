@@ -38,7 +38,7 @@ class JournalpostMappingServiceTest {
                 .administrativEnhet("Administrativ enhet")
                 .saksbehandler("Saksbehandler")
                 .journalstatus("Journalstatus")
-                .dokumentetsDato("2026-08-28")
+                .dokumentetsDato("2026-08-28T09:12:48Z")
                 .tilgangsgruppe("Tilgangsgruppe")
                 .skjerming(skjermingDto)
                 .korrespondansepart(listOf(KorrespondansepartDto.builder().korrespondanseparttype("type").build()))

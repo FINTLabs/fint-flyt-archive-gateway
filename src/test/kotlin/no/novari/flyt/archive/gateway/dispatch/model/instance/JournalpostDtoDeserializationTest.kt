@@ -20,7 +20,7 @@ class JournalpostDtoDeserializationTest {
                   "journalpost": [
                     {
                       "tittel": "Journalpost",
-                      "dokumentetsDato": "08/24/2026 09:12:48"
+                      "dokumentetsDato": "2026-08-24T09:12:48Z"
                     }
                   ]
                 }
@@ -28,7 +28,7 @@ class JournalpostDtoDeserializationTest {
             )
 
         assertThat(archiveInstance.type).isEqualTo(CaseDispatchType.BY_ID)
-        assertThat(archiveInstance.journalpost?.first()?.dokumentetsDato).isEqualTo("08/24/2026 09:12:48")
+        assertThat(archiveInstance.journalpost?.first()?.dokumentetsDato).isEqualTo("2026-08-24T09:12:48Z")
     }
 
     @Test

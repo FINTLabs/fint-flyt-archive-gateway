@@ -5,15 +5,16 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.web.FintArchiveDispatchClient
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.InjectMocks
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
@@ -36,8 +37,18 @@ class RecordDispatchServiceTest {
     @Mock
     private lateinit var fintArchiveDispatchClient: FintArchiveDispatchClient
 
-    @InjectMocks
     private lateinit var recordDispatchService: RecordDispatchService
+
+    @BeforeEach
+    fun setup() {
+        recordDispatchService =
+            RecordDispatchService(
+                journalpostMappingService,
+                filesDispatchService,
+                fintArchiveDispatchClient,
+                DokumentetsDatoFormattingService(),
+            )
+    }
 
     @Test
     fun `given accepted files and an accepted postRecord, returns an accepted result`() {
@@ -94,25 +105,55 @@ class RecordDispatchServiceTest {
     }
 
     @Test
-    fun `given dokumentetsDato, passes raw value to archive dispatch client`() {
+    fun `given valid dokumentetsDato, passes value to archive dispatch client`() {
         val journalpostDto =
             JournalpostDto
                 .builder()
-                .dokumentetsDato("not a date")
+                .dokumentetsDato("2026-08-24T09:12:48Z")
                 .build()
         val journalpostResource: JournalpostResource = mock()
         val resultJournalpostResource: JournalpostResource = mock()
         whenever(resultJournalpostResource.journalPostnummer).thenReturn(1L)
         whenever(journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()))
             .thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, "not a date"))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, "2026-08-24T09:12:48Z"))
             .thenReturn(resultJournalpostResource)
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
 
         assertThat(result).isEqualTo(RecordDispatchResult.accepted(1L))
-        verify(fintArchiveDispatchClient).postRecord("caseId", journalpostResource, "not a date")
+        verify(fintArchiveDispatchClient).postRecord("caseId", journalpostResource, "2026-08-24T09:12:48Z")
         verifyNoInteractions(filesDispatchService)
+    }
+
+    @Test
+    fun `given invalid dokumentetsDato, returns declined result before dispatching files`() {
+        val fileId = UUID.randomUUID()
+        val journalpostDto =
+            JournalpostDto
+                .builder()
+                .dokumentetsDato("not a date")
+                .dokumentbeskrivelse(
+                    listOf(
+                        DokumentbeskrivelseDto
+                            .builder()
+                            .dokumentobjekt(
+                                listOf(DokumentobjektDto.builder().fileId(fileId).build()),
+                            ).build(),
+                    ),
+                ).build()
+
+        val result = recordDispatchService.dispatch("caseId", journalpostDto)
+
+        assertThat(result).isEqualTo(
+            RecordDispatchResult.declined(
+                "Ugyldig dokumentetsDato='not a date'. Feltet må være på ISO 8601-format " +
+                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+            ),
+        )
+        verifyNoInteractions(filesDispatchService)
+        verifyNoInteractions(journalpostMappingService)
+        verifyNoInteractions(fintArchiveDispatchClient)
     }
 
     @Test

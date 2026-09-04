@@ -103,13 +103,13 @@ class FintArchiveDispatchClientTest {
     }
 
     @Test
-    fun `journalpost wrapper sends dokumentetsDato as the raw mapped string`() {
+    fun `journalpost wrapper sends provided dokumentetsDato string`() {
         val journalpostResource =
             JournalpostResource().apply {
                 tittel = "Tittel"
             }
 
-        val wrapper = fintArchiveDispatchClient.createJournalpostWrapper(journalpostResource, "03/04/2026")
+        val wrapper = fintArchiveDispatchClient.createJournalpostWrapper(journalpostResource, "2026-08-24T09:12:48Z")
 
         val journalpostNode =
             objectMapper
@@ -117,7 +117,7 @@ class FintArchiveDispatchClientTest {
                 .get("journalpost")
                 .get(0)
         assertThat(journalpostNode.get("tittel").textValue()).isEqualTo("Tittel")
-        assertThat(journalpostNode.get("dokumentetsDato").textValue()).isEqualTo("03/04/2026")
+        assertThat(journalpostNode.get("dokumentetsDato").textValue()).isEqualTo("2026-08-24T09:12:48Z")
     }
 
     @Test
