@@ -42,6 +42,9 @@ server:
   max-http-request-header-size: 40KB
 
 spring:
+  application:
+    name: ${fint.application-id}
+
   profiles:
     include:
       - fint-client

@@ -1,12 +1,12 @@
 package no.novari.flyt.archive.gateway.dispatch
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.validation.Valid
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.sak.CaseDispatchService
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -18,7 +18,10 @@ class DispatchService(
         instanceFlowHeaders: InstanceFlowHeaders,
         @Valid archiveInstance: ArchiveInstance,
     ): DispatchResult {
-        log.info("Dispatching instance with headers={}", instanceFlowHeaders)
+        log.atInfo {
+            message = "Dispatching instance with headers={}"
+            arguments = arrayOf(instanceFlowHeaders)
+        }
 
         val dispatchResult =
             try {
@@ -29,7 +32,11 @@ class DispatchService(
                     null -> DispatchResult.failed("Missing dispatch type")
                 }
             } catch (error: Throwable) {
-                log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders, error)
+                log.atError {
+                    message = "Failed to dispatch instance with headers={}"
+                    arguments = arrayOf(instanceFlowHeaders)
+                    cause = error
+                }
                 throw error
             }
 
@@ -43,18 +50,24 @@ class DispatchService(
     ) {
         when (dispatchResult.status) {
             DispatchStatus.ACCEPTED -> {
-                log.info("Successfully dispatched instance with headers={}", instanceFlowHeaders)
+                log.atInfo {
+                    message = "Successfully dispatched instance with headers={}"
+                    arguments = arrayOf(instanceFlowHeaders)
+                }
             }
 
             DispatchStatus.DECLINED -> {
-                log.info(
-                    "Dispatch was declined for instance with headers={}",
-                    instanceFlowHeaders,
-                )
+                log.atInfo {
+                    message = "Dispatch was declined for instance with headers={}"
+                    arguments = arrayOf(instanceFlowHeaders)
+                }
             }
 
             DispatchStatus.FAILED -> {
-                log.error("Failed to dispatch instance with headers={}", instanceFlowHeaders)
+                log.atError {
+                    message = "Failed to dispatch instance with headers={}"
+                    arguments = arrayOf(instanceFlowHeaders)
+                }
             }
         }
     }
@@ -111,13 +124,16 @@ class DispatchService(
                     }
 
                     archiveCaseIds.isEmpty() -> {
-                        log.info("Found no cases")
+                        log.info { "Found no cases" }
                         processNew(archiveInstance)
                     }
 
                     else -> {
                         val archiveCaseId = archiveCaseIds.first()
-                        log.info("Found case with id='{}'", archiveCaseId)
+                        log.atInfo {
+                            message = "Found case with id='{}'"
+                            arguments = arrayOf(archiveCaseId)
+                        }
 
                         if (!journalpostDtos.isNullOrEmpty()) {
                             recordsProcessingService.processRecords(archiveCaseId, false, journalpostDtos)
@@ -139,6 +155,6 @@ class DispatchService(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(DispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

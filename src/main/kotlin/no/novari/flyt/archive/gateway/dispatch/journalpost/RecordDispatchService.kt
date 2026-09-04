@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch.journalpost
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
@@ -12,7 +13,6 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.web.CreatedLocationPollTimeoutException
 import no.novari.flyt.archive.gateway.dispatch.web.FintArchiveDispatchClient
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
 import java.util.UUID
@@ -27,7 +27,7 @@ class RecordDispatchService(
         caseId: String,
         journalpostDto: JournalpostDto,
     ): RecordDispatchResult {
-        log.info("Dispatching record")
+        log.info { "Dispatching record" }
 
         val dokumentobjektDtos = journalpostDto.dokumentbeskrivelse?.flatMap(this::getDokumentObjektDtos).orEmpty()
         val result =
@@ -51,7 +51,10 @@ class RecordDispatchService(
                     }
                 }
             }
-        log.info("Dispatch result={}", result)
+        log.atInfo {
+            message = "Dispatch result={}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
@@ -72,20 +75,29 @@ class RecordDispatchService(
         } catch (error: RestClientResponseException) {
             RecordDispatchResult.declined(error.responseBodyAsString)
         } catch (error: CreatedLocationPollTimeoutException) {
-            log.error("Record dispatch timed out", error)
+            log.atError {
+                message = "Record dispatch timed out"
+                cause = error
+            }
             RecordDispatchResult.timedOut()
         } catch (error: Throwable) {
             if (isReadTimeout(error)) {
-                log.error("Record dispatch timed out", error)
+                log.atError {
+                    message = "Record dispatch timed out"
+                    cause = error
+                }
                 RecordDispatchResult.timedOut()
             } else {
-                log.error("Failed to post record", error)
+                log.atError {
+                    message = "Failed to post record"
+                    cause = error
+                }
                 RecordDispatchResult.failed("Failed to post record")
             }
         }
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(RecordDispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }
