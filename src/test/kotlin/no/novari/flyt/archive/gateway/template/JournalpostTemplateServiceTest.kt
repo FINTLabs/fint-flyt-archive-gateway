@@ -29,7 +29,7 @@ class JournalpostTemplateServiceTest {
         assertThat(dokumentetsDatoTemplate.elementConfig?.displayName).isEqualTo("Dokumentets dato")
         assertThat(dokumentetsDatoTemplate.elementConfig?.description)
             .isEqualTo(
-                "Dato som er påført selve dokumentet. Må være på ISO 8601-format YYYY-MM-DDThh:mm:ssZ.",
+                "Dato som er påført selve dokumentet. Må være på ISO 8601-format YYYY-MM-DD eller YYYY-MM-DDThh:mm:ssZ.",
             )
         assertThat(dokumentetsDatoTemplate.template?.type).isEqualTo(ValueTemplate.Type.DYNAMIC_STRING)
     }
