@@ -1,5 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.web
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import no.novari.fint.model.resource.Link
@@ -32,6 +34,7 @@ class FintArchiveDispatchClient(
     private val fintArchiveResourceClient: FintArchiveResourceClient,
     private val meterRegistry: MeterRegistry,
     private val webUtilErrorHandler: WebUtilErrorHandler,
+    private val objectMapper: ObjectMapper,
 ) {
     private val postFileTimer: Timer =
         Timer
@@ -102,6 +105,7 @@ class FintArchiveDispatchClient(
     fun postRecord(
         caseId: String,
         journalpostResource: JournalpostResource,
+        dokumentetsDato: String?,
     ): JournalpostResource {
         val sample = Timer.start(meterRegistry)
         try {
@@ -110,7 +114,7 @@ class FintArchiveDispatchClient(
                 fintRestClient
                     .put()
                     .uri("/arkiv/noark/sak/mappeid/$caseId")
-                    .body(JournalpostWrapper(journalpostResource))
+                    .body(createJournalpostWrapper(journalpostResource, dokumentetsDato))
                     .retrieve()
                     .toBodilessEntity()
             val sak = pollForCaseResult(response)
@@ -127,6 +131,16 @@ class FintArchiveDispatchClient(
         } finally {
             sample.stop(postRecordTimer)
         }
+    }
+
+    internal fun createJournalpostWrapper(
+        journalpostResource: JournalpostResource,
+        dokumentetsDato: String?,
+    ): JournalpostWrapper {
+        val journalpostNode = objectMapper.valueToTree<ObjectNode>(journalpostResource)
+        journalpostNode.remove(DOKUMENTETS_DATO_FIELD)
+        dokumentetsDato?.let { journalpostNode.put(DOKUMENTETS_DATO_FIELD, it) }
+        return JournalpostWrapper(listOf(journalpostNode))
     }
 
     private fun getMediaType(mediaType: String): MediaType =
@@ -221,6 +235,7 @@ class FintArchiveDispatchClient(
     }
 
     companion object {
+        private const val DOKUMENTETS_DATO_FIELD = "dokumentetsDato"
         private val log = LoggerFactory.getLogger(FintArchiveDispatchClient::class.java)
     }
 }

@@ -92,6 +92,15 @@ class JournalpostTemplateService(
             ).addTemplate(
                 ElementConfig
                     .builder()
+                    .key("dokumentetsDato")
+                    .displayName("Dokumentets dato")
+                    .description(
+                        "Dato som er påført selve dokumentet. Må være på ISO 8601-format YYYY-MM-DD eller YYYY-MM-DDThh:mm:ssZ.",
+                    ).build(),
+                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+            ).addTemplate(
+                ElementConfig
+                    .builder()
                     .key("tilgangsgruppe")
                     .displayName("Tilgangsgruppe")
                     .description(

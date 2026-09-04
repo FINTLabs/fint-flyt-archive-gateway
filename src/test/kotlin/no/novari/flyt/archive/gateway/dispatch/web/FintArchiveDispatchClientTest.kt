@@ -1,7 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch.web
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.WebUtilErrorHandler
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import org.assertj.core.api.Assertions.assertThat
@@ -29,6 +33,7 @@ class FintArchiveDispatchClientTest {
     private lateinit var fintArchiveDispatchClient: FintArchiveDispatchClient
     private lateinit var meterRegistry: MeterRegistry
     private lateinit var webUtilErrorHandler: WebUtilErrorHandler
+    private lateinit var objectMapper: ObjectMapper
 
     @BeforeEach
     fun setup() {
@@ -36,6 +41,7 @@ class FintArchiveDispatchClientTest {
         fintArchiveResourceClient = mock()
         meterRegistry = SimpleMeterRegistry()
         webUtilErrorHandler = mock()
+        objectMapper = jacksonObjectMapper()
         val properties =
             FintArchiveDispatchClientConfigurationProperties().apply {
                 createdLocationPollBackoffMinDelay = Duration.ofMillis(100L)
@@ -49,6 +55,7 @@ class FintArchiveDispatchClientTest {
                 fintArchiveResourceClient,
                 meterRegistry,
                 webUtilErrorHandler,
+                objectMapper,
             )
     }
 
@@ -93,6 +100,36 @@ class FintArchiveDispatchClientTest {
         assertThat(header).contains("FIKTIV%C3%85S")
         assertThat(header).doesNotContain("FIKTIVÅS")
         assertThat(ContentDisposition.parse(header).filename).isEqualTo(fileName)
+    }
+
+    @Test
+    fun `journalpost wrapper sends provided dokumentetsDato string`() {
+        val journalpostResource =
+            JournalpostResource().apply {
+                tittel = "Tittel"
+            }
+
+        val wrapper = fintArchiveDispatchClient.createJournalpostWrapper(journalpostResource, "2026-08-24T09:12:48Z")
+
+        val journalpostNode =
+            objectMapper
+                .valueToTree<JsonNode>(wrapper)
+                .get("journalpost")
+                .get(0)
+        assertThat(journalpostNode.get("tittel").textValue()).isEqualTo("Tittel")
+        assertThat(journalpostNode.get("dokumentetsDato").textValue()).isEqualTo("2026-08-24T09:12:48Z")
+    }
+
+    @Test
+    fun `journalpost wrapper omits dokumentetsDato when it is not mapped`() {
+        val wrapper = fintArchiveDispatchClient.createJournalpostWrapper(JournalpostResource(), null)
+
+        val journalpostNode =
+            objectMapper
+                .valueToTree<JsonNode>(wrapper)
+                .get("journalpost")
+                .get(0)
+        assertThat(journalpostNode.has("dokumentetsDato")).isFalse()
     }
 
     private fun mockGetReturning(response: ResponseEntity<Void>) {
