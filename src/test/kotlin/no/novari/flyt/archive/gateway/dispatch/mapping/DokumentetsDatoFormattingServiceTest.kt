@@ -15,10 +15,24 @@ class DokumentetsDatoFormattingServiceTest {
     }
 
     @Test
+    fun `given ISO 8601 date without time, returns date at start of day`() {
+        val result = dokumentetsDatoFormattingService.validateAndFormatOrNull("2026-08-24")
+
+        assertThat(result).isEqualTo("2026-08-24T00:00:00Z")
+    }
+
+    @Test
     fun `given date time with surrounding whitespace, returns trimmed ISO 8601 date time`() {
         val result = dokumentetsDatoFormattingService.validateAndFormatOrNull(" 2026-08-24T09:12:48Z ")
 
         assertThat(result).isEqualTo("2026-08-24T09:12:48Z")
+    }
+
+    @Test
+    fun `given date without time with surrounding whitespace, returns date at start of day`() {
+        val result = dokumentetsDatoFormattingService.validateAndFormatOrNull(" 2026-08-24 ")
+
+        assertThat(result).isEqualTo("2026-08-24T00:00:00Z")
     }
 
     @Test
@@ -29,23 +43,23 @@ class DokumentetsDatoFormattingServiceTest {
     }
 
     @Test
-    fun `given date without time, throws invalid date exception`() {
-        assertThatThrownBy {
-            dokumentetsDatoFormattingService.validateAndFormatOrNull("2026-08-24")
-        }.isInstanceOf(InvalidDokumentetsDatoException::class.java)
-            .hasMessage(
-                "Ugyldig dokumentetsDato='2026-08-24'. Feltet må være på ISO 8601-format " +
-                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
-            )
-    }
-
-    @Test
-    fun `given invalid calendar date, throws invalid date exception`() {
+    fun `given invalid calendar date time, throws invalid date exception`() {
         assertThatThrownBy {
             dokumentetsDatoFormattingService.validateAndFormatOrNull("2026-02-30T09:12:48Z")
         }.isInstanceOf(InvalidDokumentetsDatoException::class.java)
             .hasMessage(
                 "Ugyldig dokumentetsDato='2026-02-30T09:12:48Z'. Feltet må være på ISO 8601-format " +
+                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+            )
+    }
+
+    @Test
+    fun `given invalid calendar date without time, throws invalid date exception`() {
+        assertThatThrownBy {
+            dokumentetsDatoFormattingService.validateAndFormatOrNull("2026-02-30")
+        }.isInstanceOf(InvalidDokumentetsDatoException::class.java)
+            .hasMessage(
+                "Ugyldig dokumentetsDato='2026-02-30'. Feltet må være på ISO 8601-format " +
                     "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
             )
     }
