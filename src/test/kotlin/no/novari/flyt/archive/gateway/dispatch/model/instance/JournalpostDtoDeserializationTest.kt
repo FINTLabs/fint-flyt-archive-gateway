@@ -10,7 +10,7 @@ class JournalpostDtoDeserializationTest {
     private val objectMapper = jacksonObjectMapper()
 
     @Test
-    fun `deserializes dokumentetsDato from mapped instance date time`() {
+    fun `deserializes dokumentetsDato from mapped instance date`() {
         val archiveInstance =
             objectMapper.readValue<ArchiveInstance>(
                 """
@@ -20,7 +20,7 @@ class JournalpostDtoDeserializationTest {
                   "journalpost": [
                     {
                       "tittel": "Journalpost",
-                      "dokumentetsDato": "2026-08-24T09:12:48Z"
+                      "dokumentetsDato": "2026-08-24"
                     }
                   ]
                 }
@@ -28,7 +28,7 @@ class JournalpostDtoDeserializationTest {
             )
 
         assertThat(archiveInstance.type).isEqualTo(CaseDispatchType.BY_ID)
-        assertThat(archiveInstance.journalpost?.first()?.dokumentetsDato).isEqualTo("2026-08-24T09:12:48Z")
+        assertThat(archiveInstance.journalpost?.first()?.dokumentetsDato).isEqualTo("2026-08-24")
     }
 
     @Test

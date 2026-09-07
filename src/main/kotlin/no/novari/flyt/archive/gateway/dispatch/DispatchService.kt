@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch
 
 import jakarta.validation.Valid
-import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service
 class DispatchService(
     private val caseDispatchService: CaseDispatchService,
     private val recordsProcessingService: RecordsProcessingService,
-    private val dokumentetsDatoFormattingService: DokumentetsDatoFormattingService,
+    private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
 ) {
     fun process(
         instanceFlowHeaders: InstanceFlowHeaders,
@@ -66,7 +66,7 @@ class DispatchService(
     private fun validateDokumentetsDato(archiveInstance: ArchiveInstance): DispatchResult? {
         for (journalpostDto in archiveInstance.getJournalpostDtosForValidation()) {
             try {
-                dokumentetsDatoFormattingService.validateAndFormatOrNull(journalpostDto.dokumentetsDato)
+                dokumentetsDatoMappingService.toDateOrNull(journalpostDto.dokumentetsDato)
             } catch (error: InvalidDokumentetsDatoException) {
                 return DispatchResult.declined(error.message.orEmpty())
             }

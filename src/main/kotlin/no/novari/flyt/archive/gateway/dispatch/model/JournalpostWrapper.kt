@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.dispatch.model
 
-import com.fasterxml.jackson.databind.JsonNode
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 
 data class JournalpostWrapper(
-    val journalpost: Collection<JsonNode>,
+    val journalpost: Collection<JournalpostResource>,
 )

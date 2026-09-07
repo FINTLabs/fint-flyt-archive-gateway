@@ -6,7 +6,7 @@ import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
-import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
@@ -24,7 +24,7 @@ class RecordDispatchService(
     private val journalpostMappingService: JournalpostMappingService,
     private val filesDispatchService: FilesDispatchService,
     private val fintArchiveDispatchClient: FintArchiveDispatchClient,
-    private val dokumentetsDatoFormattingService: DokumentetsDatoFormattingService,
+    private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
 ) {
     fun dispatch(
         caseId: String,
@@ -32,16 +32,15 @@ class RecordDispatchService(
     ): RecordDispatchResult {
         log.info("Dispatching record")
 
-        val dokumentetsDato =
-            try {
-                dokumentetsDatoFormattingService.validateAndFormatOrNull(journalpostDto.dokumentetsDato)
-            } catch (error: InvalidDokumentetsDatoException) {
-                return RecordDispatchResult.declined(error.message.orEmpty())
-            }
+        try {
+            dokumentetsDatoMappingService.toDateOrNull(journalpostDto.dokumentetsDato)
+        } catch (error: InvalidDokumentetsDatoException) {
+            return RecordDispatchResult.declined(error.message.orEmpty())
+        }
         val dokumentobjektDtos = journalpostDto.dokumentbeskrivelse?.flatMap(this::getDokumentObjektDtos).orEmpty()
         val result =
             if (dokumentobjektDtos.isEmpty()) {
-                dispatch(caseId, journalpostDto, emptyMap(), dokumentetsDato)
+                dispatch(caseId, journalpostDto, emptyMap())
             } else {
                 val filesDispatchResult = filesDispatchService.dispatch(dokumentobjektDtos)
                 when (filesDispatchResult.status) {
@@ -50,7 +49,6 @@ class RecordDispatchService(
                             caseId,
                             journalpostDto,
                             filesDispatchResult.archiveFileLinkPerFileId.orEmpty(),
-                            dokumentetsDato,
                         )
                     }
 
@@ -76,7 +74,6 @@ class RecordDispatchService(
         caseId: String,
         journalpostDto: JournalpostDto,
         archiveFileLinkPerFileId: Map<UUID, Link>,
-        dokumentetsDato: String?,
     ): RecordDispatchResult {
         return try {
             val journalpostResource: JournalpostResource =
@@ -85,7 +82,6 @@ class RecordDispatchService(
                 fintArchiveDispatchClient.postRecord(
                     caseId,
                     journalpostResource,
-                    dokumentetsDato,
                 )
             RecordDispatchResult.accepted(resultJournalpost.journalPostnummer)
         } catch (error: RestClientResponseException) {

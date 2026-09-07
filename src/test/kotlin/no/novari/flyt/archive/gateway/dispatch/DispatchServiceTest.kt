@@ -1,6 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch
 
-import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -40,7 +40,7 @@ class DispatchServiceTest {
             DispatchService(
                 caseDispatchService,
                 recordsProcessingService,
-                DokumentetsDatoFormattingService(),
+                DokumentetsDatoMappingService(),
             )
     }
 
@@ -151,8 +151,8 @@ class DispatchServiceTest {
 
         assertThat(result).isEqualTo(
             DispatchResult.declined(
-                "Ugyldig dokumentetsDato='not a date'. Feltet må være på ISO 8601-format " +
-                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+                "Ugyldig dokumentetsDato='not a date'. Feltet må være på formatet " +
+                    "YYYY-MM-DD. Korriger verdien og send instansen på nytt.",
             ),
         )
         verify(caseDispatchService, never()).dispatch(sakDto)
@@ -161,7 +161,7 @@ class DispatchServiceTest {
 
     @Test
     fun `given invalid dokumentetsDato for existing case, returns declined result before dispatching journalpost`() {
-        val journalpostDto = JournalpostDto.builder().dokumentetsDato("2026-02-30T09:12:48Z").build()
+        val journalpostDto = JournalpostDto.builder().dokumentetsDato("2026-08-24T09:12:48Z").build()
         val archiveInstance =
             ArchiveInstance
                 .builder()
@@ -174,8 +174,8 @@ class DispatchServiceTest {
 
         assertThat(result).isEqualTo(
             DispatchResult.declined(
-                "Ugyldig dokumentetsDato='2026-02-30T09:12:48Z'. Feltet må være på ISO 8601-format " +
-                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+                "Ugyldig dokumentetsDato='2026-08-24T09:12:48Z'. Feltet må være på formatet " +
+                    "YYYY-MM-DD. Korriger verdien og send instansen på nytt.",
             ),
         )
         verifyNoInteractions(caseDispatchService)

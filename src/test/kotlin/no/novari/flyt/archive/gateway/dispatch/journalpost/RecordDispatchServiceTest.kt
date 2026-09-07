@@ -5,7 +5,7 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
-import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoFormattingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -46,7 +46,7 @@ class RecordDispatchServiceTest {
                 journalpostMappingService,
                 filesDispatchService,
                 fintArchiveDispatchClient,
-                DokumentetsDatoFormattingService(),
+                DokumentetsDatoMappingService(),
             )
     }
 
@@ -72,7 +72,7 @@ class RecordDispatchServiceTest {
             .thenReturn(FilesDispatchResult.accepted(mapOf(fileId to Link.with("file"))))
         whenever(journalpostMappingService.toJournalpostResource(journalpostDto, mapOf(fileId to Link.with("file"))))
             .thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, null))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource))
             .thenReturn(resultJournalpostResource)
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
@@ -105,24 +105,24 @@ class RecordDispatchServiceTest {
     }
 
     @Test
-    fun `given valid dokumentetsDato, passes value to archive dispatch client`() {
+    fun `given valid dokumentetsDato, passes journalpost resource to archive dispatch client`() {
         val journalpostDto =
             JournalpostDto
                 .builder()
-                .dokumentetsDato("2026-08-24T09:12:48Z")
+                .dokumentetsDato("2026-08-24")
                 .build()
         val journalpostResource: JournalpostResource = mock()
         val resultJournalpostResource: JournalpostResource = mock()
         whenever(resultJournalpostResource.journalPostnummer).thenReturn(1L)
         whenever(journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()))
             .thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, "2026-08-24T09:12:48Z"))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource))
             .thenReturn(resultJournalpostResource)
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
 
         assertThat(result).isEqualTo(RecordDispatchResult.accepted(1L))
-        verify(fintArchiveDispatchClient).postRecord("caseId", journalpostResource, "2026-08-24T09:12:48Z")
+        verify(fintArchiveDispatchClient).postRecord("caseId", journalpostResource)
         verifyNoInteractions(filesDispatchService)
     }
 
@@ -147,8 +147,8 @@ class RecordDispatchServiceTest {
 
         assertThat(result).isEqualTo(
             RecordDispatchResult.declined(
-                "Ugyldig dokumentetsDato='not a date'. Feltet må være på ISO 8601-format " +
-                    "YYYY-MM-DDThh:mm:ssZ. Korriger verdien og send instansen på nytt.",
+                "Ugyldig dokumentetsDato='not a date'. Feltet må være på formatet " +
+                    "YYYY-MM-DD. Korriger verdien og send instansen på nytt.",
             ),
         )
         verifyNoInteractions(filesDispatchService)
@@ -165,7 +165,7 @@ class RecordDispatchServiceTest {
         whenever(
             journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),
         ).thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, null)).thenThrow(error)
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource)).thenThrow(error)
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
 
@@ -179,7 +179,7 @@ class RecordDispatchServiceTest {
         whenever(
             journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),
         ).thenReturn(journalpostResource)
-        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource, null))
+        whenever(fintArchiveDispatchClient.postRecord("caseId", journalpostResource))
             .thenThrow(ResourceAccessException("read timeout", HttpTimeoutException("read timeout")))
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
