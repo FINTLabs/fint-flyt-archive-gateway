@@ -1,18 +1,36 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import java.sql.Date
+import java.time.Instant
 
 class DokumentetsDatoMappingServiceTest {
     private val dokumentetsDatoMappingService = DokumentetsDatoMappingService()
 
     @Test
-    fun `given date, returns sql date with same date`() {
+    fun `given date, returns date at noon utc`() {
         val result = dokumentetsDatoMappingService.toDateOrNull("2026-08-24")
 
-        assertThat(result).isEqualTo(Date.valueOf("2026-08-24"))
+        assertThat(result?.toInstant()).isEqualTo(Instant.parse("2026-08-24T12:00:00Z"))
+    }
+
+    @Test
+    fun `given date, serializes dokumentetsDato as noon utc date time`() {
+        val journalpostResource =
+            JournalpostResource().apply {
+                dokumentetsDato = dokumentetsDatoMappingService.toDate("2026-08-24")
+            }
+
+        val json =
+            ObjectMapper()
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .writeValueAsString(journalpostResource)
+
+        assertThat(json).contains("\"dokumentetsDato\":\"2026-08-24T12:00:00.000+00:00\"")
     }
 
     @Test
