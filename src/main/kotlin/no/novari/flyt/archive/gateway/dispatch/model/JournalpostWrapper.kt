@@ -4,6 +4,4 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 
 data class JournalpostWrapper(
     val journalpost: Collection<JournalpostResource>,
-) {
-    constructor(journalpost: JournalpostResource) : this(listOf(journalpost))
-}
+)

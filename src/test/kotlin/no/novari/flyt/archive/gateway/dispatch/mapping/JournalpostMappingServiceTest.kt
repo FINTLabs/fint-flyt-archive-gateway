@@ -7,6 +7,7 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.Korrespondansepart
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
 
 class JournalpostMappingServiceTest {
     private val journalpostMappingService =
@@ -18,6 +19,7 @@ class JournalpostMappingServiceTest {
                 SkjermingMappingService(),
             ),
             DokumentbeskrivelseMappingService(DokumentObjektMappingService(), SkjermingMappingService()),
+            DokumentetsDatoMappingService(),
         )
 
     @Test
@@ -38,6 +40,7 @@ class JournalpostMappingServiceTest {
                 .administrativEnhet("Administrativ enhet")
                 .saksbehandler("Saksbehandler")
                 .journalstatus("Journalstatus")
+                .dokumentetsDato("2026-08-28")
                 .tilgangsgruppe("Tilgangsgruppe")
                 .skjerming(skjermingDto)
                 .korrespondansepart(listOf(KorrespondansepartDto.builder().korrespondanseparttype("type").build()))
@@ -52,6 +55,7 @@ class JournalpostMappingServiceTest {
         assertThat(mappedResource.administrativEnhet.first().href).isEqualTo("Administrativ enhet")
         assertThat(mappedResource.saksbehandler.first().href).isEqualTo("Saksbehandler")
         assertThat(mappedResource.journalstatus.first().href).isEqualTo("Journalstatus")
+        assertThat(mappedResource.dokumentetsDato.toInstant()).isEqualTo(Instant.parse("2026-08-28T12:00:00Z"))
         assertThat(mappedResource.tilgangsgruppe.first().href).isEqualTo("Tilgangsgruppe")
         assertThat(mappedResource.skjerming.tilgangsrestriksjon).contains(Link.with("Tilgangsrestriksjon"))
         assertThat(mappedResource.skjerming.skjermingshjemmel).contains(Link.with("Skjermingshjemmel"))

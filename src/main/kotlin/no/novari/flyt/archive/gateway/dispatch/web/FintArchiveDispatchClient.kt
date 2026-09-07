@@ -110,7 +110,7 @@ class FintArchiveDispatchClient(
                 fintRestClient
                     .put()
                     .uri("/arkiv/noark/sak/mappeid/$caseId")
-                    .body(JournalpostWrapper(journalpostResource))
+                    .body(JournalpostWrapper(listOf(journalpostResource)))
                     .retrieve()
                     .toBodilessEntity()
             val sak = pollForCaseResult(response)
