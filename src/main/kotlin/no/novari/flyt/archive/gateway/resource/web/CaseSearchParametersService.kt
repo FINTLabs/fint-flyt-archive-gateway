@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.resource.web
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.cache.FintCache
 import no.novari.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource
 import no.novari.fint.model.resource.arkiv.kodeverk.SaksstatusResource
@@ -12,7 +13,6 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.KlasseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto
 import no.novari.flyt.archive.gateway.resource.web.exceptions.KlasseOrderOutOfBoundsException
 import no.novari.flyt.archive.gateway.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -88,8 +88,16 @@ class CaseSearchParametersService(
                                 rekkefolge,
                             )
 
-                    klasseDtoMatchingRekkefolge.rekkefolge?.let { log.debug("KlasseDto rekkefolge: {}", it) }
-                    log.debug("Søkeparametere rekkefølge: {}", rekkefolge)
+                    klasseDtoMatchingRekkefolge.rekkefolge?.let {
+                        log.atDebug {
+                            message = "KlasseDto rekkefolge: {}"
+                            arguments = arrayOf(it)
+                        }
+                    }
+                    log.atDebug {
+                        message = "Søkeparametere rekkefølge: {}"
+                        arguments = arrayOf(rekkefolge)
+                    }
 
                     if (caseSearchParametersDto.getKlasseringKlassifikasjonssystem()) {
                         klasseDtoMatchingRekkefolge.klassifikasjonssystem
@@ -136,6 +144,6 @@ class CaseSearchParametersService(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(CaseSearchParametersService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

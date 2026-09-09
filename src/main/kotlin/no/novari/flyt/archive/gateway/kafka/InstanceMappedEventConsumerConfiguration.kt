@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.kafka
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.dispatch.DispatchService
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
@@ -10,7 +11,6 @@ import no.novari.kafka.consuming.ErrorHandlerFactory
 import no.novari.kafka.consuming.ListenerConfiguration
 import no.novari.kafka.topic.name.EventTopicNameParameters
 import no.novari.kafka.topic.name.TopicNamePrefixParameters
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
@@ -31,14 +31,17 @@ class InstanceMappedEventConsumerConfiguration {
                 ArchiveInstance::class.java,
                 { instanceFlowConsumerRecord ->
                     val consumerRecord = instanceFlowConsumerRecord.consumerRecord
-                    log.info(
-                        "Consumed instance-mapped event topic={} partition={} offset={} key={} headers={}",
-                        consumerRecord.topic(),
-                        consumerRecord.partition(),
-                        consumerRecord.offset(),
-                        consumerRecord.key(),
-                        instanceFlowConsumerRecord.instanceFlowHeaders,
-                    )
+                    log.atInfo {
+                        message = "Consumed instance-mapped event topic={} partition={} offset={} key={} headers={}"
+                        arguments =
+                            arrayOf(
+                                consumerRecord.topic(),
+                                consumerRecord.partition(),
+                                consumerRecord.offset(),
+                                consumerRecord.key(),
+                                instanceFlowConsumerRecord.instanceFlowHeaders,
+                            )
+                    }
                     val dispatchResult =
                         dispatchService.process(
                             instanceFlowConsumerRecord.instanceFlowHeaders,
@@ -97,6 +100,6 @@ class InstanceMappedEventConsumerConfiguration {
             )
 
     companion object {
-        private val log = LoggerFactory.getLogger(InstanceMappedEventConsumerConfiguration::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }
