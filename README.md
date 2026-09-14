@@ -25,6 +25,8 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 
 Base path: `/internal/api/arkiv`
 
+Swagger UI is exposed at `/swagger-ui.html`, and the generated OpenAPI specification is available as JSON at `/v3/api-docs` and YAML at `/v3/api-docs.yaml`. The `arkiv` OpenAPI group only includes endpoints under `/internal/api/arkiv/**`.
+
 | Method | Path                                                | Description                                                                                            | Request body | Response                                                                                              |
 |--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------|
 | `GET`  | `/saker/{caseYear}/{caseNumber}/tittel`             | Fetches the case title for the given Noark `mappeId`.                                                  | –            | `200 OK` with `{ "value": "<title>" }`; `404` if unknown.                                             |

@@ -26,6 +26,7 @@ group = "no.novari"
 version = "0.0.1-SNAPSHOT"
 
 var fintResourceModelVersion = "4.1.0"
+var springdocOpenApiVersion = "3.1.1"
 
 kotlin {
     jvmToolchain(25)
@@ -42,11 +43,15 @@ repositories {
 extra["jackson-bom.version"] = "2.22.2"
 extra["log4j2.version"] = "2.26.1"
 extra["tomcat.version"] = "10.1.59"
+extra["commons-lang3.version"] = "3.20.0"
 
 dependencies {
     constraints {
         implementation("at.yawk.lz4:lz4-java:1.11.2") {
             because("Fixes CVE-2026-59949 in the kafka-clients transitive dependency")
+        }
+        implementation("org.apache.commons:commons-lang3:3.20.0") {
+            because("Fixes CVE-2025-48924 in the Spring Boot managed version")
         }
     }
 
@@ -59,6 +64,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion")
 
     implementation("no.novari:flyt-kafka:7.2.0")
     implementation("no.novari:flyt-cache:3.0.0")

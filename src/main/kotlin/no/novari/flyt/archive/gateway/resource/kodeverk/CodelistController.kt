@@ -1,5 +1,10 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import no.novari.cache.FintCache
 import no.novari.fint.model.felles.basisklasser.Begrep
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
@@ -33,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("$INTERNAL_API/arkiv/kodeverk")
+@Tag(name = "Kodeverk", description = "Cachede arkivkodeverk og arkivressurser.")
 class CodelistController(
     private val administrativEnhetResourceCache: FintCache<String, AdministrativEnhetResource>,
     private val arkivdelResourceCache: FintCache<String, ArkivdelResource>,
@@ -55,6 +61,7 @@ class CodelistController(
     private val arkivressursDisplayNameMapper: ArkivressursDisplayNameMapper,
 ) {
     @GetMapping("administrativenhet")
+    @Operation(summary = "List administrative enheter")
     fun getAdministrativEnheter(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             administrativEnhetResourceCache
@@ -70,6 +77,7 @@ class CodelistController(
         )
 
     @GetMapping("klassifikasjonssystem")
+    @Operation(summary = "List klassifikasjonssystemer")
     fun getKlassifikasjonssystem(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             klassifikasjonssystemResourceCache
@@ -85,7 +93,21 @@ class CodelistController(
         )
 
     @GetMapping("klasse")
+    @Operation(
+        summary = "List klasser for klassifikasjonssystem",
+        description = "Returnerer klasser som hører til et gitt klassifikasjonssystem.",
+    )
+    @ApiResponses(
+        value = [
+            ApiResponse(responseCode = "200", description = "Klasser funnet."),
+            ApiResponse(
+                responseCode = "404",
+                description = "Fant ikke klassifikasjonssystemet eller tilhørende klasser.",
+            ),
+        ],
+    )
     fun getKlasse(
+        @Parameter(description = "Self-link for klassifikasjonssystemet.", required = true)
         @RequestParam klassifikasjonssystemLink: String,
     ): ResponseEntity<Collection<ResourceReference>> {
         val klasseResources: List<KlasseResource> =
@@ -113,6 +135,7 @@ class CodelistController(
     }
 
     @GetMapping("arkivdel")
+    @Operation(summary = "List arkivdeler")
     fun getArkivdel(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             arkivdelResourceCache
@@ -128,6 +151,7 @@ class CodelistController(
         )
 
     @GetMapping("arkivressurs")
+    @Operation(summary = "List arkivressurser")
     fun getArkivressurs(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             arkivressursResourceCache
@@ -159,57 +183,71 @@ class CodelistController(
         )
 
     @GetMapping("partrolle")
+    @Operation(summary = "List partroller")
     fun getPartRolle(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(partRolleResourceCache)
 
     @GetMapping("korrespondanseparttype")
+    @Operation(summary = "List korrespondanseparttyper")
     fun getKorrespondansepartType(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(korrespondansepartTypeResourceCache)
 
     @GetMapping("tilknyttetregistreringsom")
+    @Operation(summary = "List tilknyttet registrering som")
     fun getTilknyttetRegistreringSom(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(tilknyttetRegistreringSomResourceCache)
 
     @GetMapping("sakstatus")
+    @Operation(summary = "List saksstatuser")
     fun getSakstatus(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(saksstatusResourceCache)
 
     @GetMapping("skjermingshjemmel")
+    @Operation(summary = "List skjermingshjemler")
     fun getSkjermingshjemmel(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(skjermingshjemmelResourceCache)
 
     @GetMapping("tilgangsrestriksjon")
+    @Operation(summary = "List tilgangsrestriksjoner")
     fun getTilgangsrestriksjon(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(tilgangsrestriksjonResourceCache)
 
     @GetMapping("dokumentstatus")
+    @Operation(summary = "List dokumentstatuser")
     fun getDokumentstatus(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(dokumentStatusResourceCache)
 
     @GetMapping("dokumenttype")
+    @Operation(summary = "List dokumenttyper")
     fun getDokumenttype(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(dokumentTypeResourceCache)
 
     @GetMapping("journalstatus")
+    @Operation(summary = "List journalstatuser")
     fun getJournalstatus(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(journalStatusResourceCache)
 
     @GetMapping("journalposttype")
+    @Operation(summary = "List journalposttyper")
     fun getJournalposttype(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(journalpostTypeResourceCache)
 
     @GetMapping("saksmappetype")
+    @Operation(summary = "List saksmappetyper")
     fun getSaksmappetype(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(saksmappetypeResourceCache)
 
     @GetMapping("variantformat")
+    @Operation(summary = "List variantformater")
     fun getVariantformat(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(variantformatResourceCache)
 
     @GetMapping("format")
+    @Operation(summary = "List formater")
     fun getFormat(): ResponseEntity<Collection<ResourceReference>> = getBegrepResourceReferences(formatResourceCache)
 
     @GetMapping("tilgangsgruppe")
+    @Operation(summary = "List tilgangsgrupper")
     fun getTilgangsgruppe(): ResponseEntity<Collection<ResourceReference>> =
         getBegrepResourceReferences(tilgangsgruppeResourceCache)
 
