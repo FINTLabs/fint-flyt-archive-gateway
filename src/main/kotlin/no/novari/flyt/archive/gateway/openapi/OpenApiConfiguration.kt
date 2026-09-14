@@ -50,8 +50,7 @@ class OpenApiConfiguration {
                 "/api/intern/arkiv/v3/api-docs",
                 "/api/intern/arkiv/v3/api-docs/**",
                 "/api/intern/arkiv/v3/api-docs.yaml",
-            ).csrf { it.disable() }
-            .httpBasic { it.disable() }
+            ).httpBasic { it.disable() }
             .authorizeHttpRequests { requests -> requests.anyRequest().permitAll() }
             .build()
 
