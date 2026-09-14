@@ -17,15 +17,15 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 | `DispatchService`                                              | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
 | `InstanceMappedEventConsumerConfiguration`                     | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services.        |
 | `FintResourcePublishingConfiguration`                          | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics.        |
-| `CaseController`/`CaseRequestService`                          | Serves `/internal/api/arkiv/saker/{year}/{number}/tittel`, issuing Kafka request/reply lookups against the archive adapter.                       |
+| `CaseController`/`CaseRequestService`                          | Serves `/api/intern/arkiv/saker/{year}/{number}/tittel`, issuing Kafka request/reply lookups against the archive adapter.                         |
 | `CodelistController`                                           | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON.       |
 | `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls.                           |
 
 ## HTTP API
 
-Base path: `/internal/api/arkiv`
+Base path: `/api/intern/arkiv`
 
-Swagger UI is exposed at `/swagger-ui.html`, and the generated OpenAPI specification is available as JSON at `/v3/api-docs` and YAML at `/v3/api-docs.yaml`. The `arkiv` OpenAPI group only includes endpoints under `/internal/api/arkiv/**`.
+Swagger UI is exposed at `/api/intern/arkiv/swagger-ui.html`, and the generated OpenAPI specification is available as JSON at `/api/intern/arkiv/v3/api-docs` and YAML at `/api/intern/arkiv/v3/api-docs.yaml`. The `arkiv` OpenAPI group only includes endpoints under `/api/intern/arkiv/**`.
 
 | Method | Path                                                | Description                                                                                            | Request body | Response                                                                                              |
 |--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------|
@@ -89,9 +89,9 @@ Prerequisites: Java 25+, Docker (for Kafka, if needed), and the Gradle wrapper.
 5. Exercise the APIs:
    ```shell
    curl -H "Authorization: Bearer <token>" \
-        "http://localhost:8301/internal/api/arkiv/saker/2024/123/tittel"
+        "http://localhost:8301/api/intern/arkiv/saker/2024/123/tittel"
    curl -H "Authorization: Bearer <token>" \
-        "http://localhost:8301/internal/api/arkiv/kodeverk/dokumenttype"
+        "http://localhost:8301/api/intern/arkiv/kodeverk/dokumenttype"
    ```
 
 Running unit tests only:
@@ -119,7 +119,7 @@ and commit both template and regenerated overlay files.
 - OAuth2 resource server validates JWTs issued by `https://idp.felleskomponent.no` and enforces internal API org/role mappings via the Flyt resource server starter.
 - Outbound calls use two OAuth2 clients: password-grant credentials for the FINT archive adapter and client-credentials for the Flyt file service.
 - Kafka consumers/producers leverage org/application-scoped prefixes ensuring each tenant’s topics stay isolated.
-- Internal APIs live under `/internal/api/**` and require authorization according to the configured org-role pairs.
+- Internal APIs live under `/api/intern/**` and require authorization according to the configured org-role pairs.
 
 ## Observability & Operations
 

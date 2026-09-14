@@ -37,7 +37,7 @@ class OpenApiConfiguration {
         GroupedOpenApi
             .builder()
             .group("arkiv")
-            .pathsToMatch("/internal/api/arkiv/**")
+            .pathsToMatch("/api/intern/arkiv/**")
             .build()
 
     @Bean
@@ -45,11 +45,11 @@ class OpenApiConfiguration {
     fun openApiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http
             .securityMatcher(
-                "/swagger-ui.html",
-                "/swagger-ui/**",
-                "/v3/api-docs",
-                "/v3/api-docs/**",
-                "/v3/api-docs.yaml",
+                "/api/intern/arkiv/swagger-ui.html",
+                "/api/intern/arkiv/swagger-ui/**",
+                "/api/intern/arkiv/v3/api-docs",
+                "/api/intern/arkiv/v3/api-docs/**",
+                "/api/intern/arkiv/v3/api-docs.yaml",
             ).csrf { it.disable() }
             .httpBasic { it.disable() }
             .authorizeHttpRequests { requests -> requests.anyRequest().permitAll() }
