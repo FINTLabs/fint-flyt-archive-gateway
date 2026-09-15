@@ -43,9 +43,9 @@ server:
 
 springdoc:
   api-docs:
-    path: /api/intern/arkiv/v3/api-docs
+    path: /v3/api-docs
   swagger-ui:
-    path: /api/intern/arkiv/swagger-ui.html
+    path: /swagger-ui.html
 
 spring:
   profiles:

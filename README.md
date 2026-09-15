@@ -25,7 +25,22 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 
 Base path: `/api/intern/arkiv`
 
-Swagger UI is exposed at `/api/intern/arkiv/swagger-ui.html`, and the generated OpenAPI specification is available as JSON at `/api/intern/arkiv/v3/api-docs` and YAML at `/api/intern/arkiv/v3/api-docs.yaml`. The `arkiv` OpenAPI group only includes endpoints under `/api/intern/arkiv/**`.
+Swagger UI and the generated OpenAPI specification are available only through direct service access, such as a
+Kubernetes port-forward. Their paths sit outside the external ingress route for `/api/intern/arkiv`:
+
+- Swagger UI: `/swagger-ui.html`
+- OpenAPI JSON: `/v3/api-docs`
+- OpenAPI YAML: `/v3/api-docs.yaml`
+
+For the FINTLabs beta deployment, forward the service and include the deployment context path in the local URL:
+
+```shell
+kubectl -n fintlabs-no port-forward service/fint-flyt-archive-gateway 8080:8080
+```
+
+Swagger UI is then available at `http://localhost:8080/beta/fintlabs-no/swagger-ui.html`, and OpenAPI JSON at
+`http://localhost:8080/beta/fintlabs-no/v3/api-docs`. The `arkiv` OpenAPI group only includes endpoints under
+`/api/intern/arkiv/**`.
 
 | Method | Path                                                | Description                                                                                            | Request body | Response                                                                                              |
 |--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------|
