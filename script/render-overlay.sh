@@ -170,9 +170,17 @@ while IFS= read -r file; do
 
   template="$(choose_template "$env_path")"
   target_dir="$ROOT/kustomize/overlays/$dir"
+  mkdir -p "$target_dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
   envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
-done < <(find "$ROOT/kustomize/overlays" -name kustomization.yaml -print | sort)
+done < <(
+  {
+    find "$ROOT/kustomize/overlays" -name kustomization.yaml -print
+    printf '%s\n' \
+      "$ROOT/kustomize/overlays/ra-no/beta/kustomization.yaml" \
+      "$ROOT/kustomize/overlays/ra-no/api/kustomization.yaml"
+  } | sort -u
+)
