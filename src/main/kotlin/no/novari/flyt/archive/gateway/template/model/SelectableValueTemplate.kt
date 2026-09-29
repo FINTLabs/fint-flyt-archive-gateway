@@ -12,6 +12,7 @@ data class SelectableValueTemplate(
     val type: Type? = null,
     val selectables: Collection<@Valid Selectable>? = null,
     val selectablesSources: Collection<@Valid UrlBuilder>? = null,
+    val referenceTemplate: ReferenceTemplate? = null,
 ) {
     enum class Type {
         DYNAMIC_STRING_OR_SEARCH_SELECT,
@@ -28,6 +29,7 @@ data class SelectableValueTemplate(
         private var type: Type? = null
         private var selectables: Collection<Selectable>? = null
         private var selectablesSources: Collection<UrlBuilder>? = null
+        private var referenceTemplate: ReferenceTemplate? = null
 
         fun type(type: Type?) = apply { this.type = type }
 
@@ -38,11 +40,17 @@ data class SelectableValueTemplate(
                 this.selectablesSources = selectablesSources
             }
 
+        fun referenceTemplate(referenceTemplate: ReferenceTemplate?) =
+            apply {
+                this.referenceTemplate = referenceTemplate
+            }
+
         fun build() =
             SelectableValueTemplate(
                 type = type,
                 selectables = selectables,
                 selectablesSources = selectablesSources,
+                referenceTemplate = referenceTemplate,
             )
     }
 }

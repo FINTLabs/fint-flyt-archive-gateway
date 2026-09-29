@@ -1,5 +1,8 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.DokumentStatus
+import no.novari.fint.model.arkiv.kodeverk.DokumentType
+import no.novari.fint.model.arkiv.kodeverk.TilknyttetRegistreringSom
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Service
 class DokumentbeskrivelseTemplateService(
     private val dokumentobjektTemplateService: DokumentobjektTemplateService,
     private val skjermingTemplateService: SkjermingTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -35,7 +39,8 @@ class DokumentbeskrivelseTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/dokumentstatus").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(DokumentStatus::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -48,7 +53,8 @@ class DokumentbeskrivelseTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/dokumenttype").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(DokumentType::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -67,7 +73,8 @@ class DokumentbeskrivelseTemplateService(
                                     "api/intern/arkiv/kodeverk/tilknyttetregistreringsom",
                                 ).build(),
                         ),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(TilknyttetRegistreringSom::class))
+                    .build(),
             ).addCollectionTemplate(
                 ElementConfig
                     .builder()

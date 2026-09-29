@@ -1,5 +1,10 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.JournalStatus
+import no.novari.fint.model.arkiv.kodeverk.JournalpostType
+import no.novari.fint.model.arkiv.kodeverk.Tilgangsgruppe
+import no.novari.fint.model.arkiv.noark.AdministrativEnhet
+import no.novari.fint.model.arkiv.noark.Arkivressurs
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -12,6 +17,7 @@ class JournalpostTemplateService(
     private val korrespondansepartTemplateService: KorrespondansepartTemplateService,
     private val dokumentbeskrivelseTemplateService: DokumentbeskrivelseTemplateService,
     private val skjermingTemplateService: SkjermingTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -44,7 +50,8 @@ class JournalpostTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalposttype").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(JournalpostType::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -60,7 +67,8 @@ class JournalpostTemplateService(
                         listOf(
                             UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/administrativenhet").build(),
                         ),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(AdministrativEnhet::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -74,7 +82,8 @@ class JournalpostTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/arkivressurs").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Arkivressurs::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -88,7 +97,8 @@ class JournalpostTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalstatus").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(JournalStatus::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -111,7 +121,8 @@ class JournalpostTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsgruppe").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Tilgangsgruppe::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()

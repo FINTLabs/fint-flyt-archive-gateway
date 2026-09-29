@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.PartRolle
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
 class PartTemplateService(
     private val adresseTemplateService: AdresseTemplateService,
     private val kontaktinformasjonTemplateService: KontaktinformasjonTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -36,7 +38,8 @@ class PartTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/partrolle").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(PartRolle::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
