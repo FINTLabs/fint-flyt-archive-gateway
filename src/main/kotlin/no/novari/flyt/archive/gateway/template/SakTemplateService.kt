@@ -1,5 +1,11 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.Saksmappetype
+import no.novari.fint.model.arkiv.kodeverk.Saksstatus
+import no.novari.fint.model.arkiv.kodeverk.Tilgangsgruppe
+import no.novari.fint.model.arkiv.noark.AdministrativEnhet
+import no.novari.fint.model.arkiv.noark.Arkivdel
+import no.novari.fint.model.arkiv.noark.Arkivressurs
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -13,6 +19,7 @@ class SakTemplateService(
     private val skjermingTemplateService: SkjermingTemplateService,
     private val journalpostTemplateService: JournalpostTemplateService,
     private val partTemplateService: PartTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -46,7 +53,8 @@ class SakTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/saksmappetype").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Saksmappetype::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -62,7 +70,8 @@ class SakTemplateService(
                         listOf(
                             UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/administrativenhet").build(),
                         ),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(AdministrativEnhet::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -76,7 +85,8 @@ class SakTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/arkivressurs").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Arkivressurs::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -90,7 +100,8 @@ class SakTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/arkivdel").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Arkivdel::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -105,7 +116,8 @@ class SakTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/sakstatus").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Saksstatus::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -119,7 +131,8 @@ class SakTemplateService(
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsgruppe").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Tilgangsgruppe::class))
+                    .build(),
             ).addCollectionTemplate(
                 ElementConfig
                     .builder()

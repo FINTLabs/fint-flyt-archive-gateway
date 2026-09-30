@@ -12,6 +12,7 @@ import no.novari.flyt.archive.gateway.template.KlasseringTemplateService
 import no.novari.flyt.archive.gateway.template.KontaktinformasjonTemplateService
 import no.novari.flyt.archive.gateway.template.KorrespondansepartTemplateService
 import no.novari.flyt.archive.gateway.template.PartTemplateService
+import no.novari.flyt.archive.gateway.template.ReferenceTemplateFactory
 import no.novari.flyt.archive.gateway.template.SakTemplateService
 import no.novari.flyt.archive.gateway.template.SearchParametersTemplateService
 import no.novari.flyt.archive.gateway.template.SkjermingTemplateService
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @ExtendWith(SpringExtension::class)
@@ -40,8 +42,12 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
         SakTemplateService::class,
         SkjermingTemplateService::class,
         PartTemplateService::class,
+        ReferenceTemplateFactory::class,
         ObjectMapper::class,
     ],
+)
+@TestPropertySource(
+    properties = ["novari.flyt.archive.gateway.client.fint-archive.base-url=https://api.felleskomponent.no"],
 )
 class MappingTemplateTest {
     @Autowired

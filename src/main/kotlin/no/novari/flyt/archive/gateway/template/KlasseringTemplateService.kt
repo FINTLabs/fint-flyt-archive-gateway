@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.noark.Klassifikasjonssystem
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service
 @Service
 class KlasseringTemplateService(
     private val skjermingTemplateService: SkjermingTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -41,7 +43,8 @@ class KlasseringTemplateService(
                         listOf(
                             UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/klassifikasjonssystem").build(),
                         ),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Klassifikasjonssystem::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()

@@ -5,19 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class JournalpostTemplateServiceTest {
-    private val journalpostTemplateService =
-        JournalpostTemplateService(
-            KorrespondansepartTemplateService(
-                AdresseTemplateService(),
-                KontaktinformasjonTemplateService(),
-                SkjermingTemplateService(),
-            ),
-            DokumentbeskrivelseTemplateService(
-                DokumentobjektTemplateService(),
-                SkjermingTemplateService(),
-            ),
-            SkjermingTemplateService(),
-        )
+    private val journalpostTemplateService = TestTemplateServices.journalpostTemplateService()
 
     @Test
     fun `template explains required dokumentetsDato format`() {

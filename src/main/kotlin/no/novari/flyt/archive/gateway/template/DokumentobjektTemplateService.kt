@@ -1,5 +1,7 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.Format
+import no.novari.fint.model.arkiv.kodeverk.Variantformat
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -8,7 +10,9 @@ import no.novari.flyt.archive.gateway.template.model.ValueTemplate
 import org.springframework.stereotype.Service
 
 @Service
-class DokumentobjektTemplateService {
+class DokumentobjektTemplateService(
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
+) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
             .builder()
@@ -24,7 +28,8 @@ class DokumentobjektTemplateService {
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/variantformat").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Variantformat::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -38,7 +43,8 @@ class DokumentobjektTemplateService {
                     .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
                     .selectablesSources(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/format").build()),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(Format::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()

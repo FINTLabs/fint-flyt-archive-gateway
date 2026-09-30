@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.template
 
+import no.novari.fint.model.arkiv.kodeverk.KorrespondansepartType
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
@@ -12,6 +13,7 @@ class KorrespondansepartTemplateService(
     private val adresseTemplateService: AdresseTemplateService,
     private val kontaktinformasjonTemplateService: KontaktinformasjonTemplateService,
     private val skjermingTemplateService: SkjermingTemplateService,
+    private val referenceTemplateFactory: ReferenceTemplateFactory,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -34,7 +36,8 @@ class KorrespondansepartTemplateService(
                                     "api/intern/arkiv/kodeverk/korrespondanseparttype",
                                 ).build(),
                         ),
-                    ).build(),
+                    ).referenceTemplate(referenceTemplateFactory.create(KorrespondansepartType::class))
+                    .build(),
             ).addTemplate(
                 ElementConfig
                     .builder()

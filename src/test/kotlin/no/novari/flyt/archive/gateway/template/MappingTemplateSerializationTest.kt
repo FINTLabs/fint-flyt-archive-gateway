@@ -7,42 +7,7 @@ import org.junit.jupiter.api.Test
 class MappingTemplateSerializationTest {
     private val objectMapper = jacksonObjectMapper()
 
-    private val archiveTemplateService =
-        ArchiveTemplateService(
-            SearchParametersTemplateService(),
-            SakTemplateService(
-                KlasseringTemplateService(SkjermingTemplateService()),
-                SkjermingTemplateService(),
-                JournalpostTemplateService(
-                    KorrespondansepartTemplateService(
-                        AdresseTemplateService(),
-                        KontaktinformasjonTemplateService(),
-                        SkjermingTemplateService(),
-                    ),
-                    DokumentbeskrivelseTemplateService(
-                        DokumentobjektTemplateService(),
-                        SkjermingTemplateService(),
-                    ),
-                    SkjermingTemplateService(),
-                ),
-                PartTemplateService(
-                    AdresseTemplateService(),
-                    KontaktinformasjonTemplateService(),
-                ),
-            ),
-            JournalpostTemplateService(
-                KorrespondansepartTemplateService(
-                    AdresseTemplateService(),
-                    KontaktinformasjonTemplateService(),
-                    SkjermingTemplateService(),
-                ),
-                DokumentbeskrivelseTemplateService(
-                    DokumentobjektTemplateService(),
-                    SkjermingTemplateService(),
-                ),
-                SkjermingTemplateService(),
-            ),
-        )
+    private val archiveTemplateService = TestTemplateServices.archiveTemplateService()
 
     @Test
     fun `the created template is serializable`() {
