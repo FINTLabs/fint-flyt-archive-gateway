@@ -1,6 +1,7 @@
 package no.novari.flyt.archive.gateway.resource.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import no.novari.fint.model.resource.AbstractCollectionResources
@@ -8,7 +9,6 @@ import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.fint.model.resource.arkiv.noark.SakResources
 import no.novari.flyt.archive.gateway.WebUtilErrorHandler
 import no.novari.flyt.archive.gateway.resource.model.ResourceCollection
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.MediaType
@@ -76,9 +76,16 @@ class FintArchiveResourceClient(
                 .map { resource -> objectMapper.convertValue(resource, resourceClass) }
         } catch (error: Exception) {
             if (error is RestClientResponseException) {
-                log.error("{} body={}", error, error.responseBodyAsString)
+                log.atError {
+                    message = "{} body={}"
+                    arguments = arrayOf(error, error.responseBodyAsString)
+                }
             } else {
-                log.error("Error fetching resources since {}", sinceTimestamp, error)
+                log.atError {
+                    message = "Error fetching resources since {}"
+                    arguments = arrayOf(sinceTimestamp)
+                    cause = error
+                }
             }
             throw error
         }
@@ -110,11 +117,11 @@ class FintArchiveResourceClient(
                     webUtilErrorHandler.logAndSendError(error)
                     throw error
                 }
-                log.warn(
-                    "Encountered error when finding cases with filter -- performing retry {}",
-                    attempt,
-                    error,
-                )
+                log.atWarn {
+                    message = "Encountered error when finding cases with filter -- performing retry {}"
+                    arguments = arrayOf(attempt)
+                    cause = error
+                }
                 Thread.sleep(delay.toMillis())
                 delay = minOf(delay.multipliedBy(2), maxDelay)
             } finally {
@@ -142,6 +149,6 @@ class FintArchiveResourceClient(
     )
 
     companion object {
-        private val log = LoggerFactory.getLogger(FintArchiveResourceClient::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch.web
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import no.novari.fint.model.resource.Link
@@ -9,7 +10,6 @@ import no.novari.flyt.archive.gateway.WebUtilErrorHandler
 import no.novari.flyt.archive.gateway.dispatch.model.File
 import no.novari.flyt.archive.gateway.dispatch.model.JournalpostWrapper
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.ContentDisposition
 import org.springframework.http.HttpHeaders
@@ -57,7 +57,7 @@ class FintArchiveDispatchClient(
     fun postFile(file: File): Link {
         val sample = Timer.start(meterRegistry)
         try {
-            log.info("Posting file")
+            log.info { "Posting file" }
             val response =
                 fintRestClient
                     .post()
@@ -69,7 +69,10 @@ class FintArchiveDispatchClient(
                     .toBodilessEntity()
             val createdLocation = pollAfterAcceptedResponse(response)
             val link = Link.with(createdLocation.toString())
-            log.info("Successfully posted file name={} uri={}", file.name, createdLocation)
+            log.atInfo {
+                message = "Successfully posted file name={} uri={}"
+                arguments = arrayOf(file.name, createdLocation)
+            }
             return link
         } catch (error: Throwable) {
             webUtilErrorHandler.logAndSendError(error)
@@ -82,7 +85,7 @@ class FintArchiveDispatchClient(
     fun postCase(sakResource: SakResource): SakResource {
         val sample = Timer.start(meterRegistry)
         try {
-            log.info("Posting case")
+            log.info { "Posting case" }
             val response =
                 fintRestClient
                     .post()
@@ -105,7 +108,10 @@ class FintArchiveDispatchClient(
     ): JournalpostResource {
         val sample = Timer.start(meterRegistry)
         try {
-            log.info("Posting record caseId={}", caseId)
+            log.atInfo {
+                message = "Posting record caseId={}"
+                arguments = arrayOf(caseId)
+            }
             val response =
                 fintRestClient
                     .put()
@@ -148,11 +154,10 @@ class FintArchiveDispatchClient(
     }
 
     private fun getStatusLocation(entity: ResponseEntity<Void>): URI {
-        log.debug(
-            "Received status response status={} location={}",
-            entity.statusCode,
-            entity.headers.location,
-        )
+        log.atDebug {
+            message = "Received status response status={} location={}"
+            arguments = arrayOf(entity.statusCode, entity.headers.location)
+        }
         val location = entity.headers.location
         if (entity.statusCode == HttpStatus.ACCEPTED && location != null) {
             return location
@@ -168,13 +173,10 @@ class FintArchiveDispatchClient(
         val minDelay = requireNotNull(properties.createdLocationPollBackoffMinDelay)
         val maxDelay = requireNotNull(properties.createdLocationPollBackoffMaxDelay)
 
-        log.info(
-            "Polling for created location statusUri={} totalTimeout={} backoffMinDelay={} backoffMaxDelay={}",
-            statusUri,
-            totalTimeout,
-            minDelay,
-            maxDelay,
-        )
+        log.atInfo {
+            message = "Polling for created location statusUri={} totalTimeout={} backoffMinDelay={} backoffMaxDelay={}"
+            arguments = arrayOf(statusUri, totalTimeout, minDelay, maxDelay)
+        }
 
         val deadline = Instant.now().plus(totalTimeout)
         var delay = minDelay
@@ -190,12 +192,10 @@ class FintArchiveDispatchClient(
                         .retrieve()
                         .toBodilessEntity()
                 lastStatus = entity.statusCode.toString()
-                log.debug(
-                    "Poll response statusUri={} status={} location={}",
-                    statusUri,
-                    entity.statusCode,
-                    entity.headers.location,
-                )
+                log.atDebug {
+                    message = "Poll response statusUri={} status={} location={}"
+                    arguments = arrayOf(statusUri, entity.statusCode, entity.headers.location)
+                }
                 val location = entity.headers.location
                 if (entity.statusCode == HttpStatus.CREATED && location != null) {
                     return location
@@ -211,17 +211,15 @@ class FintArchiveDispatchClient(
             delay = minOf(delay.multipliedBy(2), maxDelay)
         }
 
-        log.warn(
-            "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}",
-            statusUri,
-            totalTimeout,
-            lastStatus,
-        )
+        log.atWarn {
+            message = "Timed out polling created location statusUri={} totalTimeout={} lastStatus={}"
+            arguments = arrayOf(statusUri, totalTimeout, lastStatus)
+        }
         throw CreatedLocationPollTimeoutException(statusUri, totalTimeout, lastStatus)
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(FintArchiveDispatchClient::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }
 

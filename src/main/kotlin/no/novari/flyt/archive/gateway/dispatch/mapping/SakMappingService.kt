@@ -1,9 +1,9 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -15,7 +15,7 @@ class SakMappingService(
     fun toSakResource(sakDto: SakDto?): SakResource {
         requireNotNull(sakDto) { "sakDto cannot be null" }
 
-        log.info("Mapping SakDto to SakResource")
+        log.info { "Mapping SakDto to SakResource" }
 
         return SakResource()
             .apply {
@@ -32,11 +32,11 @@ class SakMappingService(
                 sakDto.skjerming?.let(skjermingMappingService::toSkjermingResource)?.let(::setSkjerming)
                 sakDto.klasse?.let(klasseMappingService::toKlasse)?.let(::setKlasse)
             }.also {
-                log.info("Successfully mapped SakDto to SakResource")
+                log.info { "Successfully mapped SakDto to SakResource" }
             }
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(SakMappingService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

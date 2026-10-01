@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.dispatch.sak
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
@@ -14,7 +15,6 @@ import no.novari.flyt.archive.gateway.resource.web.CaseSearchParametersService
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import no.novari.flyt.archive.gateway.resource.web.exceptions.KlasseOrderOutOfBoundsException
 import no.novari.flyt.archive.gateway.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
 
@@ -26,36 +26,54 @@ class CaseDispatchService(
     private val fintArchiveResourceClient: FintArchiveResourceClient,
 ) {
     fun dispatch(sakDto: SakDto): CaseDispatchResult {
-        log.info("Dispatching case")
+        log.info { "Dispatching case" }
         val sakResource: SakResource = sakMappingService.toSakResource(sakDto)
 
         val result =
             try {
                 val resultSak = fintArchiveDispatchClient.postCase(sakResource)
                 val archiveCaseId = resultSak.mappeId.identifikatorverdi
-                log.info("Successfully posted case with archive case id = {}", archiveCaseId)
+                log.atInfo {
+                    message = "Successfully posted case with archive case id = {}"
+                    arguments = arrayOf(archiveCaseId)
+                }
                 CaseDispatchResult.accepted(archiveCaseId)
             } catch (error: RestClientResponseException) {
-                log.info("Post request for case was declined with message='{}'", error.responseBodyAsString)
+                log.atInfo {
+                    message = "Post request for case was declined with message='{}'"
+                    arguments = arrayOf(error.responseBodyAsString)
+                }
                 CaseDispatchResult.declined(error.responseBodyAsString)
             } catch (error: CreatedLocationPollTimeoutException) {
-                log.error("Case dispatch timed out", error)
+                log.atError {
+                    message = "Case dispatch timed out"
+                    cause = error
+                }
                 CaseDispatchResult.timedOut()
             } catch (error: Throwable) {
                 if (isReadTimeout(error)) {
-                    log.error("Case dispatch timed out", error)
+                    log.atError {
+                        message = "Case dispatch timed out"
+                        cause = error
+                    }
                     CaseDispatchResult.timedOut()
                 } else {
-                    log.error("Failed to post case", error)
+                    log.atError {
+                        message = "Failed to post case"
+                        cause = error
+                    }
                     CaseDispatchResult.failed()
                 }
             }
-        log.info("Dispatch result: {}", result)
+        log.atInfo {
+            message = "Dispatch result: {}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
     fun findCasesBySearch(archiveInstance: ArchiveInstance): CaseSearchResult {
-        log.info("Searching for cases")
+        log.info { "Searching for cases" }
 
         val caseFilter =
             try {
@@ -63,16 +81,28 @@ class CaseDispatchService(
                 val caseSearchParameters = requireNotNull(archiveInstance.caseSearchParameters)
                 caseSearchParametersService.createFilterQueryParamValue(newCase, caseSearchParameters)
             } catch (error: SearchKlasseOrderNotFoundInCaseException) {
-                log.error("Case search failed", error)
+                log.atError {
+                    message = "Case search failed"
+                    cause = error
+                }
                 return CaseSearchResult.declined(error.message.orEmpty())
             } catch (error: KlasseOrderOutOfBoundsException) {
-                log.error("Case search failed", error)
+                log.atError {
+                    message = "Case search failed"
+                    cause = error
+                }
                 return CaseSearchResult.declined(error.message.orEmpty())
             } catch (error: Exception) {
-                log.error("Case search failed", error)
+                log.atError {
+                    message = "Case search failed"
+                    cause = error
+                }
                 return CaseSearchResult.failed()
             }
-        log.debug("Generated case filter: {}", caseFilter)
+        log.atDebug {
+            message = "Generated case filter: {}"
+            arguments = arrayOf(caseFilter)
+        }
 
         val result =
             try {
@@ -84,18 +114,27 @@ class CaseDispatchService(
                 CaseSearchResult.accepted(ids)
             } catch (error: Throwable) {
                 if (isReadTimeout(error)) {
-                    log.error("Case search timed out", error)
+                    log.atError {
+                        message = "Case search timed out"
+                        cause = error
+                    }
                     CaseSearchResult.timedOut()
                 } else {
-                    log.error("Case search failed", error)
+                    log.atError {
+                        message = "Case search failed"
+                        cause = error
+                    }
                     CaseSearchResult.failed()
                 }
             }
-        log.info("Search result: {}", result)
+        log.atInfo {
+            message = "Search result: {}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(CaseDispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

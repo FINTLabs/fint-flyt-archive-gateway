@@ -1,5 +1,6 @@
 package no.novari.flyt.archive.gateway.resource
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
@@ -12,7 +13,6 @@ import no.novari.kafka.requestreply.topic.RequestTopicService
 import no.novari.kafka.requestreply.topic.configuration.RequestTopicConfiguration
 import no.novari.kafka.requestreply.topic.name.RequestTopicNameParameters
 import no.novari.kafka.topic.name.TopicNamePrefixParameters
-import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
@@ -129,7 +129,11 @@ class CaseRequestConfiguration(
                 fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
             ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
         } catch (error: RuntimeException) {
-            log.error("Could not find case with id={}", mappeId, error)
+            log.atError {
+                message = "Could not find case with id={}"
+                arguments = arrayOf(mappeId)
+                cause = error
+            }
             ReplyProducerRecord.builder<SakResource>().value(null).build()
         }
 
@@ -151,7 +155,11 @@ class CaseRequestConfiguration(
 
             ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
         } catch (error: RuntimeException) {
-            log.error("Could not find case with archive instance id={}", archiveInstanceId, error)
+            log.atError {
+                message = "Could not find case with archive instance id={}"
+                arguments = arrayOf(archiveInstanceId)
+                cause = error
+            }
             ReplyProducerRecord.builder<SakResource>().value(null).build()
         }
     }
@@ -162,7 +170,7 @@ class CaseRequestConfiguration(
     )
 
     companion object {
-        private val log = LoggerFactory.getLogger(CaseRequestConfiguration::class.java)
+        private val log = KotlinLogging.logger {}
         private val RETENTION_TIME: Duration = Duration.ofMinutes(10)
     }
 }
