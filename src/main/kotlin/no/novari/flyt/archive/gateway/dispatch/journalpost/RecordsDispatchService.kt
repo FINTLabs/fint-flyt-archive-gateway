@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch.journalpost
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.dispatch.DispatchMessageFormattingService
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordsDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -17,7 +17,7 @@ class RecordsDispatchService(
         caseId: String,
         journalpostDtos: List<JournalpostDto>,
     ): RecordsDispatchResult {
-        log.info("Dispatching records")
+        log.info { "Dispatching records" }
         if (journalpostDtos.isEmpty()) {
             return RecordsDispatchResult.accepted(emptyList())
         }
@@ -64,13 +64,19 @@ class RecordsDispatchService(
                     }
                 }
             } catch (error: Throwable) {
-                log.error("Journalposts dispatch failed", error)
+                log.atError {
+                    message = "Journalposts dispatch failed"
+                    cause = error
+                }
                 RecordsDispatchResult.failed(
                     "Journalposts dispatch failed",
                     "possible journalposts with unknown ids",
                 )
             }
-        log.info("Dispatch result={}", result)
+        log.atInfo {
+            message = "Dispatch result={}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
@@ -82,6 +88,6 @@ class RecordsDispatchService(
         )
 
     companion object {
-        private val log = LoggerFactory.getLogger(RecordsDispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

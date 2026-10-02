@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.slack.SlackAlertService
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
@@ -17,10 +17,16 @@ class WebUtilErrorHandler(
         val errorMessage =
             if (error is RestClientResponseException) {
                 val responseBody = error.responseBodyAsString
-                log.error("{} body={}", error, responseBody)
+                log.atError {
+                    message = "{} body={}"
+                    arguments = arrayOf(error, responseBody)
+                }
                 responseBody
             } else {
-                log.error(error.toString(), error)
+                log.atError {
+                    message = error.toString()
+                    cause = error
+                }
                 error.toString()
             }
 
@@ -28,12 +34,15 @@ class WebUtilErrorHandler(
             try {
                 slackAlertService.sendMessage(errorMessage)
             } catch (sendError: Throwable) {
-                log.warn("Failed to send Slack alert", sendError)
+                log.atWarn {
+                    message = "Failed to send Slack alert"
+                    cause = sendError
+                }
             }
         }
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(WebUtilErrorHandler::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

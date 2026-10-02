@@ -1,10 +1,10 @@
 package no.novari.flyt.archive.gateway.dispatch.file
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.file.result.FileDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
@@ -13,11 +13,11 @@ class FilesDispatchService(
 ) {
     fun dispatch(dokumentobjektDtos: Collection<DokumentobjektDto>): FilesDispatchResult {
         if (dokumentobjektDtos.isEmpty()) {
-            log.info("No files to dispatch")
+            log.info { "No files to dispatch" }
             return FilesDispatchResult.accepted(emptyMap())
         }
 
-        log.info("Dispatching files")
+        log.info { "Dispatching files" }
         val fileDispatchResults = mutableListOf<FileDispatchResult>()
         for (dokumentobjektDto in dokumentobjektDtos) {
             val result = fileDispatchService.dispatch(dokumentobjektDto)
@@ -53,11 +53,14 @@ class FilesDispatchService(
                     FilesDispatchResult.failed()
                 }
             }
-        log.info("Dispatch result={}", result)
+        log.atInfo {
+            message = "Dispatch result={}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(FilesDispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

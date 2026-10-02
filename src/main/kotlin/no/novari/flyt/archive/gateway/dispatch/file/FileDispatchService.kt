@@ -1,12 +1,12 @@
 package no.novari.flyt.archive.gateway.dispatch.file
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.dispatch.file.result.FileDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.web.CreatedLocationPollTimeoutException
 import no.novari.flyt.archive.gateway.dispatch.web.FintArchiveDispatchClient
 import no.novari.flyt.archive.gateway.dispatch.web.flytfile.FlytFileClient
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClientResponseException
 
@@ -16,19 +16,30 @@ class FileDispatchService(
     private val flytFileClient: FlytFileClient,
 ) {
     fun dispatch(dokumentobjektDto: DokumentobjektDto): FileDispatchResult {
-        log.info("Dispatching file")
+        log.info { "Dispatching file" }
         val fileId =
             dokumentobjektDto.fileId
                 ?: return FileDispatchResult.noFileId().also { result ->
-                    log.info("Dispatch result={}", result)
+                    log.atInfo {
+                        message = "Dispatch result={}"
+                        arguments = arrayOf(result)
+                    }
                 }
 
         val file =
             try {
                 flytFileClient.getFile(fileId)
             } catch (error: Throwable) {
-                log.error("File could not be retrieved", error)
-                return FileDispatchResult.couldNotBeRetrieved(fileId).also { log.info("Dispatch result={}", it) }
+                log.atError {
+                    message = "File could not be retrieved"
+                    cause = error
+                }
+                return FileDispatchResult.couldNotBeRetrieved(fileId).also {
+                    log.atInfo {
+                        message = "Dispatch result={}"
+                        arguments = arrayOf(it)
+                    }
+                }
             }
 
         val result =
@@ -38,22 +49,34 @@ class FileDispatchService(
             } catch (error: RestClientResponseException) {
                 FileDispatchResult.declined(fileId, error.responseBodyAsString)
             } catch (error: CreatedLocationPollTimeoutException) {
-                log.error("File dispatch timed out", error)
+                log.atError {
+                    message = "File dispatch timed out"
+                    cause = error
+                }
                 FileDispatchResult.timedOut(fileId)
             } catch (error: Throwable) {
                 if (isReadTimeout(error)) {
-                    log.error("File dispatch timed out", error)
+                    log.atError {
+                        message = "File dispatch timed out"
+                        cause = error
+                    }
                     FileDispatchResult.timedOut(fileId)
                 } else {
-                    log.error("File dispatch failed", error)
+                    log.atError {
+                        message = "File dispatch failed"
+                        cause = error
+                    }
                     FileDispatchResult.failed(fileId)
                 }
             }
-        log.info("Dispatch result={}", result)
+        log.atInfo {
+            message = "Dispatch result={}"
+            arguments = arrayOf(result)
+        }
         return result
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(FileDispatchService::class.java)
+        private val log = KotlinLogging.logger {}
     }
 }

@@ -63,6 +63,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("io.github.oshai:kotlin-logging-jvm:8.0.4")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion")
 
@@ -74,6 +75,8 @@ dependencies {
     implementation("no.novari:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
 
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+    // Pinned to 8.x: 9.x pulls in Jackson 3 (tools.jackson), while Spring Boot 3.5 uses Jackson 2
+    runtimeOnly("net.logstash.logback:logstash-logback-encoder:8.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito.kotlin:mockito-kotlin:6.4.0")
