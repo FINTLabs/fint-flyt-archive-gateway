@@ -8,7 +8,7 @@ buildscript {
             classpath("org.apache.httpcomponents.client5:httpclient5:5.6.4")
             classpath("org.apache.httpcomponents.core5:httpcore5:5.4.4")
             classpath("org.apache.httpcomponents.core5:httpcore5-h2:5.4.4")
-            classpath("org.apache.commons:commons-lang3:3.20.0")
+            classpath("org.apache.commons:commons-lang3:3.21.0")
         }
     }
 }
@@ -43,14 +43,14 @@ repositories {
 extra["jackson-bom.version"] = "2.22.3"
 extra["log4j2.version"] = "2.26.1"
 extra["tomcat.version"] = "10.1.59"
-extra["commons-lang3.version"] = "3.20.0"
+extra["commons-lang3.version"] = "3.21.0"
 
 dependencies {
     constraints {
         implementation("at.yawk.lz4:lz4-java:1.12.0") {
             because("Fixes CVE-2026-59949 in the kafka-clients transitive dependency")
         }
-        implementation("org.apache.commons:commons-lang3:3.20.0") {
+        implementation("org.apache.commons:commons-lang3:3.21.0") {
             because("Fixes CVE-2025-48924 in the Spring Boot managed version")
         }
     }
