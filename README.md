@@ -89,7 +89,7 @@ Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-fil
 
 Prerequisites: Java 25+, Docker, and the Gradle wrapper.
 
-1. Start Kafka on `localhost:9092` with `docker compose up -d`. Add `--profile tools` to also start Kafdrop on http://localhost:19000. `docker compose down -v` stops everything and wipes the data.
+1. Start Kafka on `localhost:9092` with `docker compose up -d`. Add `--profile tools` to also start Kafdrop on http://localhost:19000. Kafka topics are empty on every start.
 2. Export the local profile:
    ```shell
    export SPRING_PROFILES_ACTIVE=local-staging
