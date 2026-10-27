@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
 import java.net.URI
+import java.util.concurrent.TimeUnit
 
 @Component
 class FintArchiveResourceClient(
@@ -99,6 +100,7 @@ class FintArchiveResourceClient(
         var delay = minDelay
         while (true) {
             val sample = Timer.start(meterRegistry)
+            val startedAt = System.nanoTime()
             try {
                 val sakResources =
                     fintRestClient
@@ -113,14 +115,21 @@ class FintArchiveResourceClient(
                 return emptyList()
             } catch (error: Throwable) {
                 attempt++
+                log.atWarn {
+                    message = "Case search failed: attempt={}/{}, elapsedMs={}, status={}, errorType={}, retryInMs={}"
+                    arguments =
+                        arrayOf(
+                            attempt,
+                            maxAttempts,
+                            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt),
+                            (error as? RestClientResponseException)?.statusCode?.value(),
+                            error.javaClass.name,
+                            if (attempt < maxAttempts) delay.toMillis() else null,
+                        )
+                }
                 if (attempt >= maxAttempts) {
                     webUtilErrorHandler.logAndSendError(error)
                     throw error
-                }
-                log.atWarn {
-                    message = "Encountered error when finding cases with filter -- performing retry {}"
-                    arguments = arrayOf(attempt)
-                    cause = error
                 }
                 Thread.sleep(delay.toMillis())
                 delay = minOf(delay.multipliedBy(2), maxDelay)

@@ -142,6 +142,31 @@ and commit both template and regenerated overlay files.
 - Logging integrates with the shared Flyt logging profile and emits structured entries for dispatch outcomes and resource pulls.
 - Kafka listener and resource publishing logs indicate topic provisioning, cache sizes, and error conditions for easier incident triage.
 
+### Diagnosing archive HTTP failures
+
+Archive HTTP calls log failed responses at WARN with method, endpoint (excluding query parameters and URI credentials),
+time to response headers in milliseconds, status, and selected response headers (`Content-Type`, `Server`, `Via`,
+`X-Request-ID`, `X-Correlation-ID`, `traceparent`). The local `requestId` connects request and response log entries;
+it is not sent to the remote server. Request bodies, authorization headers, cookies, and response bodies are not
+included in these diagnostic entries. Existing final-error handling still logs response bodies.
+Case-search retry entries include the attempt count, time spent on the attempt, status, exception type, and next delay.
+
+Transport failures include exception class names and a `failureType`: `CERTIFICATE`, `TLS_HANDSHAKE`, `TLS`,
+`TIMEOUT`, `DNS`, `CONNECT`, or `OTHER`. These describe failures observed by this application's HTTP client;
+certificate failures between an upstream proxy and its backend require logs from that proxy.
+
+To also log request starts and successful responses temporarily, set
+`logging.level.no.novari.flyt.archive.gateway.FintArchiveRequestLoggingInterceptor=DEBUG`.
+
+To reproduce a case search in Insomnia, use the deployment's configured
+`novari.flyt.archive.gateway.client.fint-archive.base-url` followed by `/arkiv/noark/sak/$query`,
+method `POST`, `Content-Type: text/plain`, and the same OAuth2 identity as the application.
+The raw body is the filter produced by `CaseSearchParametersService`, for example `saksstatus eq '<systemId>'`.
+The failing filter can be taken from the affected instance's mapping and search parameters, or from the existing
+`Generated case filter` DEBUG entry in `no.novari.flyt.archive.gateway.dispatch.sak.CaseDispatchService`.
+That DEBUG entry contains the raw filter, which may include sensitive case data.
+Keep certificate validation enabled when comparing results.
+
 ## Development Tips
 
 - `RecordsProcessingService` streams journalpost records/files sequentially; keep payload sizes manageable and verify the file-service timeouts before tightening Kafka consumer settings.

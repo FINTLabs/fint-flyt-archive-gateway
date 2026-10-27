@@ -70,6 +70,7 @@ class FintArchiveRestClientConfiguration {
 
         return restClientBuilder
             .requestFactory(clientHttpRequestFactory)
+            .requestInterceptor(FintArchiveRequestLoggingInterceptor())
             .baseUrl(requireNotNull(baseUrl))
             .build()
     }
