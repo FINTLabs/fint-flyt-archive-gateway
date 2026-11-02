@@ -75,9 +75,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocOpenApiVersion")
 
-    implementation("no.novari:flyt-kafka:7.3.0")
+    implementation("no.novari:flyt-kafka:7.4.0")
     implementation("no.novari:flyt-cache:3.0.0")
-    implementation("no.novari:flyt-web-resource-server:4.0.0")
+    implementation("no.novari:flyt-web-resource-server:4.1.0")
 
     implementation("no.novari:fint-arkiv-resource-model-java:$fintResourceModelVersion")
     implementation("no.novari:fint-administrasjon-resource-model-java:$fintResourceModelVersion")
