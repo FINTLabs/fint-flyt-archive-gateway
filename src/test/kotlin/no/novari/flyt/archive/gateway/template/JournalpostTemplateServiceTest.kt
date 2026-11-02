@@ -25,11 +25,11 @@ class JournalpostTemplateServiceTest {
         assertThat(avskrivningsmate.template?.type)
             .isEqualTo(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
         assertThat(avskrivningsmate.template?.selectables).containsExactly(
-            Selectable(displayName = "Besvart med brev", value = "BU"),
-            Selectable(displayName = "Besvart med e-post", value = "BE"),
-            Selectable(displayName = "Besvart på telefon", value = "TLF"),
-            Selectable(displayName = "Tatt til etterretning", value = "TE"),
-            Selectable(displayName = "Tatt til orientering", value = "TO"),
+            Selectable(displayName = "[BU] Besvart med brev", value = "BU"),
+            Selectable(displayName = "[BE] Besvart med e-post", value = "BE"),
+            Selectable(displayName = "[TLF] Besvart på telefon", value = "TLF"),
+            Selectable(displayName = "[TE] Tatt til etterretning", value = "TE"),
+            Selectable(displayName = "[TO] Tatt til orientering", value = "TO"),
         )
         assertThat(avskrivningsmate.template?.selectablesSources).isNull()
         assertThat(avskrivningsmate.template?.referenceTemplate).isNull()
