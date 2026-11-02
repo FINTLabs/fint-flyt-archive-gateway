@@ -26,7 +26,7 @@ group = "no.novari"
 version = "0.0.1-SNAPSHOT"
 
 var fintResourceModelVersion = "4.1.0"
-var springdocOpenApiVersion = "2.9.1"
+var springdocOpenApiVersion = "2.10.0"
 
 kotlin {
     jvmToolchain(25)
