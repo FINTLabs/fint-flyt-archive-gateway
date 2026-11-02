@@ -12,6 +12,8 @@ data class JournalpostDto(
     val offentligTittel: String? = null,
     @get:JvmName("getJournalposttypeOrNull")
     val journalposttype: String? = null,
+    @get:JvmName("getAvskrivningsmateOrNull")
+    val avskrivningsmate: String? = null,
     @get:JvmName("getAdministrativEnhetOrNull")
     val administrativEnhet: String? = null,
     @get:JvmName("getSaksbehandlerOrNull")
@@ -49,6 +51,8 @@ data class JournalpostDto(
 
     fun getJournalposttype(): Optional<String> = Optional.ofNullable(journalposttype)
 
+    fun getAvskrivningsmate(): Optional<String> = Optional.ofNullable(avskrivningsmate)
+
     fun getAdministrativEnhet(): Optional<String> = Optional.ofNullable(administrativEnhet)
 
     fun getSkjerming(): Optional<SkjermingDto> = Optional.ofNullable(skjerming)
@@ -67,6 +71,7 @@ data class JournalpostDto(
         private var tittel: String? = null
         private var offentligTittel: String? = null
         private var journalposttype: String? = null
+        private var avskrivningsmate: String? = null
         private var administrativEnhet: String? = null
         private var saksbehandler: String? = null
         private var journalstatus: String? = null
@@ -81,6 +86,8 @@ data class JournalpostDto(
         fun offentligTittel(offentligTittel: String?) = apply { this.offentligTittel = offentligTittel }
 
         fun journalposttype(journalposttype: String?) = apply { this.journalposttype = journalposttype }
+
+        fun avskrivningsmate(avskrivningsmate: String?) = apply { this.avskrivningsmate = avskrivningsmate }
 
         fun administrativEnhet(administrativEnhet: String?) = apply { this.administrativEnhet = administrativEnhet }
 
@@ -109,6 +116,7 @@ data class JournalpostDto(
                 tittel = tittel,
                 offentligTittel = offentligTittel,
                 journalposttype = journalposttype,
+                avskrivningsmate = avskrivningsmate,
                 administrativEnhet = administrativEnhet,
                 saksbehandler = saksbehandler,
                 journalstatus = journalstatus,
