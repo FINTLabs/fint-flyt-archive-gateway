@@ -10,6 +10,36 @@ class JournalpostDtoDeserializationTest {
     private val objectMapper = jacksonObjectMapper()
 
     @Test
+    fun `deserializes avskrivningsmate from mapped instance`() {
+        val archiveInstance =
+            objectMapper.readValue<ArchiveInstance>(
+                """
+                {
+                  "type": "BY_ID",
+                  "caseId": "caseId",
+                  "journalpost": [
+                    {
+                      "journalposttype": "https://example.com/journalposttype/I",
+                      "avskrivningsmate": "TE"
+                    }
+                  ]
+                }
+                """.trimIndent(),
+            )
+
+        assertThat(archiveInstance.journalpost?.single()?.avskrivningsmate).isEqualTo("TE")
+        assertThat(archiveInstance.journalpost?.single()?.getAvskrivningsmate()).contains("TE")
+    }
+
+    @Test
+    fun `avskrivningsmate remains optional for existing instances`() {
+        val journalpostDto = objectMapper.readValue<JournalpostDto>("""{"tittel": "Journalpost"}""")
+
+        assertThat(journalpostDto.avskrivningsmate).isNull()
+        assertThat(journalpostDto.getAvskrivningsmate()).isEmpty()
+    }
+
+    @Test
     fun `deserializes dokumentetsDato from mapped instance date`() {
         val archiveInstance =
             objectMapper.readValue<ArchiveInstance>(
