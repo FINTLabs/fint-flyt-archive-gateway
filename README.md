@@ -17,7 +17,7 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 | `DispatchService`                                              | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
 | `InstanceMappedEventConsumerConfiguration`                     | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services.        |
 | `FintResourcePublishingConfiguration`                          | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics.        |
-| `CaseController`/`CaseRequestService`                          | Serves `/api/intern/arkiv/saker/{year}/{number}/tittel`, issuing Kafka request/reply lookups against the archive adapter.                         |
+| `CaseController`/`CaseService`                                 | Serves `/api/intern/arkiv/saker/{year}/{number}/tittel` by looking up the case directly in FINT Archive.                                          |
 | `CodelistController`                                           | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON.       |
 | `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls.                           |
 
@@ -56,7 +56,7 @@ Kodeverk endpoints share the same response contract; each list is distinct (admi
 - `InstanceMappedEventConsumerConfiguration.instanceMappedEventConsumer` listens to the `instance-mapped` event topic (partitioned by org/app defaults) and hands each record to `DispatchService`. Failed records are skipped with no retries via the shared `ErrorHandlerFactory`.
 - `InstanceDispatchedEventProducerService` provisions the `instance-dispatched` topic (retention derived from `KafkaTopicProperties`) and emits completion events after accepted dispatches. Keys should uniquely represent the archive instance for better ordering.
 - `InstanceDispatchingErrorProducerService` creates the `instance-dispatching-error` topic and publishes structured error collections for DECLINED or FAILED dispatches.
-- `CaseRequestService` issues Kafka request/reply calls to `arkiv.noark.sak` to resolve case titles, provisioning a reply topic scoped to the service’s application ID.
+- `CaseRequestConfiguration` answers request/reply lookups on the `arkiv-noark-sak` and `arkiv-noark-sak-with-filtered-journalposts` request topics for other Flyt services, delegating to `CaseService`.
 - `FintResourcePublishingConfiguration` ensures entity topics exist for each pipeline and uses `ParameterizedTemplate` to push updated resources, caching them locally for HTTP lookups.
 
 ## Scheduled Tasks
