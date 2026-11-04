@@ -1,9 +1,7 @@
 package no.novari.flyt.archive.gateway.resource
 
-import io.github.oshai.kotlinlogging.KotlinLogging
-import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.fint.model.resource.arkiv.noark.SakResource
-import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
+import no.novari.flyt.archive.gateway.resource.sak.CaseService
 import no.novari.kafka.consuming.ErrorHandlerConfiguration
 import no.novari.kafka.consuming.ErrorHandlerFactory
 import no.novari.kafka.requestreply.ReplyProducerRecord
@@ -23,7 +21,7 @@ class CaseRequestConfiguration(
     private val requestListenerContainerFactory: RequestListenerContainerFactory,
     private val errorHandlerFactory: ErrorHandlerFactory,
     private val requestTopicService: RequestTopicService,
-    private val fintArchiveResourceClient: FintArchiveResourceClient,
+    private val caseService: CaseService,
 ) {
     @Bean
     fun caseRequestByMappeIdConsumer(): ConcurrentMessageListenerContainer<String, String> {
@@ -105,72 +103,16 @@ class CaseRequestConfiguration(
             ).createContainer(topicNameParameters)
     }
 
-    private fun extractCaseAndJournalpostIds(archiveInstanceId: String): CaseAndJournalpostIds {
-        val splitArchiveInstanceId = archiveInstanceId.split("-")
-        val caseId = splitArchiveInstanceId.first()
-        val journalpostIds =
-            if (splitArchiveInstanceId.size == 1) {
-                emptyList()
-            } else {
-                splitArchiveInstanceId[1]
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(",")
-                    .filter(String::isNotBlank)
-                    .map(String::toLong)
-            }
-
-        return CaseAndJournalpostIds(caseId = caseId, journalpostIds = journalpostIds)
-    }
-
     private fun handleCaseRequestByMappeId(mappeId: String): ReplyProducerRecord<SakResource> =
-        try {
-            val sakResource =
-                fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
-            ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
-        } catch (error: RuntimeException) {
-            log.atError {
-                message = "Could not find case with id={}"
-                arguments = arrayOf(mappeId)
-                cause = error
-            }
-            ReplyProducerRecord.builder<SakResource>().value(null).build()
-        }
+        ReplyProducerRecord.builder<SakResource>().value(caseService.getByMappeId(mappeId)).build()
 
-    private fun handleCaseRequestByArchiveInstanceId(archiveInstanceId: String): ReplyProducerRecord<SakResource> {
-        val caseAndJournalpostIds = extractCaseAndJournalpostIds(archiveInstanceId)
-        return try {
-            val sakResource =
-                fintArchiveResourceClient.getResource(
-                    "/arkiv/noark/sak/mappeid/${caseAndJournalpostIds.caseId}",
-                    SakResource::class.java,
-                )
-
-            val journalposts: List<JournalpostResource> = sakResource.journalpost?.toList() ?: emptyList()
-            val filteredJournalposts =
-                journalposts.filter { journalpostResource ->
-                    caseAndJournalpostIds.journalpostIds.contains(journalpostResource.journalPostnummer)
-                }
-            sakResource.journalpost = filteredJournalposts
-
-            ReplyProducerRecord.builder<SakResource>().value(sakResource).build()
-        } catch (error: RuntimeException) {
-            log.atError {
-                message = "Could not find case with archive instance id={}"
-                arguments = arrayOf(archiveInstanceId)
-                cause = error
-            }
-            ReplyProducerRecord.builder<SakResource>().value(null).build()
-        }
-    }
-
-    private data class CaseAndJournalpostIds(
-        val caseId: String,
-        val journalpostIds: List<Long>,
-    )
+    private fun handleCaseRequestByArchiveInstanceId(archiveInstanceId: String): ReplyProducerRecord<SakResource> =
+        ReplyProducerRecord
+            .builder<SakResource>()
+            .value(caseService.getByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId))
+            .build()
 
     companion object {
-        private val log = KotlinLogging.logger {}
         private val RETENTION_TIME: Duration = Duration.ofMinutes(10)
     }
 }
