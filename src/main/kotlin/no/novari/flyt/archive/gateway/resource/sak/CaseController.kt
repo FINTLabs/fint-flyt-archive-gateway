@@ -19,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException
 @RequestMapping("$INTERNAL_API/arkiv/saker")
 @Tag(name = "Saker", description = "Oppslag mot arkivsaker.")
 class CaseController(
-    private val caseRequestService: CaseRequestService,
+    private val caseService: CaseService,
 ) {
     @GetMapping("{caseYear}/{caseNumber}/tittel")
     @Operation(
@@ -40,7 +40,7 @@ class CaseController(
     ): ResponseEntity<CaseTitle> {
         val mappeId = "$caseYear/$caseNumber"
         val title =
-            caseRequestService.getByMappeId(mappeId)?.let(SakResource::getTittel)
+            caseService.getByMappeId(mappeId)?.let(SakResource::getTittel)
                 ?: throw ResponseStatusException(
                     HttpStatus.NOT_FOUND,
                     "Case with mappeId=$mappeId could not be found",
