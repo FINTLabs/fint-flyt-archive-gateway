@@ -7,7 +7,9 @@ import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.isReadTimeout
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
@@ -25,6 +27,7 @@ class RecordDispatchService(
     private val filesDispatchService: FilesDispatchService,
     private val fintArchiveDispatchClient: FintArchiveDispatchClient,
     private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
+    private val avskrivningMappingService: AvskrivningMappingService,
 ) {
     fun dispatch(
         caseId: String,
@@ -34,7 +37,10 @@ class RecordDispatchService(
 
         try {
             dokumentetsDatoMappingService.toDateOrNull(journalpostDto.dokumentetsDato)
+            avskrivningMappingService.toAvskrivning(journalpostDto)
         } catch (error: InvalidDokumentetsDatoException) {
+            return RecordDispatchResult.declined(error.message.orEmpty())
+        } catch (error: InvalidAvskrivningsdatoException) {
             return RecordDispatchResult.declined(error.message.orEmpty())
         }
         val dokumentobjektDtos = journalpostDto.dokumentbeskrivelse?.flatMap(this::getDokumentObjektDtos).orEmpty()

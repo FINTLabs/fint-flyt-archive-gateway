@@ -10,18 +10,37 @@ class JournalpostTemplateServiceTest {
     private val journalpostTemplateService = TestTemplateServices.journalpostTemplateService()
 
     @Test
-    fun `template offers fixed avskrivningsmate values without resource lookup`() {
+    fun `template offers avskrivning object before skjerming without visibility dependency`() {
         val template = journalpostTemplateService.createTemplate()
+        val avskrivning = template.objectTemplates.single { it.elementConfig?.key == "avskrivning" }
+        val skjerming = template.objectTemplates.single { it.elementConfig?.key == "skjerming" }
+
+        assertThat(avskrivning.order).isEqualTo(skjerming.order - 1)
+        assertThat(avskrivning.elementConfig?.displayName).isEqualTo("Avskrivning")
+        assertThat(avskrivning.elementConfig?.showDependency).isNull()
+        assertThat(avskrivning.elementConfig?.description)
+            .contains("I (Inngående brev)", "utelates hele avskrivningen", "dagens dato", "ved utsending")
+        assertThat(template.selectableValueTemplates.map { it.elementConfig?.key }).doesNotContain("avskrivningsmate")
+        assertThat(avskrivning.template?.valueTemplates?.map { it.elementConfig?.key })
+            .containsExactly("avskrivningsdato")
+        assertThat(avskrivning.template?.selectableValueTemplates?.map { it.elementConfig?.key })
+            .containsExactly("avskrivningsmate")
+    }
+
+    @Test
+    fun `avskrivning template offers date and fixed avskrivningsmate values without resource lookup`() {
+        val template = AvskrivningTemplateService().createTemplate()
         val avskrivningsmate =
             template.selectableValueTemplates.single { it.elementConfig?.key == "avskrivningsmate" }
-        val journalposttype = template.selectableValueTemplates.single { it.elementConfig?.key == "journalposttype" }
-        val administrativEnhet =
-            template.selectableValueTemplates.single { it.elementConfig?.key == "administrativEnhet" }
+        val avskrivningsdato = template.valueTemplates.single { it.elementConfig?.key == "avskrivningsdato" }
 
+        assertThat(avskrivningsdato.elementConfig?.displayName).isEqualTo("Avskrivningsdato")
+        assertThat(avskrivningsdato.elementConfig?.description)
+            .contains("YYYY-MM-DDThh:mm:ssZ", "dagens dato", "ved utsending")
+        assertThat(avskrivningsdato.template?.type).isEqualTo(ValueTemplate.Type.DYNAMIC_STRING)
         assertThat(avskrivningsmate.elementConfig?.displayName).isEqualTo("Avskrivningsmåte")
         assertThat(avskrivningsmate.elementConfig?.description).contains("I (Inngående brev)")
-        assertThat(avskrivningsmate.order).isEqualTo(journalposttype.order + 1)
-        assertThat(administrativEnhet.order).isEqualTo(avskrivningsmate.order + 1)
+        assertThat(avskrivningsmate.order).isEqualTo(avskrivningsdato.order + 1)
         assertThat(avskrivningsmate.template?.type)
             .isEqualTo(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
         assertThat(avskrivningsmate.template?.selectables).containsExactly(

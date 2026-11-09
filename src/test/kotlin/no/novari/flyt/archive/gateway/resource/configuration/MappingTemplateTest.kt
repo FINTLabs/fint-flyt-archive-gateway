@@ -5,6 +5,7 @@ import jakarta.validation.Validation.buildDefaultValidatorFactory
 import jakarta.validation.Validator
 import no.novari.flyt.archive.gateway.template.AdresseTemplateService
 import no.novari.flyt.archive.gateway.template.ArchiveTemplateService
+import no.novari.flyt.archive.gateway.template.AvskrivningTemplateService
 import no.novari.flyt.archive.gateway.template.DokumentbeskrivelseTemplateService
 import no.novari.flyt.archive.gateway.template.DokumentobjektTemplateService
 import no.novari.flyt.archive.gateway.template.JournalpostTemplateService
@@ -32,6 +33,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
     classes = [
         AdresseTemplateService::class,
         ArchiveTemplateService::class,
+        AvskrivningTemplateService::class,
         SearchParametersTemplateService::class,
         DokumentbeskrivelseTemplateService::class,
         DokumentobjektTemplateService::class,

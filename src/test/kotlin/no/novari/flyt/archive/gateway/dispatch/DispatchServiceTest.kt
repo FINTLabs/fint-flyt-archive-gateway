@@ -1,8 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch
 
+import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
+import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto
 import no.novari.flyt.archive.gateway.dispatch.sak.CaseDispatchService
@@ -13,6 +16,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
@@ -34,6 +39,9 @@ class DispatchServiceTest {
 
     private lateinit var dispatchService: DispatchService
 
+    @Mock
+    private lateinit var avskrivningMappingService: AvskrivningMappingService
+
     @BeforeEach
     fun setup() {
         dispatchService =
@@ -41,6 +49,7 @@ class DispatchServiceTest {
                 caseDispatchService,
                 recordsProcessingService,
                 DokumentetsDatoMappingService(),
+                avskrivningMappingService,
             )
     }
 
@@ -180,5 +189,24 @@ class DispatchServiceTest {
         )
         verifyNoInteractions(caseDispatchService)
         verify(recordsProcessingService, never()).processRecords("testCaseId", false, listOf(journalpostDto))
+    }
+
+    @ParameterizedTest
+    @EnumSource(CaseDispatchType::class)
+    fun `declines invalid avskrivningsdato before any case or record dispatch`(type: CaseDispatchType) {
+        val journalpost = JournalpostDto(avskrivning = AvskrivningDto("invalid date", "TE"))
+        val instance =
+            ArchiveInstance(
+                type = type,
+                newCase = SakDto(journalpost = listOf(journalpost)),
+                journalpost = listOf(journalpost),
+            )
+        val error = InvalidAvskrivningsdatoException("invalid date")
+        whenever(avskrivningMappingService.toAvskrivning(journalpost)).thenThrow(error)
+
+        val result = dispatchService.process(instanceFlowHeaders, instance)
+
+        assertThat(result).isEqualTo(DispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(caseDispatchService, recordsProcessingService)
     }
 }

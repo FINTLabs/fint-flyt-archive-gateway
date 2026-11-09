@@ -2,7 +2,9 @@ package no.novari.flyt.archive.gateway.dispatch
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.validation.Valid
+import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
@@ -16,6 +18,7 @@ class DispatchService(
     private val caseDispatchService: CaseDispatchService,
     private val recordsProcessingService: RecordsProcessingService,
     private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
+    private val avskrivningMappingService: AvskrivningMappingService,
 ) {
     fun process(
         instanceFlowHeaders: InstanceFlowHeaders,
@@ -28,7 +31,7 @@ class DispatchService(
 
         val dispatchResult =
             try {
-                validateDokumentetsDato(archiveInstance)
+                validateDates(archiveInstance)
                     ?: when (archiveInstance.type) {
                         CaseDispatchType.NEW -> processNew(archiveInstance)
                         CaseDispatchType.BY_ID -> processById(archiveInstance)
@@ -76,11 +79,14 @@ class DispatchService(
         }
     }
 
-    private fun validateDokumentetsDato(archiveInstance: ArchiveInstance): DispatchResult? {
+    private fun validateDates(archiveInstance: ArchiveInstance): DispatchResult? {
         for (journalpostDto in archiveInstance.getJournalpostDtosForValidation()) {
             try {
                 dokumentetsDatoMappingService.toDateOrNull(journalpostDto.dokumentetsDato)
+                avskrivningMappingService.toAvskrivning(journalpostDto)
             } catch (error: InvalidDokumentetsDatoException) {
+                return DispatchResult.declined(error.message.orEmpty())
+            } catch (error: InvalidAvskrivningsdatoException) {
                 return DispatchResult.declined(error.message.orEmpty())
             }
         }
