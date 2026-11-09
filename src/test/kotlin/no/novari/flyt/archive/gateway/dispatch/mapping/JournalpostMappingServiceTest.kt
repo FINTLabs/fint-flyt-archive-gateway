@@ -125,12 +125,22 @@ class JournalpostMappingServiceTest {
         assertThat(json.has("avskrivning")).isFalse()
     }
 
-    @Test
-    fun `serializes avskrivning date in requested UTC format without avskrevetAv`() {
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "2026-08-24T09:12:48Z",
+            "2026-08-24T09:12:48.000Z",
+            "2026-08-24T09:12:48.987Z",
+            "2026-08-24T11:12:48+02:00",
+            "2026-08-24T11:12:48.987+02:00",
+            "2026-08-24T04:12:48.987-05:00",
+        ],
+    )
+    fun `serializes avskrivning date in UTC with second precision without avskrevetAv`(date: String) {
         val dto =
             JournalpostDto(
                 journalposttype = "incoming-type",
-                avskrivning = AvskrivningDto("2026-08-24T09:12:48Z", "TE"),
+                avskrivning = AvskrivningDto(date, "TE"),
             )
 
         val resource = journalpostMappingService.toJournalpostResource(dto, emptyMap())

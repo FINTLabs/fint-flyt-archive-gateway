@@ -182,8 +182,11 @@ class AvskrivningMappingServiceTest {
             "2026-08-24T24:00:00Z",
             "2026-08-24T09:12:48",
             "2026-08-24T09:12Z",
-            "2026-08-24T09:12:48.123Z",
-            "2026-08-24T09:12:48+02:00",
+            "2026-08-24T09:12+02:00",
+            "2026-08-24T09:12:48.123",
+            "2026-02-30T09:12:48.123+02:00",
+            "2026-08-24T09:12:48+25:00",
+            "2026-08-24T09:12:48.Z",
             " 2026-08-24T09:12:48Z ",
         ],
     )
@@ -192,6 +195,7 @@ class AvskrivningMappingServiceTest {
 
         assertThatThrownBy { service.toAvskrivning(dto) }
             .isInstanceOf(InvalidAvskrivningsdatoException::class.java)
-            .hasMessageContaining("YYYY-MM-DDThh:mm:ssZ (UTC)")
+            .hasMessageContaining("ISO 8601")
+            .hasMessageContaining("klokkeslett med sekunder og tidssone")
     }
 }

@@ -18,9 +18,11 @@ class AvskrivningTemplateService {
                     .key("avskrivningsdato")
                     .displayName("Avskrivningsdato")
                     .description(
-                        "Dato og klokkeslett for avskrivning. Må være på ISO 8601-format YYYY-MM-DDThh:mm:ssZ " +
-                            "(UTC), for eksempel 2026-08-24T09:12:48Z. Hvis feltet er tomt og avskrivningsmåte " +
-                            "er fylt ut, brukes dagens dato og klokkeslett ved utsending til arkivet.",
+                        "Dato og klokkeslett for avskrivning. Bruk ISO 8601 med sekunder og tidssone " +
+                            "(Z eller +/-hh:mm), for eksempel 2026-08-24T09:12:48Z eller " +
+                            "2026-08-24T11:12:48.123+02:00. Datoen sendes til arkivet i UTC på formatet " +
+                            "YYYY-MM-DDThh:mm:ssZ. Millisekunder utelates. Hvis feltet er tomt og " +
+                            "avskrivningsmåte er fylt ut, brukes dagens dato og klokkeslett ved utsending til arkivet.",
                     ).build(),
                 ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
             ).addTemplate(

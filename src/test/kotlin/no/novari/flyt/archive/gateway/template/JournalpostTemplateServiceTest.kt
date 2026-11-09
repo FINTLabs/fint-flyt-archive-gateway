@@ -36,7 +36,14 @@ class JournalpostTemplateServiceTest {
 
         assertThat(avskrivningsdato.elementConfig?.displayName).isEqualTo("Avskrivningsdato")
         assertThat(avskrivningsdato.elementConfig?.description)
-            .contains("YYYY-MM-DDThh:mm:ssZ", "dagens dato", "ved utsending")
+            .contains(
+                "sekunder og tidssone",
+                ".123+02:00",
+                "UTC på formatet YYYY-MM-DDThh:mm:ssZ",
+                "Millisekunder utelates",
+                "dagens dato",
+                "ved utsending",
+            )
         assertThat(avskrivningsdato.template?.type).isEqualTo(ValueTemplate.Type.DYNAMIC_STRING)
         assertThat(avskrivningsmate.elementConfig?.displayName).isEqualTo("Avskrivningsmåte")
         assertThat(avskrivningsmate.elementConfig?.description).contains("I (Inngående brev)")
