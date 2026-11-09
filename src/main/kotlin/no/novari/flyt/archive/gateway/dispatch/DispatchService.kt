@@ -6,6 +6,8 @@ import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidJournalpostTypeException
+import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostTypeLookupException
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -31,7 +33,7 @@ class DispatchService(
 
         val dispatchResult =
             try {
-                validateDates(archiveInstance)
+                validateJournalposts(archiveInstance)
                     ?: when (archiveInstance.type) {
                         CaseDispatchType.NEW -> processNew(archiveInstance)
                         CaseDispatchType.BY_ID -> processById(archiveInstance)
@@ -79,7 +81,7 @@ class DispatchService(
         }
     }
 
-    private fun validateDates(archiveInstance: ArchiveInstance): DispatchResult? {
+    private fun validateJournalposts(archiveInstance: ArchiveInstance): DispatchResult? {
         for (journalpostDto in archiveInstance.getJournalpostDtosForValidation()) {
             try {
                 dokumentetsDatoMappingService.toDateOrNull(journalpostDto.dokumentetsDato)
@@ -88,6 +90,14 @@ class DispatchService(
                 return DispatchResult.declined(error.message.orEmpty())
             } catch (error: InvalidAvskrivningsdatoException) {
                 return DispatchResult.declined(error.message.orEmpty())
+            } catch (error: InvalidJournalpostTypeException) {
+                return DispatchResult.declined(error.message.orEmpty())
+            } catch (error: JournalpostTypeLookupException) {
+                log.atError {
+                    message = "Could not resolve journalpost type"
+                    cause = error
+                }
+                return DispatchResult.failed(error.message.orEmpty())
             }
         }
         return null

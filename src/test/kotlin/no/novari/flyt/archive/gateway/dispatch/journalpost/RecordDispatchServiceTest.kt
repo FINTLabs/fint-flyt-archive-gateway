@@ -8,7 +8,9 @@ import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatch
 import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidJournalpostTypeException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostTypeLookupException
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
@@ -176,6 +178,38 @@ class RecordDispatchServiceTest {
         val result = recordDispatchService.dispatch("caseId", dto)
 
         assertThat(result).isEqualTo(RecordDispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
+    }
+
+    @Test
+    fun `declines unknown journalpost type before dispatching files or journalpost`() {
+        val dto =
+            JournalpostDto(
+                avskrivning = AvskrivningDto(avskrivningsmate = "TE"),
+                dokumentbeskrivelse = listOf(DokumentbeskrivelseDto(dokumentobjekt = listOf(DokumentobjektDto()))),
+            )
+        val error = InvalidJournalpostTypeException("I")
+        whenever(avskrivningMappingService.toAvskrivning(dto)).thenThrow(error)
+
+        val result = recordDispatchService.dispatch("caseId", dto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
+    }
+
+    @Test
+    fun `returns technical lookup failure with explanation before dispatching files or journalpost`() {
+        val dto =
+            JournalpostDto(
+                avskrivning = AvskrivningDto(avskrivningsmate = "TE"),
+                dokumentbeskrivelse = listOf(DokumentbeskrivelseDto(dokumentobjekt = listOf(DokumentobjektDto()))),
+            )
+        val error = JournalpostTypeLookupException("incoming-type")
+        whenever(avskrivningMappingService.toAvskrivning(dto)).thenThrow(error)
+
+        val result = recordDispatchService.dispatch("caseId", dto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.failed(error.message.orEmpty()))
         verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
     }
 

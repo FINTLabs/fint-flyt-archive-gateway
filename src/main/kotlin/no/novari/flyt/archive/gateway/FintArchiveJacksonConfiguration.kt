@@ -16,6 +16,7 @@ class FintArchiveJacksonConfiguration {
     @Bean
     fun avskrivningSerialization(): Jackson2ObjectMapperBuilderCustomizer =
         Jackson2ObjectMapperBuilderCustomizer { builder ->
+            // The archive RestClient uses Spring's shared mapper; keep date formatting serialization-only.
             builder.mixIn(JournalpostResource::class.java, JournalpostResourceMixin::class.java)
             builder.mixIn(Avskrivning::class.java, AvskrivningMixin::class.java)
         }

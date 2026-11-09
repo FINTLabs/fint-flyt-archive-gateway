@@ -11,7 +11,9 @@ import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
 import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidDokumentetsDatoException
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidJournalpostTypeException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostTypeLookupException
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -42,6 +44,14 @@ class RecordDispatchService(
             return RecordDispatchResult.declined(error.message.orEmpty())
         } catch (error: InvalidAvskrivningsdatoException) {
             return RecordDispatchResult.declined(error.message.orEmpty())
+        } catch (error: InvalidJournalpostTypeException) {
+            return RecordDispatchResult.declined(error.message.orEmpty())
+        } catch (error: JournalpostTypeLookupException) {
+            log.atError {
+                message = "Could not resolve journalpost type"
+                cause = error
+            }
+            return RecordDispatchResult.failed(error.message.orEmpty())
         }
         val dokumentobjektDtos = journalpostDto.dokumentbeskrivelse?.flatMap(this::getDokumentObjektDtos).orEmpty()
         val result =

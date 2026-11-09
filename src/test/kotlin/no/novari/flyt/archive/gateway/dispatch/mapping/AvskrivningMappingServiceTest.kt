@@ -1,9 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
 import no.novari.cache.FintCache
+import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
+import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -11,13 +13,17 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullAndEmptySource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
 import org.mockito.kotlin.whenever
+import org.springframework.web.client.ResourceAccessException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class AvskrivningMappingServiceTest {
     private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource> = mock()
-    private val service = AvskrivningMappingService(journalpostTypeResourceCache)
+    private val fintArchiveResourceClient: FintArchiveResourceClient = mock()
+    private val service = AvskrivningMappingService(journalpostTypeResourceCache, fintArchiveResourceClient)
     private val incomingType = "https://example.com/arkiv/kodeverk/journalposttype/systemid/42"
 
     private fun incomingJournalpost(avskrivning: AvskrivningDto): JournalpostDto {
@@ -35,6 +41,7 @@ class AvskrivningMappingServiceTest {
         assertThat(result.avskrivningsmate).isEqualTo("TE")
         assertThat(result.avskrivningsdato.toInstant()).isEqualTo(Instant.parse("2026-08-24T09:12:48Z"))
         assertThat(result.avskrevetAv).isNull()
+        verifyNoInteractions(fintArchiveResourceClient)
     }
 
     @ParameterizedTest
@@ -83,12 +90,87 @@ class AvskrivningMappingServiceTest {
     }
 
     @Test
-    fun `fails when journalpost type is missing from cache instead of silently discarding avskrivning`() {
+    fun `loads journalpost types from archive on cache miss and caches all self links`() {
+        val codeLink = "https://example.com/arkiv/kodeverk/journalposttype/kode/I"
+        val type: JournalpostTypeResource = mock()
+        whenever(type.kode).thenReturn("I")
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType), Link.with(codeLink)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        val result = service.toAvskrivning(dto)!!
+
+        assertThat(result.avskrivningsmate).isEqualTo("TE")
+        assertThat(result.avskrivningsdato).isNotNull()
+        verify(journalpostTypeResourceCache).put(listOf(incomingType, codeLink), type)
+    }
+
+    @Test
+    fun `declines unknown reference only after successfully loading archive code list`() {
+        val type: JournalpostTypeResource = mock()
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = "I", avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(InvalidJournalpostTypeException::class.java)
+            .hasMessageContaining("Ukjent journalposttype='I'")
+            .hasMessageContaining("Korriger mappingen")
+    }
+
+    @Test
+    fun `reports a technical lookup error when archive code list cannot be fetched`() {
+        val error = ResourceAccessException("Archive unavailable")
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenThrow(error)
         val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
 
         assertThatThrownBy { service.toAvskrivning(dto) }
-            .isInstanceOf(IllegalStateException::class.java)
-            .hasMessageContaining("Fant ikke kode for journalposttype")
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
+            .hasCause(error)
+            .hasMessageContaining("Prøv å sende instansen på nytt")
+    }
+
+    @Test
+    fun `reports empty archive code list as missing technical data instead of invalid user mapping`() {
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
+    }
+
+    @Test
+    fun `reports matching archive resource without code as missing technical data`() {
+        val type: JournalpostTypeResource = mock()
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
     }
 
     @ParameterizedTest

@@ -4,6 +4,8 @@ import no.novari.cache.FintCache
 import no.novari.fint.model.arkiv.noark.Avskrivning
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
+import no.novari.flyt.archive.gateway.links.ResourceLinkUtil
+import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -13,21 +15,40 @@ import java.util.Date
 @Service
 class AvskrivningMappingService(
     private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource>,
+    private val fintArchiveResourceClient: FintArchiveResourceClient,
 ) {
     fun toAvskrivning(journalpostDto: JournalpostDto): Avskrivning? {
         val dto = journalpostDto.avskrivning ?: return null
         if (dto.avskrivningsmate.isNullOrBlank()) return null
         val journalposttype = journalpostDto.journalposttype ?: return null
-        val kode =
-            checkNotNull(journalpostTypeResourceCache.get(journalposttype)?.kode) {
-                "Fant ikke kode for journalposttype '$journalposttype' i kodeverk-cachen"
-            }
-        if (kode != "I") return null
+        if (getJournalpostTypeCode(journalposttype) != INCOMING_JOURNALPOST_TYPE) return null
 
         return Avskrivning().apply {
             avskrivningsmate = dto.avskrivningsmate
             avskrivningsdato = toDate(dto.avskrivningsdato)
         }
+    }
+
+    private fun getJournalpostTypeCode(journalposttype: String): String {
+        journalpostTypeResourceCache.get(journalposttype)?.kode?.let { return it }
+
+        val types =
+            try {
+                fintArchiveResourceClient.getResourcesSince(
+                    "arkiv/kodeverk/journalposttype",
+                    JournalpostTypeResource::class.java,
+                    0L,
+                )
+            } catch (error: RuntimeException) {
+                throw JournalpostTypeLookupException(journalposttype, error)
+            }
+        if (types.isEmpty()) throw JournalpostTypeLookupException(journalposttype)
+
+        types.forEach { journalpostTypeResourceCache.put(ResourceLinkUtil.getSelfLinks(it), it) }
+        val type =
+            types.firstOrNull { journalposttype in ResourceLinkUtil.getSelfLinks(it) }
+                ?: throw InvalidJournalpostTypeException(journalposttype)
+        return type.kode ?: throw JournalpostTypeLookupException(journalposttype)
     }
 
     private fun toDate(value: String?): Date {
@@ -42,6 +63,7 @@ class AvskrivningMappingService(
     }
 
     companion object {
+        private const val INCOMING_JOURNALPOST_TYPE = "I"
         private val DATE_TIME_PATTERN = Regex("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z")
     }
 }

@@ -42,7 +42,7 @@ class JournalpostMappingServiceTest {
             ),
             DokumentbeskrivelseMappingService(DokumentObjektMappingService(), SkjermingMappingService()),
             DokumentetsDatoMappingService(),
-            AvskrivningMappingService(journalpostTypeResourceCache),
+            AvskrivningMappingService(journalpostTypeResourceCache, mock()),
         )
 
     @Test
