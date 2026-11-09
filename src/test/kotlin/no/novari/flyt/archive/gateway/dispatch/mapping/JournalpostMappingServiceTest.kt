@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import no.novari.cache.FintCache
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
+import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.FintArchiveJacksonConfiguration
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
@@ -138,5 +139,33 @@ class JournalpostMappingServiceTest {
         assertThat(json["avskrivningsdato"].asText()).isEqualTo("2026-08-24T09:12:48Z")
         assertThat(json["avskrivningsmate"].asText()).isEqualTo("TE")
         assertThat(json.has("avskrevetAv")).isFalse()
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "2026-11-09T12:58:53.000+00:00",
+            "2026-11-09T12:58:53Z",
+            "2026-11-09T13:58:53.000+01:00",
+        ],
+    )
+    fun `reads avskrivningsdato from archive case response with milliseconds and offsets`(date: String) {
+        val json =
+            """
+            {
+              "journalpost": [{
+                "avskrivning": {
+                  "avskrivningsdato": "$date",
+                  "avskrivningsmate": "TE"
+                }
+              }]
+            }
+            """.trimIndent()
+
+        val resource = objectMapper.readValue(json, SakResource::class.java)
+        val avskrivning = resource.journalpost.single().avskrivning
+
+        assertThat(avskrivning.avskrivningsdato.toInstant())
+            .isEqualTo(Instant.parse("2026-11-09T12:58:53Z"))
     }
 }
