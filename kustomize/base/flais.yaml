@@ -31,6 +31,11 @@ spec:
   env:
     - name: JAVA_TOOL_OPTIONS
       value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0'
+    - name: fint.flyt.archive.sso.client-id
+      valueFrom:
+        secretKeyRef:
+          name: fint-flyt-archive-oauth2-client
+          key: fint.sso.client-id
   onePassword:
     itemPath: path
   envFrom:
