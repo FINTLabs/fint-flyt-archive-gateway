@@ -3,8 +3,10 @@ package no.novari.flyt.archive.gateway.sak
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.resource.sak.CaseService
+import no.novari.flyt.archive.gateway.resource.sak.InvalidArchiveInstanceIdException
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -13,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.whenever
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 
 @ExtendWith(MockitoExtension::class)
 class CaseServiceTest {
@@ -63,5 +66,45 @@ class CaseServiceTest {
             .thenThrow(HttpClientErrorException(HttpStatus.NOT_FOUND))
 
         assertThat(caseService.getByArchiveInstanceIdWithFilteredJournalposts("2023/101-[1]")).isNull()
+    }
+
+    @Test
+    fun `findByMappeId returns null when FINT has no sak`() {
+        whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/101", SakResource::class.java))
+            .thenThrow(HttpClientErrorException(HttpStatus.NOT_FOUND))
+
+        assertThat(caseService.findByMappeId("2023/101")).isNull()
+    }
+
+    @Test
+    fun `findByMappeId throws when FINT call fails`() {
+        whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/101", SakResource::class.java))
+            .thenThrow(HttpServerErrorException(HttpStatus.BAD_GATEWAY))
+
+        assertThatThrownBy { caseService.findByMappeId("2023/101") }
+            .isInstanceOf(HttpServerErrorException::class.java)
+    }
+
+    @Test
+    fun `findByArchiveInstanceIdWithFilteredJournalposts returns null when FINT has no sak`() {
+        whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/101", SakResource::class.java))
+            .thenThrow(HttpClientErrorException(HttpStatus.NOT_FOUND))
+
+        assertThat(caseService.findByArchiveInstanceIdWithFilteredJournalposts("2023/101-[1]")).isNull()
+    }
+
+    @Test
+    fun `findByArchiveInstanceIdWithFilteredJournalposts throws when FINT call fails`() {
+        whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/101", SakResource::class.java))
+            .thenThrow(HttpServerErrorException(HttpStatus.BAD_GATEWAY))
+
+        assertThatThrownBy { caseService.findByArchiveInstanceIdWithFilteredJournalposts("2023/101-[1]") }
+            .isInstanceOf(HttpServerErrorException::class.java)
+    }
+
+    @Test
+    fun `findByArchiveInstanceIdWithFilteredJournalposts throws when journalpost ids are invalid`() {
+        assertThatThrownBy { caseService.findByArchiveInstanceIdWithFilteredJournalposts("2023/101-[x]") }
+            .isInstanceOf(InvalidArchiveInstanceIdException::class.java)
     }
 }

@@ -4,7 +4,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.fint.model.resource.arkiv.noark.SakResource
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.web.client.HttpClientErrorException
 
 @Service
 class CaseService(
@@ -12,7 +14,7 @@ class CaseService(
 ) {
     fun getByMappeId(mappeId: String): SakResource? =
         try {
-            fetchByMappeId(mappeId)
+            findByMappeId(mappeId)
         } catch (error: RuntimeException) {
             log.atError {
                 message = "Could not find case with id={}"
@@ -22,16 +24,9 @@ class CaseService(
             null
         }
 
-    fun getByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId: String): SakResource? {
-        val caseAndJournalpostIds = extractCaseAndJournalpostIds(archiveInstanceId)
-        return try {
-            val sakResource = fetchByMappeId(caseAndJournalpostIds.caseId)
-            val journalposts: List<JournalpostResource> = sakResource.journalpost?.toList() ?: emptyList()
-            sakResource.journalpost =
-                journalposts.filter { journalpostResource ->
-                    caseAndJournalpostIds.journalpostIds.contains(journalpostResource.journalPostnummer)
-                }
-            sakResource
+    fun getByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId: String): SakResource? =
+        try {
+            findByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId)
         } catch (error: RuntimeException) {
             log.atError {
                 message = "Could not find case with archive instance id={}"
@@ -40,10 +35,32 @@ class CaseService(
             }
             null
         }
-    }
 
-    private fun fetchByMappeId(mappeId: String): SakResource =
-        fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
+    /**
+     * Returns null when FINT has no sak with the given mappeId. Other errors are thrown.
+     */
+    fun findByMappeId(mappeId: String): SakResource? =
+        try {
+            fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/$mappeId", SakResource::class.java)
+        } catch (error: HttpClientErrorException) {
+            if (error.statusCode == HttpStatus.NOT_FOUND) null else throw error
+        }
+
+    /**
+     * Returns null when FINT has no sak for the given archive instance id. Other errors are thrown.
+     *
+     * @throws InvalidArchiveInstanceIdException if the archive instance id cannot be parsed
+     */
+    fun findByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId: String): SakResource? {
+        val caseAndJournalpostIds = extractCaseAndJournalpostIds(archiveInstanceId)
+        val sakResource = findByMappeId(caseAndJournalpostIds.caseId) ?: return null
+        val journalposts: List<JournalpostResource> = sakResource.journalpost?.toList() ?: emptyList()
+        sakResource.journalpost =
+            journalposts.filter { journalpostResource ->
+                caseAndJournalpostIds.journalpostIds.contains(journalpostResource.journalPostnummer)
+            }
+        return sakResource
+    }
 
     private fun extractCaseAndJournalpostIds(archiveInstanceId: String): CaseAndJournalpostIds {
         val splitArchiveInstanceId = archiveInstanceId.split("-")
@@ -57,7 +74,7 @@ class CaseService(
                     .replace("]", "")
                     .split(",")
                     .filter(String::isNotBlank)
-                    .map(String::toLong)
+                    .map { it.toLongOrNull() ?: throw InvalidArchiveInstanceIdException(archiveInstanceId) }
             }
 
         return CaseAndJournalpostIds(caseId = caseId, journalpostIds = journalpostIds)

@@ -16,6 +16,8 @@ novari:
         api:
           internal:
             authorized-org-id-role-pairs-json: "{\"vigo.no\":[\"DEVELOPER\",\"USER\"]}"
+          internal-client:
+            authorized-client-ids: local-client
   kafka:
     default-replicas: 1
     topic:

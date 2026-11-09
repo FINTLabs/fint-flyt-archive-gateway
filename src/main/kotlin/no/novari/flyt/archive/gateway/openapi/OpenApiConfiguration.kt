@@ -41,6 +41,14 @@ class OpenApiConfiguration {
             .build()
 
     @Bean
+    fun internalClientApiGroup(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
+            .group("intern-klient")
+            .pathsToMatch("/api/intern-klient/**")
+            .build()
+
+    @Bean
     @Order(-1)
     fun openApiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http
