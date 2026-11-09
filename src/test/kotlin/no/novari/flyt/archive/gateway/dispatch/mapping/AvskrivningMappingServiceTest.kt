@@ -1,0 +1,201 @@
+package no.novari.flyt.archive.gateway.dispatch.mapping
+
+import no.novari.cache.FintCache
+import no.novari.fint.model.resource.Link
+import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
+import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
+import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
+import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.NullAndEmptySource
+import org.junit.jupiter.params.provider.ValueSource
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.verifyNoInteractions
+import org.mockito.kotlin.whenever
+import org.springframework.web.client.ResourceAccessException
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+class AvskrivningMappingServiceTest {
+    private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource> = mock()
+    private val fintArchiveResourceClient: FintArchiveResourceClient = mock()
+    private val service = AvskrivningMappingService(journalpostTypeResourceCache, fintArchiveResourceClient)
+    private val incomingType = "https://example.com/arkiv/kodeverk/journalposttype/systemid/42"
+
+    private fun incomingJournalpost(avskrivning: AvskrivningDto): JournalpostDto {
+        whenever(journalpostTypeResourceCache.get(incomingType))
+            .thenReturn(JournalpostTypeResource().apply { kode = "I" })
+        return JournalpostDto(journalposttype = incomingType, avskrivning = avskrivning)
+    }
+
+    @Test
+    fun `uses journalpost type code from cache and maps date and method without avskrevetAv`() {
+        val dto = incomingJournalpost(AvskrivningDto("2026-08-24T09:12:48Z", "TE"))
+
+        val result = service.toAvskrivning(dto)!!
+
+        assertThat(result.avskrivningsmate).isEqualTo("TE")
+        assertThat(result.avskrivningsdato.toInstant()).isEqualTo(Instant.parse("2026-08-24T09:12:48Z"))
+        assertThat(result.avskrevetAv).isNull()
+        verifyNoInteractions(fintArchiveResourceClient)
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = [" "])
+    fun `defaults missing or blank date to current time at dispatch`(date: String?) {
+        val dto = incomingJournalpost(AvskrivningDto(date, "TE"))
+        val before = Instant.now().truncatedTo(ChronoUnit.SECONDS)
+
+        val result = service.toAvskrivning(dto)!!
+
+        assertThat(result.avskrivningsdato.toInstant())
+            .isBetween(before, Instant.now())
+        assertThat(result.avskrivningsmate).isEqualTo("TE")
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = [" "])
+    fun `omits avskrivning when method is missing or blank even with a date`(method: String?) {
+        val dto = incomingJournalpost(AvskrivningDto("invalid date", method))
+
+        assertThat(service.toAvskrivning(dto)).isNull()
+    }
+
+    @Test
+    fun `omits absent avskrivning`() {
+        assertThat(service.toAvskrivning(JournalpostDto(journalposttype = incomingType))).isNull()
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["U", "N", "X", "i", ""])
+    fun `omits entire avskrivning for other journalpost types regardless of date or link suffix`(code: String) {
+        val type = "https://example.com/arkiv/kodeverk/journalposttype/systemid/I"
+        whenever(journalpostTypeResourceCache.get(type)).thenReturn(JournalpostTypeResource().apply { kode = code })
+        val dto = JournalpostDto(journalposttype = type, avskrivning = AvskrivningDto("invalid date", "TE"))
+
+        assertThat(service.toAvskrivning(dto)).isNull()
+    }
+
+    @Test
+    fun `omits avskrivning when journalpost type is missing`() {
+        val dto = JournalpostDto(avskrivning = AvskrivningDto("invalid date", "TE"))
+
+        assertThat(service.toAvskrivning(dto)).isNull()
+    }
+
+    @Test
+    fun `loads journalpost types from archive on cache miss and caches all self links`() {
+        val codeLink = "https://example.com/arkiv/kodeverk/journalposttype/kode/I"
+        val type: JournalpostTypeResource = mock()
+        whenever(type.kode).thenReturn("I")
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType), Link.with(codeLink)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        val result = service.toAvskrivning(dto)!!
+
+        assertThat(result.avskrivningsmate).isEqualTo("TE")
+        assertThat(result.avskrivningsdato).isNotNull()
+        verify(journalpostTypeResourceCache).put(listOf(incomingType, codeLink), type)
+    }
+
+    @Test
+    fun `declines unknown reference only after successfully loading archive code list`() {
+        val type: JournalpostTypeResource = mock()
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = "I", avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(InvalidJournalpostTypeException::class.java)
+            .hasMessageContaining("Ukjent journalposttype='I'")
+            .hasMessageContaining("Korriger mappingen")
+    }
+
+    @Test
+    fun `reports a technical lookup error when archive code list cannot be fetched`() {
+        val error = ResourceAccessException("Archive unavailable")
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenThrow(error)
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
+            .hasCause(error)
+            .hasMessageContaining("Prøv å sende instansen på nytt")
+    }
+
+    @Test
+    fun `reports empty archive code list as missing technical data instead of invalid user mapping`() {
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
+    }
+
+    @Test
+    fun `reports matching archive resource without code as missing technical data`() {
+        val type: JournalpostTypeResource = mock()
+        whenever(type.selfLinks).thenReturn(listOf(Link.with(incomingType)))
+        whenever(
+            fintArchiveResourceClient.getResourcesSince(
+                "arkiv/kodeverk/journalposttype",
+                JournalpostTypeResource::class.java,
+                0L,
+            ),
+        ).thenReturn(listOf(type))
+        val dto = JournalpostDto(journalposttype = incomingType, avskrivning = AvskrivningDto(avskrivningsmate = "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(JournalpostTypeLookupException::class.java)
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = [
+            "not a date",
+            "2026-08-24",
+            "2026-02-30T09:12:48Z",
+            "2026-08-24T24:00:00Z",
+            "2026-08-24T09:12:48",
+            "2026-08-24T09:12Z",
+            "2026-08-24T09:12+02:00",
+            "2026-08-24T09:12:48.123",
+            "2026-02-30T09:12:48.123+02:00",
+            "2026-08-24T09:12:48+25:00",
+            "2026-08-24T09:12:48.Z",
+            " 2026-08-24T09:12:48Z ",
+        ],
+    )
+    fun `rejects invalid avskrivningsdato for incoming journalpost`(date: String) {
+        val dto = incomingJournalpost(AvskrivningDto(date, "TE"))
+
+        assertThatThrownBy { service.toAvskrivning(dto) }
+            .isInstanceOf(InvalidAvskrivningsdatoException::class.java)
+            .hasMessageContaining("ISO 8601")
+            .hasMessageContaining("klokkeslett med sekunder og tidssone")
+    }
+}

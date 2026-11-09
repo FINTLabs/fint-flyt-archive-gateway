@@ -20,6 +20,7 @@ object TestTemplateServices {
             ),
             skjermingTemplateService(),
             referenceTemplateFactory,
+            AvskrivningTemplateService(),
         )
 
     fun archiveTemplateService() =

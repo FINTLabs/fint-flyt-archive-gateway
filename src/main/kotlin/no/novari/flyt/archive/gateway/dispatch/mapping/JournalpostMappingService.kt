@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
-import no.novari.fint.model.arkiv.noark.Avskrivning
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -13,6 +12,7 @@ class JournalpostMappingService(
     private val korrespondansepartMappingService: KorrespondansepartMappingService,
     private val dokumentbeskrivelseMappingService: DokumentbeskrivelseMappingService,
     private val dokumentetsDatoMappingService: DokumentetsDatoMappingService,
+    private val avskrivningMappingService: AvskrivningMappingService,
 ) {
     fun toJournalpostResource(
         journalpostDto: JournalpostDto,
@@ -26,9 +26,7 @@ class JournalpostMappingService(
             journalpostDto.tilgangsgruppe?.let(Link::with)?.let(::addTilgangsgruppe)
             journalpostDto.saksbehandler?.let(Link::with)?.let(::addSaksbehandler)
             journalpostDto.journalposttype?.let(Link::with)?.let(::addJournalposttype)
-            journalpostDto.avskrivningsmate
-                ?.let { Avskrivning().apply { avskrivningsmate = it } }
-                ?.let(::setAvskrivning)
+            avskrivningMappingService.toAvskrivning(journalpostDto)?.let(::setAvskrivning)
             journalpostDto.administrativEnhet?.let(Link::with)?.let(::addAdministrativEnhet)
             journalpostDto.skjerming?.let(skjermingMappingService::toSkjermingResource)?.let(::setSkjerming)
             journalpostDto.korrespondansepart
