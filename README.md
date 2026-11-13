@@ -18,6 +18,7 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 | `InstanceMappedEventConsumerConfiguration`                     | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services.        |
 | `FintResourcePublishingConfiguration`                          | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics.        |
 | `CaseController`/`CaseService`                                 | Serves `/api/intern/arkiv/saker/{year}/{number}/tittel` by looking up the case directly in FINT Archive.                                          |
+| `InternalClientCaseController`                                 | Serves `/api/intern-klient/arkiv/saker` for other Flyt services, see [Internal client API](#internal-client-api).                                 |
 | `CodelistController`                                           | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON.       |
 | `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls.                           |
 
@@ -51,12 +52,23 @@ Swagger UI is then available at `http://localhost:8080/beta/fintlabs-no/swagger-
 
 Kodeverk endpoints share the same response contract; each list is distinct (administrativEnhet, arkivdel, arkivressurs, partrolle, korrespondanseparttype, tilknyttetregistreringsom, sakstatus, skjermingshjemmel, tilgangsrestriksjon, dokumentstatus, dokumenttype, journalstatus, journalposttype, saksmappetype, variantformat, format, tilgangsgruppe).
 
+### Internal client API
+
+Base path: `/api/intern-klient/arkiv`, OpenAPI group `intern-klient`. Only callers with a token for `fint-flyt-authorization-oauth2-client` are allowed. It is the shared client for
+internal calls between FLYT services, because namerator does not create new NAM clients. The secret is mapped with
+`env` to `fint.flyt.authorization.sso.client-id`, so it does not collide with `fint-flyt-file-oauth2-client`.
+
+| Method | Path                             | Description                                                                                        | Response                                                                                        |
+|--------|----------------------------------|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `GET`  | `/saker/{caseYear}/{caseNumber}` | Fetches the sak for the given Noark `mappeId`.                                                     | `200 OK` with `SakResource`; `404` if unknown; `5xx` if FINT fails.                             |
+| `GET`  | `/saker?archiveInstanceId=<id>`  | Fetches the sak with only the journalposter listed in the archive instance id (`2024/123-[1,2]`).  | `200 OK` with `SakResource`; `400` if the id is invalid; `404` if unknown; `5xx` if FINT fails. |
+
 ## Kafka Integration
 
 - `InstanceMappedEventConsumerConfiguration.instanceMappedEventConsumer` listens to the `instance-mapped` event topic (partitioned by org/app defaults) and hands each record to `DispatchService`. Failed records are skipped with no retries via the shared `ErrorHandlerFactory`.
 - `InstanceDispatchedEventProducerService` provisions the `instance-dispatched` topic (retention derived from `KafkaTopicProperties`) and emits completion events after accepted dispatches. Keys should uniquely represent the archive instance for better ordering.
 - `InstanceDispatchingErrorProducerService` creates the `instance-dispatching-error` topic and publishes structured error collections for DECLINED or FAILED dispatches.
-- `CaseRequestConfiguration` answers request/reply lookups on the `arkiv-noark-sak` and `arkiv-noark-sak-with-filtered-journalposts` request topics for other Flyt services, delegating to `CaseService`.
+- `CaseRequestConfiguration` answers request/reply lookups on the `arkiv-noark-sak` and `arkiv-noark-sak-with-filtered-journalposts` request topics for other Flyt services, delegating to `CaseService`. It is replaced by the [internal client API](#internal-client-api) and will be removed once no service uses the topics.
 - `FintResourcePublishingConfiguration` ensures entity topics exist for each pipeline and uses `ParameterizedTemplate` to push updated resources, caching them locally for HTTP lookups.
 
 ## Scheduled Tasks
@@ -72,18 +84,19 @@ No other cron-style jobs exist; the dispatch path is fully event-driven.
 
 Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-web-resource-server`. Key properties:
 
-| Property                                                       | Description                                                                                           |
-|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| `fint.application-id`                                          | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`). |
-| `fint.org-id`                                                  | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).   |
-| `novari.kafka.topic.instance-processing-events-retention-time` | Retention (hours) applied to instance-processing topics when provisioning.                            |
-| `novari.flyt.archive.gateway.dispatch.fint-client.*`           | Timeout and polling settings for posting cases, records, and files to the archive adapter.            |
-| `novari.flyt.archive.gateway.resource.publishing.*`            | Window, offset, and pull cadence for resource caching and topic publishing.                           |
-| `novari.flyt.archive.gateway.resource.fint-client.*`           | Timeouts and retry strategy for resource lookups and case searches.                                   |
-| `novari.flyt.web-resource-server.security.api.internal.*`      | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.    |
-| `spring.kafka.bootstrap-servers`                               | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                    |
-| `server.port`                                                  | HTTP port (8301 for local-staging).                                                                   |
-| `spring.security.oauth2.client.*`                              | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                        |
+| Property                                                         | Description                                                                                             |
+|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `fint.application-id`                                            | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`).   |
+| `fint.org-id`                                                    | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).     |
+| `novari.kafka.topic.instance-processing-events-retention-time`   | Retention (hours) applied to instance-processing topics when provisioning.                              |
+| `novari.flyt.archive.gateway.dispatch.fint-client.*`             | Timeout and polling settings for posting cases, records, and files to the archive adapter.              |
+| `novari.flyt.archive.gateway.resource.publishing.*`              | Window, offset, and pull cadence for resource caching and topic publishing.                             |
+| `novari.flyt.archive.gateway.resource.fint-client.*`             | Timeouts and retry strategy for resource lookups and case searches.                                     |
+| `novari.flyt.web-resource-server.security.api.internal.*`        | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.      |
+| `novari.flyt.web-resource-server.security.api.internal-client.*` | Enables the internal client API; `authorized-client-ids` is `${fint.flyt.authorization.sso.client-id}`. |
+| `spring.kafka.bootstrap-servers`                                 | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                      |
+| `server.port`                                                    | HTTP port (8301 for local-staging).                                                                     |
+| `spring.security.oauth2.client.*`                                | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                          |
 
 ## Running Locally
 
@@ -135,6 +148,7 @@ and commit both template and regenerated overlay files.
 - Outbound calls use two OAuth2 clients: password-grant credentials for the FINT archive adapter and client-credentials for the Flyt file service.
 - Kafka consumers/producers leverage org/application-scoped prefixes ensuring each tenant’s topics stay isolated.
 - Internal APIs live under `/api/intern/**` and require authorization according to the configured org-role pairs.
+- The internal client API lives under `/api/intern-klient/**` and only accepts tokens issued to `fint-flyt-authorization-oauth2-client`.
 
 ## Observability & Operations
 

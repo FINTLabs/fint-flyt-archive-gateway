@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: $NAMESPACE
 
 resources:
-  - ../../../base
+  - ../../../base$EXTRA_RESOURCES
 
 labels:
   - pairs:
