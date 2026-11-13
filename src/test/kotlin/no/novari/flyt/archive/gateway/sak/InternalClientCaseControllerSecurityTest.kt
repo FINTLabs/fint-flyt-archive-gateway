@@ -42,7 +42,7 @@ import java.time.Instant
 @TestPropertySource(
     properties = [
         "novari.flyt.web-resource-server.security.api.internal-client.enabled=true",
-        "novari.flyt.web-resource-server.security.api.internal-client.authorized-client-ids=$ARCHIVE_CLIENT_ID",
+        "novari.flyt.web-resource-server.security.api.internal-client.authorized-client-ids=$INTERNAL_CLIENT_ID",
     ],
 )
 class InternalClientCaseControllerSecurityTest {
@@ -95,15 +95,15 @@ class InternalClientCaseControllerSecurityTest {
 
     @ParameterizedTest
     @MethodSource("endpoints")
-    fun `accepts token from archive client`(path: String) {
-        givenTokenForClient(ARCHIVE_CLIENT_ID)
+    fun `accepts token from internal client`(path: String) {
+        givenTokenForClient(INTERNAL_CLIENT_ID)
 
         assertThat(get(path)).isEqualTo(HttpStatus.OK)
     }
 
     @Test
     fun `returns 404 when sak does not exist`() {
-        givenTokenForClient(ARCHIVE_CLIENT_ID)
+        givenTokenForClient(INTERNAL_CLIENT_ID)
         whenever(caseService.findByMappeId("2023/102")).thenReturn(null)
 
         assertThat(get(SAK_PATH)).isEqualTo(HttpStatus.NOT_FOUND)
@@ -111,7 +111,7 @@ class InternalClientCaseControllerSecurityTest {
 
     @Test
     fun `returns 400 for invalid archiveInstanceId`() {
-        givenTokenForClient(ARCHIVE_CLIENT_ID)
+        givenTokenForClient(INTERNAL_CLIENT_ID)
         whenever(caseService.findByArchiveInstanceIdWithFilteredJournalposts(any()))
             .thenThrow(InvalidArchiveInstanceIdException("invalid"))
 
@@ -120,7 +120,7 @@ class InternalClientCaseControllerSecurityTest {
 
     @Test
     fun `returns 500 when FINT fails`() {
-        givenTokenForClient(ARCHIVE_CLIENT_ID)
+        givenTokenForClient(INTERNAL_CLIENT_ID)
         whenever(caseService.findByMappeId(any())).thenThrow(IllegalStateException("FINT failed"))
 
         assertThat(get(SAK_PATH)).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -155,6 +155,6 @@ class InternalClientCaseControllerSecurityTest {
     }
 }
 
-private const val ARCHIVE_CLIENT_ID = "test-archive-client"
+private const val INTERNAL_CLIENT_ID = "test-internal-client"
 private const val SAK_PATH = "/api/intern-klient/arkiv/saker/2023/102"
 private const val FILTERED_SAK_PATH = "/api/intern-klient/arkiv/saker?archiveInstanceId=2023/102-[1]"

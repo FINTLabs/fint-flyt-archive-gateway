@@ -31,10 +31,12 @@ spec:
   env:
     - name: JAVA_TOOL_OPTIONS
       value: '-XX:+ExitOnOutOfMemoryError --sun-misc-unsafe-memory-access=allow -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0'
-    - name: fint.flyt.archive.sso.client-id
+    # Shared OAuth client for internal calls between FLYT services (FFS-2389). Mapped with env, not envFrom,
+    # because fint-flyt-file-oauth2-client also exposes fint.sso.*.
+    - name: fint.flyt.authorization.sso.client-id
       valueFrom:
         secretKeyRef:
-          name: fint-flyt-archive-oauth2-client
+          name: fint-flyt-authorization-oauth2-client
           key: fint.sso.client-id
   onePassword:
     itemPath: path
