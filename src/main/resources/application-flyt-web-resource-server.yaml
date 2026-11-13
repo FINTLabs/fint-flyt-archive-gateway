@@ -7,4 +7,4 @@ novari:
             enabled: true
           internal-client:
             enabled: true
-            authorized-client-ids: ${fint.flyt.archive.sso.client-id}
+            authorized-client-ids: ${fint.flyt.authorization.sso.client-id}

@@ -54,7 +54,9 @@ Kodeverk endpoints share the same response contract; each list is distinct (admi
 
 ### Internal client API
 
-Base path: `/api/intern-klient/arkiv`, OpenAPI group `intern-klient`. Only callers with a token for `fint-flyt-archive-oauth2-client` are allowed.
+Base path: `/api/intern-klient/arkiv`, OpenAPI group `intern-klient`. Only callers with a token for `fint-flyt-authorization-oauth2-client` are allowed. It is the shared client for
+internal calls between FLYT services, because namerator does not create new NAM clients. The secret is mapped with
+`env` to `fint.flyt.authorization.sso.client-id`, so it does not collide with `fint-flyt-file-oauth2-client`.
 
 | Method | Path                             | Description                                                                                        | Response                                                                                        |
 |--------|----------------------------------|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
@@ -82,19 +84,19 @@ No other cron-style jobs exist; the dispatch path is fully event-driven.
 
 Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-web-resource-server`. Key properties:
 
-| Property                                                         | Description                                                                                                     |
-|------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `fint.application-id`                                            | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`).           |
-| `fint.org-id`                                                    | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).             |
-| `novari.kafka.topic.instance-processing-events-retention-time`   | Retention (hours) applied to instance-processing topics when provisioning.                                      |
-| `novari.flyt.archive.gateway.dispatch.fint-client.*`             | Timeout and polling settings for posting cases, records, and files to the archive adapter.                      |
-| `novari.flyt.archive.gateway.resource.publishing.*`              | Window, offset, and pull cadence for resource caching and topic publishing.                                     |
-| `novari.flyt.archive.gateway.resource.fint-client.*`             | Timeouts and retry strategy for resource lookups and case searches.                                             |
-| `novari.flyt.web-resource-server.security.api.internal.*`        | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.              |
-| `novari.flyt.web-resource-server.security.api.internal-client.*` | Enables the internal client API; `authorized-client-ids` is the client id of `fint-flyt-archive-oauth2-client`. |
-| `spring.kafka.bootstrap-servers`                                 | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                              |
-| `server.port`                                                    | HTTP port (8301 for local-staging).                                                                             |
-| `spring.security.oauth2.client.*`                                | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                                  |
+| Property                                                         | Description                                                                                             |
+|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `fint.application-id`                                            | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`).   |
+| `fint.org-id`                                                    | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).     |
+| `novari.kafka.topic.instance-processing-events-retention-time`   | Retention (hours) applied to instance-processing topics when provisioning.                              |
+| `novari.flyt.archive.gateway.dispatch.fint-client.*`             | Timeout and polling settings for posting cases, records, and files to the archive adapter.              |
+| `novari.flyt.archive.gateway.resource.publishing.*`              | Window, offset, and pull cadence for resource caching and topic publishing.                             |
+| `novari.flyt.archive.gateway.resource.fint-client.*`             | Timeouts and retry strategy for resource lookups and case searches.                                     |
+| `novari.flyt.web-resource-server.security.api.internal.*`        | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.      |
+| `novari.flyt.web-resource-server.security.api.internal-client.*` | Enables the internal client API; `authorized-client-ids` is `${fint.flyt.authorization.sso.client-id}`. |
+| `spring.kafka.bootstrap-servers`                                 | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                      |
+| `server.port`                                                    | HTTP port (8301 for local-staging).                                                                     |
+| `spring.security.oauth2.client.*`                                | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                          |
 
 ## Running Locally
 
@@ -146,7 +148,7 @@ and commit both template and regenerated overlay files.
 - Outbound calls use two OAuth2 clients: password-grant credentials for the FINT archive adapter and client-credentials for the Flyt file service.
 - Kafka consumers/producers leverage org/application-scoped prefixes ensuring each tenant’s topics stay isolated.
 - Internal APIs live under `/api/intern/**` and require authorization according to the configured org-role pairs.
-- The internal client API lives under `/api/intern-klient/**` and only accepts tokens issued to `fint-flyt-archive-oauth2-client`.
+- The internal client API lives under `/api/intern-klient/**` and only accepts tokens issued to `fint-flyt-authorization-oauth2-client`.
 
 ## Observability & Operations
 
