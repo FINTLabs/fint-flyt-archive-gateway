@@ -62,20 +62,20 @@ class CaseService(
         return sakResource
     }
 
+    /**
+     * Accepts the formats written by [no.novari.flyt.archive.gateway.dispatch.DispatchMessageFormattingService]:
+     * `caseId` or `caseId-[1,2]`.
+     */
     private fun extractCaseAndJournalpostIds(archiveInstanceId: String): CaseAndJournalpostIds {
-        val splitArchiveInstanceId = archiveInstanceId.split("-")
-        val caseId = splitArchiveInstanceId.first()
+        val match =
+            ARCHIVE_INSTANCE_ID_PATTERN.matchEntire(archiveInstanceId)
+                ?: throw InvalidArchiveInstanceIdException(archiveInstanceId)
+        val (caseId, journalpostIdList) = match.destructured
         val journalpostIds =
-            if (splitArchiveInstanceId.size == 1) {
-                emptyList()
-            } else {
-                splitArchiveInstanceId[1]
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(",")
-                    .filter(String::isNotBlank)
-                    .map { it.toLongOrNull() ?: throw InvalidArchiveInstanceIdException(archiveInstanceId) }
-            }
+            journalpostIdList
+                .split(",")
+                .filter(String::isNotEmpty)
+                .map { it.toLongOrNull() ?: throw InvalidArchiveInstanceIdException(archiveInstanceId) }
 
         return CaseAndJournalpostIds(caseId = caseId, journalpostIds = journalpostIds)
     }
@@ -87,5 +87,6 @@ class CaseService(
 
     companion object {
         private val log = KotlinLogging.logger {}
+        private val ARCHIVE_INSTANCE_ID_PATTERN = Regex("""([^-\[\]]+)(?:-\[(\d+(?:,\d+)*)])?""")
     }
 }
