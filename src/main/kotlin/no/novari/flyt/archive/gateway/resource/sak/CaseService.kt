@@ -24,18 +24,6 @@ class CaseService(
             null
         }
 
-    fun getByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId: String): SakResource? =
-        try {
-            findByArchiveInstanceIdWithFilteredJournalposts(archiveInstanceId)
-        } catch (error: RuntimeException) {
-            log.atError {
-                message = "Could not find case with archive instance id={}"
-                arguments = arrayOf(archiveInstanceId)
-                cause = error
-            }
-            null
-        }
-
     /**
      * Returns null when FINT has no sak with the given mappeId. Other errors are thrown.
      */
