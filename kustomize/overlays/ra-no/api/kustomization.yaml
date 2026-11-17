@@ -54,6 +54,9 @@ patches:
           name: "server.servlet.context-path"
           value: "/ra-no"
       - op: replace
+        path: "/spec/env/1/valueFrom/secretKeyRef/key"
+        value: "fint.flyt.authorization.sso.client-id"
+      - op: replace
         path: "/spec/onePassword/itemPath"
         value: "vaults/aks-api-vault/items/fint-flyt-v1-slack-webhook"
       - op: replace

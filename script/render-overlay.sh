@@ -71,6 +71,21 @@ render_extra_env_patches() {
     printf '          name: "logging.level.no.novari.flyt.archive.gateway.dispatch.web"\n'
     printf '          value: "DEBUG"\n'
   fi
+
+  if [[ "$namespace" == "ra-no" ]]; then
+    printf '\n      - op: replace\n'
+    printf '        path: "/spec/env/1/valueFrom/secretKeyRef/key"\n'
+    printf '        value: "fint.flyt.authorization.sso.client-id"'
+  fi
+}
+
+# ra-no gets its OAuth clients from 1Password, with per-client key names.
+render_extra_resources() {
+  local namespace="$1"
+
+  if [[ "$namespace" == "ra-no" ]]; then
+    printf '\n  - authorization-client-onepassword.yaml'
+  fi
 }
 
 render_authorized_role_pairs() {
@@ -158,6 +173,7 @@ while IFS= read -r file; do
   export LIVENESS_PATH="${path_prefix}/actuator/health/liveness"
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
   export EXTRA_ENV_PATCHES="$(render_extra_env_patches "$namespace" "$env_path")"
+  export EXTRA_RESOURCES="$(render_extra_resources "$namespace")"
   if ((${#additional_user_orgs[@]})); then
     AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$(authorized_org_id "$namespace")" "${additional_user_orgs[@]}")"
   else
@@ -173,7 +189,7 @@ while IFS= read -r file; do
   mkdir -p "$target_dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
-  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES' \
+  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES $EXTRA_RESOURCES' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
 done < <(
