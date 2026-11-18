@@ -12,6 +12,8 @@ Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive insta
 
 ## Architecture Overview
 
+C4 diagrams are in [docs/architecture.md](docs/architecture.md).
+
 | Component                                                      | Responsibility                                                                                                                                    |
 |----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | `DispatchService`                                              | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
@@ -68,7 +70,6 @@ internal calls between FLYT services, because namerator does not create new NAM 
 - `InstanceMappedEventConsumerConfiguration.instanceMappedEventConsumer` listens to the `instance-mapped` event topic (partitioned by org/app defaults) and hands each record to `DispatchService`. Failed records are skipped with no retries via the shared `ErrorHandlerFactory`.
 - `InstanceDispatchedEventProducerService` provisions the `instance-dispatched` topic (retention derived from `KafkaTopicProperties`) and emits completion events after accepted dispatches. Keys should uniquely represent the archive instance for better ordering.
 - `InstanceDispatchingErrorProducerService` creates the `instance-dispatching-error` topic and publishes structured error collections for DECLINED or FAILED dispatches.
-- `CaseRequestConfiguration` answers request/reply lookups on the `arkiv-noark-sak` and `arkiv-noark-sak-with-filtered-journalposts` request topics for other Flyt services, delegating to `CaseService`. It is replaced by the [internal client API](#internal-client-api) and will be removed once no service uses the topics.
 - `FintResourcePublishingConfiguration` ensures entity topics exist for each pipeline and uses `ParameterizedTemplate` to push updated resources, caching them locally for HTTP lookups.
 
 ## Scheduled Tasks
