@@ -12,8 +12,8 @@ data class JournalpostDto(
     val offentligTittel: String? = null,
     @get:JvmName("getJournalposttypeOrNull")
     val journalposttype: String? = null,
-    @get:JvmName("getAvskrivningsmateOrNull")
-    val avskrivningsmate: String? = null,
+    @get:JvmName("getAvskrivningOrNull")
+    val avskrivning: @Valid AvskrivningDto? = null,
     @get:JvmName("getAdministrativEnhetOrNull")
     val administrativEnhet: String? = null,
     @get:JvmName("getSaksbehandlerOrNull")
@@ -51,7 +51,7 @@ data class JournalpostDto(
 
     fun getJournalposttype(): Optional<String> = Optional.ofNullable(journalposttype)
 
-    fun getAvskrivningsmate(): Optional<String> = Optional.ofNullable(avskrivningsmate)
+    fun getAvskrivning(): Optional<AvskrivningDto> = Optional.ofNullable(avskrivning)
 
     fun getAdministrativEnhet(): Optional<String> = Optional.ofNullable(administrativEnhet)
 
@@ -71,7 +71,7 @@ data class JournalpostDto(
         private var tittel: String? = null
         private var offentligTittel: String? = null
         private var journalposttype: String? = null
-        private var avskrivningsmate: String? = null
+        private var avskrivning: AvskrivningDto? = null
         private var administrativEnhet: String? = null
         private var saksbehandler: String? = null
         private var journalstatus: String? = null
@@ -87,7 +87,7 @@ data class JournalpostDto(
 
         fun journalposttype(journalposttype: String?) = apply { this.journalposttype = journalposttype }
 
-        fun avskrivningsmate(avskrivningsmate: String?) = apply { this.avskrivningsmate = avskrivningsmate }
+        fun avskrivning(avskrivning: AvskrivningDto?) = apply { this.avskrivning = avskrivning }
 
         fun administrativEnhet(administrativEnhet: String?) = apply { this.administrativEnhet = administrativEnhet }
 
@@ -116,7 +116,7 @@ data class JournalpostDto(
                 tittel = tittel,
                 offentligTittel = offentligTittel,
                 journalposttype = journalposttype,
-                avskrivningsmate = avskrivningsmate,
+                avskrivning = avskrivning,
                 administrativEnhet = administrativEnhet,
                 saksbehandler = saksbehandler,
                 journalstatus = journalstatus,
