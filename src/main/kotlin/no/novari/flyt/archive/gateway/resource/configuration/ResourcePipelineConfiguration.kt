@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResource
 import no.novari.fint.model.resource.arkiv.kodeverk.DokumentStatusResource
 import no.novari.fint.model.resource.arkiv.kodeverk.DokumentTypeResource
@@ -21,6 +20,7 @@ import no.novari.fint.model.resource.arkiv.noark.ArkivdelResource
 import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource
 import no.novari.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource
 import no.novari.fint.model.resource.felles.PersonResource
+import no.novari.flyt.cache.FlytCache
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -30,7 +30,7 @@ class ResourcePipelineConfiguration(
 ) {
     @Bean
     fun administrativEnhetResourcePipeline(
-        administrativEnhetResourceCache: FintCache<String, AdministrativEnhetResource>,
+        administrativEnhetResourceCache: FlytCache<String, AdministrativEnhetResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         AdministrativEnhetResource::class.java,
         administrativEnhetResourceCache,
@@ -40,7 +40,7 @@ class ResourcePipelineConfiguration(
 
     @Bean
     fun klassifikasjonssystemResourcePipeline(
-        klassifikasjonssystemResourceCache: FintCache<String, KlassifikasjonssystemResource>,
+        klassifikasjonssystemResourceCache: FlytCache<String, KlassifikasjonssystemResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         KlassifikasjonssystemResource::class.java,
         klassifikasjonssystemResourceCache,
@@ -49,7 +49,7 @@ class ResourcePipelineConfiguration(
     )
 
     @Bean
-    fun partRolleResourcePipeline(partRolleResourceCache: FintCache<String, PartRolleResource>) =
+    fun partRolleResourcePipeline(partRolleResourceCache: FlytCache<String, PartRolleResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             PartRolleResource::class.java,
             partRolleResourceCache,
@@ -59,7 +59,7 @@ class ResourcePipelineConfiguration(
 
     @Bean
     fun korrespondansepartTypeResourcePipeline(
-        korrespondansepartTypeResourceCache: FintCache<String, KorrespondansepartTypeResource>,
+        korrespondansepartTypeResourceCache: FlytCache<String, KorrespondansepartTypeResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         KorrespondansepartTypeResource::class.java,
         korrespondansepartTypeResourceCache,
@@ -68,7 +68,7 @@ class ResourcePipelineConfiguration(
     )
 
     @Bean
-    fun saksstatusResourcePipeline(saksstatusResourceCache: FintCache<String, SaksstatusResource>) =
+    fun saksstatusResourcePipeline(saksstatusResourceCache: FlytCache<String, SaksstatusResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             SaksstatusResource::class.java,
             saksstatusResourceCache,
@@ -77,7 +77,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun arkivdelResourcePipeline(arkivdelResourceCache: FintCache<String, ArkivdelResource>) =
+    fun arkivdelResourcePipeline(arkivdelResourceCache: FlytCache<String, ArkivdelResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             ArkivdelResource::class.java,
             arkivdelResourceCache,
@@ -87,7 +87,7 @@ class ResourcePipelineConfiguration(
 
     @Bean
     fun skjermingshjemmelResourcePipeline(
-        skjermingshjemmelResourceCache: FintCache<String, SkjermingshjemmelResource>,
+        skjermingshjemmelResourceCache: FlytCache<String, SkjermingshjemmelResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         SkjermingshjemmelResource::class.java,
         skjermingshjemmelResourceCache,
@@ -97,7 +97,7 @@ class ResourcePipelineConfiguration(
 
     @Bean
     fun tilgangsrestriksjonResourcePipeline(
-        tilgangsrestriksjonResourceCache: FintCache<String, TilgangsrestriksjonResource>,
+        tilgangsrestriksjonResourceCache: FlytCache<String, TilgangsrestriksjonResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         TilgangsrestriksjonResource::class.java,
         tilgangsrestriksjonResourceCache,
@@ -106,7 +106,7 @@ class ResourcePipelineConfiguration(
     )
 
     @Bean
-    fun dokumentStatusResourcePipeline(dokumentStatusResourceCache: FintCache<String, DokumentStatusResource>) =
+    fun dokumentStatusResourcePipeline(dokumentStatusResourceCache: FlytCache<String, DokumentStatusResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             DokumentStatusResource::class.java,
             dokumentStatusResourceCache,
@@ -115,7 +115,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun dokumentTypeResourcePipeline(dokumentTypeResourceCache: FintCache<String, DokumentTypeResource>) =
+    fun dokumentTypeResourcePipeline(dokumentTypeResourceCache: FlytCache<String, DokumentTypeResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             DokumentTypeResource::class.java,
             dokumentTypeResourceCache,
@@ -124,7 +124,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun journalpostTypeResourcePipeline(journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource>) =
+    fun journalpostTypeResourcePipeline(journalpostTypeResourceCache: FlytCache<String, JournalpostTypeResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             JournalpostTypeResource::class.java,
             journalpostTypeResourceCache,
@@ -133,7 +133,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun journalStatusResourcePipeline(journalStatusResourceCache: FintCache<String, JournalStatusResource>) =
+    fun journalStatusResourcePipeline(journalStatusResourceCache: FlytCache<String, JournalStatusResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             JournalStatusResource::class.java,
             journalStatusResourceCache,
@@ -142,7 +142,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun variantformatResourcePipeline(variantformatResourceCache: FintCache<String, VariantformatResource>) =
+    fun variantformatResourcePipeline(variantformatResourceCache: FlytCache<String, VariantformatResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             VariantformatResource::class.java,
             variantformatResourceCache,
@@ -151,7 +151,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun formatResourcePipeline(formatResourceCache: FintCache<String, FormatResource>) =
+    fun formatResourcePipeline(formatResourceCache: FlytCache<String, FormatResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             FormatResource::class.java,
             formatResourceCache,
@@ -160,7 +160,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun tilgangsgruppeResourcePipeline(tilgangsgruppeResourceCache: FintCache<String, TilgangsgruppeResource>) =
+    fun tilgangsgruppeResourcePipeline(tilgangsgruppeResourceCache: FlytCache<String, TilgangsgruppeResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             TilgangsgruppeResource::class.java,
             tilgangsgruppeResourceCache,
@@ -169,7 +169,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun saksmappetypeResourcePipeline(saksmappetypeResourceCache: FintCache<String, SaksmappetypeResource>) =
+    fun saksmappetypeResourcePipeline(saksmappetypeResourceCache: FlytCache<String, SaksmappetypeResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             SaksmappetypeResource::class.java,
             saksmappetypeResourceCache,
@@ -179,7 +179,7 @@ class ResourcePipelineConfiguration(
 
     @Bean
     fun tilknyttetRegistreringSomResourcePipeline(
-        tilknyttetRegistreringSomResourceCache: FintCache<String, TilknyttetRegistreringSomResource>,
+        tilknyttetRegistreringSomResourceCache: FlytCache<String, TilknyttetRegistreringSomResource>,
     ) = fintLinksResourcePipelineFactory.createResourcePipeLine(
         TilknyttetRegistreringSomResource::class.java,
         tilknyttetRegistreringSomResourceCache,
@@ -188,7 +188,7 @@ class ResourcePipelineConfiguration(
     )
 
     @Bean
-    fun arkivressursResourcePipeline(arkivressursResourceCache: FintCache<String, ArkivressursResource>) =
+    fun arkivressursResourcePipeline(arkivressursResourceCache: FlytCache<String, ArkivressursResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             ArkivressursResource::class.java,
             arkivressursResourceCache,
@@ -197,7 +197,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun personalressursResourcePipeline(personalressursResourceCache: FintCache<String, PersonalressursResource>) =
+    fun personalressursResourcePipeline(personalressursResourceCache: FlytCache<String, PersonalressursResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             PersonalressursResource::class.java,
             personalressursResourceCache,
@@ -206,7 +206,7 @@ class ResourcePipelineConfiguration(
         )
 
     @Bean
-    fun personResourcePipeline(personResourceCache: FintCache<String, PersonResource>) =
+    fun personResourcePipeline(personResourceCache: FlytCache<String, PersonResource>) =
         fintLinksResourcePipelineFactory.createResourcePipeLine(
             PersonResource::class.java,
             personResourceCache,

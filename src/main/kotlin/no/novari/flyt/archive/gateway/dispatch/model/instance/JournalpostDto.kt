@@ -2,66 +2,27 @@ package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class JournalpostDto(
-    @get:JvmName("getTittelOrNull")
     val tittel: String? = null,
-    @get:JvmName("getOffentligTittelOrNull")
     val offentligTittel: String? = null,
-    @get:JvmName("getJournalposttypeOrNull")
     val journalposttype: String? = null,
-    @get:JvmName("getAvskrivningOrNull")
     val avskrivning: @Valid AvskrivningDto? = null,
-    @get:JvmName("getAdministrativEnhetOrNull")
     val administrativEnhet: String? = null,
-    @get:JvmName("getSaksbehandlerOrNull")
     val saksbehandler: String? = null,
-    @get:JvmName("getJournalstatusOrNull")
     val journalstatus: String? = null,
-    @get:JvmName("getDokumentetsDatoOrNull")
     val dokumentetsDato: String? = null,
-    @get:JvmName("getTilgangsgruppeOrNull")
     val tilgangsgruppe: String? = null,
-    @get:JvmName("getSkjermingOrNull")
     val skjerming: @Valid SkjermingDto? = null,
-    @get:JvmName("getKorrespondansepartOrNull")
     val korrespondansepart: Collection<
         @NotNull @Valid
         KorrespondansepartDto,
     >? = null,
-    @get:JvmName("getDokumentbeskrivelseOrNull")
     val dokumentbeskrivelse: Collection<
         @NotNull @Valid
         DokumentbeskrivelseDto,
     >? = null,
 ) {
-    fun getTittel(): Optional<String> = Optional.ofNullable(tittel)
-
-    fun getOffentligTittel(): Optional<String> = Optional.ofNullable(offentligTittel)
-
-    fun getJournalstatus(): Optional<String> = Optional.ofNullable(journalstatus)
-
-    fun getDokumentetsDato(): Optional<String> = Optional.ofNullable(dokumentetsDato)
-
-    fun getTilgangsgruppe(): Optional<String> = Optional.ofNullable(tilgangsgruppe)
-
-    fun getSaksbehandler(): Optional<String> = Optional.ofNullable(saksbehandler)
-
-    fun getJournalposttype(): Optional<String> = Optional.ofNullable(journalposttype)
-
-    fun getAvskrivning(): Optional<AvskrivningDto> = Optional.ofNullable(avskrivning)
-
-    fun getAdministrativEnhet(): Optional<String> = Optional.ofNullable(administrativEnhet)
-
-    fun getSkjerming(): Optional<SkjermingDto> = Optional.ofNullable(skjerming)
-
-    fun getKorrespondansepart(): Optional<Collection<KorrespondansepartDto>> = Optional.ofNullable(korrespondansepart)
-
-    fun getDokumentbeskrivelse(): Optional<Collection<DokumentbeskrivelseDto>> =
-        Optional.ofNullable(dokumentbeskrivelse)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

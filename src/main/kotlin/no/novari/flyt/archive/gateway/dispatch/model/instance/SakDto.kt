@@ -2,72 +2,31 @@ package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class SakDto(
-    @get:JvmName("getTittelOrNull")
     val tittel: String? = null,
-    @get:JvmName("getOffentligTittelOrNull")
     val offentligTittel: String? = null,
-    @get:JvmName("getSaksmappetypeOrNull")
     val saksmappetype: String? = null,
-    @get:JvmName("getJournalenhetOrNull")
     val journalenhet: String? = null,
-    @get:JvmName("getAdministrativEnhetOrNull")
     val administrativEnhet: String? = null,
-    @get:JvmName("getSaksansvarligOrNull")
     val saksansvarlig: String? = null,
-    @get:JvmName("getArkivdelOrNull")
     val arkivdel: String? = null,
-    @get:JvmName("getSaksstatusOrNull")
     val saksstatus: String? = null,
-    @get:JvmName("getTilgangsgruppeOrNull")
     val tilgangsgruppe: String? = null,
-    @get:JvmName("getPartOrNull")
     val part: List<
         @NotNull @Valid
         PartDto,
     >? = null,
-    @get:JvmName("getSkjermingOrNull")
     val skjerming: @Valid SkjermingDto? = null,
-    @get:JvmName("getKlasseOrNull")
     val klasse: List<
         @NotNull @Valid
         KlasseDto,
     >? = null,
-    @get:JvmName("getJournalpostOrNull")
     val journalpost: List<
         @NotNull @Valid
         JournalpostDto,
     >? = null,
 ) {
-    fun getTittel(): Optional<String> = Optional.ofNullable(tittel)
-
-    fun getOffentligTittel(): Optional<String> = Optional.ofNullable(offentligTittel)
-
-    fun getSaksmappetype(): Optional<String> = Optional.ofNullable(saksmappetype)
-
-    fun getSaksstatus(): Optional<String> = Optional.ofNullable(saksstatus)
-
-    fun getTilgangsgruppe(): Optional<String> = Optional.ofNullable(tilgangsgruppe)
-
-    fun getJournalenhet(): Optional<String> = Optional.ofNullable(journalenhet)
-
-    fun getAdministrativEnhet(): Optional<String> = Optional.ofNullable(administrativEnhet)
-
-    fun getSaksansvarlig(): Optional<String> = Optional.ofNullable(saksansvarlig)
-
-    fun getArkivdel(): Optional<String> = Optional.ofNullable(arkivdel)
-
-    fun getSkjerming(): Optional<SkjermingDto> = Optional.ofNullable(skjerming)
-
-    fun getKlasse(): Optional<List<KlasseDto>> = Optional.ofNullable(klasse)
-
-    fun getPart(): Optional<List<PartDto>> = Optional.ofNullable(part)
-
-    fun getJournalpost(): Optional<List<JournalpostDto>> = Optional.ofNullable(journalpost)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

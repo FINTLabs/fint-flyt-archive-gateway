@@ -53,7 +53,7 @@ class RecordsDispatchServiceTest {
         whenever(recordDispatchService.dispatch("caseId", journalpostDto2))
             .thenReturn(RecordDispatchResult.declined("test error message"))
         whenever(
-            dispatchMessageFormattingService.createFunctionalWarningMessageOrNull("journalpost", "id", listOf("1")),
+            dispatchMessageFormattingService.createFunctionalWarningMessage("journalpost", "id", listOf("1")),
         ).thenReturn("test warning message")
 
         val result = recordsDispatchService.dispatch("caseId", listOf(journalpostDto1, journalpostDto2))

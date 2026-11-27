@@ -1,24 +1,24 @@
 package no.novari.flyt.archive.gateway
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.util.StdConverter
 import no.novari.fint.model.arkiv.noark.Avskrivning
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import tools.jackson.databind.annotation.JsonSerialize
+import tools.jackson.databind.util.StdConverter
 import java.time.temporal.ChronoUnit
 import java.util.Date
 
 @Configuration
 class FintArchiveJacksonConfiguration {
     @Bean
-    fun avskrivningSerialization(): Jackson2ObjectMapperBuilderCustomizer =
-        Jackson2ObjectMapperBuilderCustomizer { builder ->
+    fun avskrivningSerialization(): JsonMapperBuilderCustomizer =
+        JsonMapperBuilderCustomizer { builder ->
             // The archive RestClient uses Spring's shared mapper; keep date formatting serialization-only.
-            builder.mixIn(JournalpostResource::class.java, JournalpostResourceMixin::class.java)
-            builder.mixIn(Avskrivning::class.java, AvskrivningMixin::class.java)
+            builder.addMixIn(JournalpostResource::class.java, JournalpostResourceMixin::class.java)
+            builder.addMixIn(Avskrivning::class.java, AvskrivningMixin::class.java)
         }
 }
 

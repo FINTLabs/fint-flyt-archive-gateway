@@ -1,26 +1,17 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import java.util.Optional
-import kotlin.jvm.JvmName
-
-data class ResourcePipeline<T>(
+data class ResourcePipeline<T : Any>(
     val resourceClass: Class<T>,
     val urlResourcePath: String,
-    @get:JvmName("getCachePropertiesOrNull")
     val cacheProperties: ResourcePipelineCacheProperties<T>? = null,
-    @get:JvmName("getKafkaPropertiesOrNull")
     val kafkaProperties: ResourcePipelineKafkaProperties<T>? = null,
 ) {
-    fun getCacheProperties(): Optional<ResourcePipelineCacheProperties<T>> = Optional.ofNullable(cacheProperties)
-
-    fun getKafkaProperties(): Optional<ResourcePipelineKafkaProperties<T>> = Optional.ofNullable(kafkaProperties)
-
     companion object {
         @JvmStatic
-        fun <T> builder() = Builder<T>()
+        fun <T : Any> builder() = Builder<T>()
     }
 
-    class Builder<T> {
+    class Builder<T : Any> {
         private var resourceClass: Class<T>? = null
         private var urlResourcePath: String? = null
         private var cacheProperties: ResourcePipelineCacheProperties<T>? = null

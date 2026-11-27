@@ -1,7 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import no.novari.cache.FintCache
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
 import no.novari.fint.model.resource.arkiv.noark.SakResource
@@ -11,24 +9,26 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.Dokumentbeskrivels
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.KorrespondansepartDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto
+import no.novari.flyt.cache.FlytCache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.readValue
 import java.time.Instant
 
 class JournalpostMappingServiceTest {
     private val objectMapper =
-        Jackson2ObjectMapperBuilder
-            .json()
+        JsonMapper
+            .builder()
             .also { FintArchiveJacksonConfiguration().avskrivningSerialization().customize(it) }
-            .build<ObjectMapper>()
+            .build()
 
-    private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource> =
-        mock<FintCache<String, JournalpostTypeResource>>().also {
+    private val journalpostTypeResourceCache: FlytCache<String, JournalpostTypeResource> =
+        mock<FlytCache<String, JournalpostTypeResource>>().also {
             whenever(it.get("incoming-type")).thenReturn(JournalpostTypeResource().apply { kode = "I" })
         }
 
@@ -146,8 +146,8 @@ class JournalpostMappingServiceTest {
         val resource = journalpostMappingService.toJournalpostResource(dto, emptyMap())
         val json = objectMapper.readTree(objectMapper.writeValueAsString(resource))["avskrivning"]
 
-        assertThat(json["avskrivningsdato"].asText()).isEqualTo("2026-08-24T09:12:48Z")
-        assertThat(json["avskrivningsmate"].asText()).isEqualTo("TE")
+        assertThat(json["avskrivningsdato"].asString()).isEqualTo("2026-08-24T09:12:48Z")
+        assertThat(json["avskrivningsmate"].asString()).isEqualTo("TE")
         assertThat(json.has("avskrevetAv")).isFalse()
     }
 
@@ -172,7 +172,7 @@ class JournalpostMappingServiceTest {
             }
             """.trimIndent()
 
-        val resource = objectMapper.readValue(json, SakResource::class.java)
+        val resource = objectMapper.readValue<SakResource>(json)
         val avskrivning = resource.journalpost.single().avskrivning
 
         assertThat(avskrivning.avskrivningsdato.toInstant())

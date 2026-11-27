@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.resource.web
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -17,6 +16,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.RestClientResponseException
 import org.springframework.web.client.body
+import tools.jackson.databind.json.JsonMapper
 import java.net.URI
 
 @Component
@@ -26,8 +26,8 @@ class FintArchiveResourceClient(
     private val fintRestClient: RestClient,
     private val meterRegistry: MeterRegistry,
     private val webUtilErrorHandler: WebUtilErrorHandler,
+    private val jsonMapper: JsonMapper,
 ) {
-    private val objectMapper = ObjectMapper()
     private val lastUpdatedTimer: Timer =
         Timer
             .builder("novari.flyt.gateway.archive.resource.getResourcesLastUpdated")
@@ -73,7 +73,7 @@ class FintArchiveResourceClient(
             collection
                 ?.let(AbstractCollectionResources<Any>::getContent)
                 .orEmpty()
-                .map { resource -> objectMapper.convertValue(resource, resourceClass) }
+                .map { resource -> jsonMapper.convertValue(resource, resourceClass) }
         } catch (error: Exception) {
             if (error is RestClientResponseException) {
                 log.atError {
@@ -130,7 +130,7 @@ class FintArchiveResourceClient(
         }
     }
 
-    fun <T> getResource(
+    fun <T : Any> getResource(
         endpoint: String,
         clazz: Class<T>,
     ): T =

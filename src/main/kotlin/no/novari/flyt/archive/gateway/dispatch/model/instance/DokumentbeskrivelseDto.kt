@@ -2,38 +2,18 @@ package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotNull
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class DokumentbeskrivelseDto(
-    @get:JvmName("getTittelOrNull")
     val tittel: String? = null,
-    @get:JvmName("getDokumentstatusOrNull")
     val dokumentstatus: String? = null,
-    @get:JvmName("getDokumentTypeOrNull")
     val dokumentType: String? = null,
-    @get:JvmName("getTilknyttetRegistreringSomOrNull")
     val tilknyttetRegistreringSom: String? = null,
-    @get:JvmName("getDokumentobjektOrNull")
     val dokumentobjekt: Collection<
         @NotNull @Valid
         DokumentobjektDto,
     >? = null,
-    @get:JvmName("getSkjermingOrNull")
     val skjerming: @Valid SkjermingDto? = null,
 ) {
-    fun getTittel(): Optional<String> = Optional.ofNullable(tittel)
-
-    fun getDokumentType(): Optional<String> = Optional.ofNullable(dokumentType)
-
-    fun getTilknyttetRegistreringSom(): Optional<String> = Optional.ofNullable(tilknyttetRegistreringSom)
-
-    fun getDokumentstatus(): Optional<String> = Optional.ofNullable(dokumentstatus)
-
-    fun getDokumentobjekt(): Optional<Collection<DokumentobjektDto>> = Optional.ofNullable(dokumentobjekt)
-
-    fun getSkjerming(): Optional<SkjermingDto> = Optional.ofNullable(skjerming)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

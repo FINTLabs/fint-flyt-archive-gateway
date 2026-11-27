@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import no.novari.kafka.topic.name.EntityTopicNameParameters
+import no.novari.kafka.starter.topic.EntityTopicName
 import java.util.function.Function
 
 data class ResourcePipelineKafkaProperties<T>(
     val createKafkaKey: Function<T, String>,
-    val topicNameParameters: EntityTopicNameParameters,
+    val topic: EntityTopicName,
 ) {
     companion object {
         @JvmStatic
@@ -14,19 +14,16 @@ data class ResourcePipelineKafkaProperties<T>(
 
     class Builder<T> {
         private var createKafkaKey: Function<T, String>? = null
-        private var topicNameParameters: EntityTopicNameParameters? = null
+        private var topic: EntityTopicName? = null
 
         fun createKafkaKey(createKafkaKey: Function<T, String>) = apply { this.createKafkaKey = createKafkaKey }
 
-        fun topicNameParameters(topicNameParameters: EntityTopicNameParameters) =
-            apply {
-                this.topicNameParameters = topicNameParameters
-            }
+        fun topic(topic: EntityTopicName) = apply { this.topic = topic }
 
         fun build() =
             ResourcePipelineKafkaProperties(
                 createKafkaKey = requireNotNull(createKafkaKey) { "createKafkaKey is required" },
-                topicNameParameters = requireNotNull(topicNameParameters) { "topicNameParameters is required" },
+                topic = requireNotNull(topic) { "topic is required" },
             )
     }
 }

@@ -1,43 +1,17 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class KorrespondansepartDto(
-    @get:JvmName("getKorrespondanseparttypeOrNull")
     val korrespondanseparttype: String? = null,
-    @get:JvmName("getOrganisasjonsnummerOrNull")
     val organisasjonsnummer: String? = null,
-    @get:JvmName("getFodselsnummerOrNull")
     val fodselsnummer: String? = null,
-    @get:JvmName("getKorrespondansepartNavnOrNull")
     val korrespondansepartNavn: String? = null,
-    @get:JvmName("getKontaktpersonOrNull")
     val kontaktperson: String? = null,
-    @get:JvmName("getAdresseOrNull")
     val adresse: @Valid AdresseDto? = null,
-    @get:JvmName("getKontaktinformasjonOrNull")
     val kontaktinformasjon: @Valid KontaktinformasjonDto? = null,
-    @get:JvmName("getSkjermingOrNull")
     val skjerming: @Valid SkjermingDto? = null,
 ) {
-    fun getKorrespondanseparttype(): Optional<String> = Optional.ofNullable(korrespondanseparttype)
-
-    fun getFodselsnummer(): Optional<String> = Optional.ofNullable(fodselsnummer)
-
-    fun getOrganisasjonsnummer(): Optional<String> = Optional.ofNullable(organisasjonsnummer)
-
-    fun getKorrespondansepartNavn(): Optional<String> = Optional.ofNullable(korrespondansepartNavn)
-
-    fun getAdresse(): Optional<AdresseDto> = Optional.ofNullable(adresse)
-
-    fun getKontaktperson(): Optional<String> = Optional.ofNullable(kontaktperson)
-
-    fun getKontaktinformasjon(): Optional<KontaktinformasjonDto> = Optional.ofNullable(kontaktinformasjon)
-
-    fun getSkjerming(): Optional<SkjermingDto> = Optional.ofNullable(skjerming)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

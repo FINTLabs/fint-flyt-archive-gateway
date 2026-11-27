@@ -5,99 +5,73 @@ import no.novari.flyt.archive.gateway.dispatch.DispatchService
 import no.novari.flyt.archive.gateway.dispatch.DispatchStatus
 import no.novari.flyt.archive.gateway.dispatch.model.instance.ArchiveInstance
 import no.novari.flyt.archive.gateway.kafka.error.InstanceErrorEventProducerService
-import no.novari.flyt.kafka.instanceflow.consuming.InstanceFlowListenerFactoryService
-import no.novari.kafka.consuming.ErrorHandlerConfiguration
-import no.novari.kafka.consuming.ErrorHandlerFactory
-import no.novari.kafka.consuming.ListenerConfiguration
-import no.novari.kafka.topic.name.EventTopicNameParameters
-import no.novari.kafka.topic.name.TopicNamePrefixParameters
+import no.novari.flyt.kafka.instanceflow.headers.INSTANCE_FLOW_HEADERS_KEY
+import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
+import no.novari.kafka.starter.topic.EventTopicName
+import no.novari.kafka.starter.topic.KafkaTopics
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.kafka.listener.ConcurrentMessageListenerContainer
-import java.time.Duration
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.kafka.listener.CommonErrorHandler
+import org.springframework.kafka.listener.DefaultErrorHandler
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.messaging.handler.annotation.Header
+import org.springframework.stereotype.Component
+import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
 class InstanceMappedEventConsumerConfiguration {
     @Bean
-    fun instanceMappedEventConsumer(
-        instanceFlowListenerFactoryService: InstanceFlowListenerFactoryService,
-        dispatchService: DispatchService,
-        instanceDispatchedEventProducerService: InstanceDispatchedEventProducerService,
-        instanceErrorEventProducerService: InstanceErrorEventProducerService,
-        errorHandlerFactory: ErrorHandlerFactory,
-    ): ConcurrentMessageListenerContainer<String, ArchiveInstance> =
-        instanceFlowListenerFactoryService
-            .createRecordListenerContainerFactory(
-                ArchiveInstance::class.java,
-                { instanceFlowConsumerRecord ->
-                    val consumerRecord = instanceFlowConsumerRecord.consumerRecord
-                    log.atInfo {
-                        message = "Consumed instance-mapped event topic={} partition={} offset={} key={} headers={}"
-                        arguments =
-                            arrayOf(
-                                consumerRecord.topic(),
-                                consumerRecord.partition(),
-                                consumerRecord.offset(),
-                                consumerRecord.key(),
-                                instanceFlowConsumerRecord.instanceFlowHeaders,
-                            )
-                    }
-                    val dispatchResult =
-                        dispatchService.process(
-                            instanceFlowConsumerRecord.instanceFlowHeaders,
-                            consumerRecord.value(),
-                        )
-                    when (dispatchResult.status) {
-                        DispatchStatus.ACCEPTED -> {
-                            instanceDispatchedEventProducerService.publish(
-                                instanceFlowConsumerRecord.instanceFlowHeaders
-                                    .toBuilder()
-                                    .archiveInstanceId(dispatchResult.archiveCaseAndRecordsIds)
-                                    .build(),
-                            )
-                        }
+    fun instanceMappedTopic(topics: KafkaTopics): EventTopicName = topics.event("instance-mapped")
 
-                        DispatchStatus.DECLINED -> {
-                            instanceErrorEventProducerService.publishInstanceDispatchDeclinedErrorEvent(
-                                instanceFlowConsumerRecord.instanceFlowHeaders,
-                                dispatchResult.errorMessage,
-                            )
-                        }
+    /** One attempt, then log and skip the record. */
+    @Bean
+    fun kafkaErrorHandler(): CommonErrorHandler = DefaultErrorHandler(FixedBackOff(0, 0))
+}
 
-                        DispatchStatus.FAILED -> {
-                            instanceErrorEventProducerService.publishGeneralSystemErrorEvent(
-                                instanceFlowConsumerRecord.instanceFlowHeaders,
-                                dispatchResult.errorMessage,
-                            )
-                        }
-                    }
-                },
-                ListenerConfiguration
-                    .stepBuilder()
-                    .groupIdApplicationDefault()
-                    .maxPollRecords(1)
-                    .maxPollInterval(Duration.ofMinutes(30))
-                    .continueFromPreviousOffsetOnAssignment()
-                    .build(),
-                errorHandlerFactory.createErrorHandler(
-                    ErrorHandlerConfiguration
-                        .stepBuilder<ArchiveInstance>()
-                        .noRetries()
-                        .skipFailedRecords()
-                        .build(),
-                ),
-            ).createContainer(
-                EventTopicNameParameters
-                    .builder()
-                    .topicNamePrefixParameters(
-                        TopicNamePrefixParameters
-                            .stepBuilder()
-                            .orgIdApplicationDefault()
-                            .domainContextApplicationDefault()
-                            .build(),
-                    ).eventName("instance-mapped")
-                    .build(),
-            )
+@Component
+class InstanceMappedEventListener(
+    private val dispatchService: DispatchService,
+    private val instanceDispatchedEventProducerService: InstanceDispatchedEventProducerService,
+    private val instanceErrorEventProducerService: InstanceErrorEventProducerService,
+) {
+    // One instance per poll, and up to 30 minutes to dispatch it.
+    @KafkaListener(
+        topics = ["#{@instanceMappedTopic.name}"],
+        properties = ["max.poll.records=1", "max.poll.interval.ms=1800000"],
+    )
+    fun on(
+        archiveInstance: ArchiveInstance,
+        @Header(INSTANCE_FLOW_HEADERS_KEY) headers: InstanceFlowHeaders,
+        @Header(KafkaHeaders.RECEIVED_TOPIC) topic: String,
+        @Header(KafkaHeaders.RECEIVED_PARTITION) partition: Int,
+        @Header(KafkaHeaders.OFFSET) offset: Long,
+        @Header(KafkaHeaders.RECEIVED_KEY, required = false) key: String?,
+    ) {
+        log.atInfo {
+            message = "Consumed instance-mapped event topic={} partition={} offset={} key={} headers={}"
+            arguments = arrayOf(topic, partition, offset, key, headers)
+        }
+        val dispatchResult = dispatchService.process(headers, archiveInstance)
+        when (dispatchResult.status) {
+            DispatchStatus.ACCEPTED -> {
+                instanceDispatchedEventProducerService.publish(
+                    headers.copy(archiveInstanceId = dispatchResult.archiveCaseAndRecordsIds),
+                )
+            }
+
+            DispatchStatus.DECLINED -> {
+                instanceErrorEventProducerService.publishInstanceDispatchDeclinedErrorEvent(
+                    headers,
+                    dispatchResult.errorMessage,
+                )
+            }
+
+            DispatchStatus.FAILED -> {
+                instanceErrorEventProducerService.publishGeneralSystemErrorEvent(headers, dispatchResult.errorMessage)
+            }
+        }
+    }
 
     companion object {
         private val log = KotlinLogging.logger {}

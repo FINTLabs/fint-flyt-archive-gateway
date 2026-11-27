@@ -1,10 +1,10 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import no.novari.flyt.archive.gateway.dispatch.model.CaseDispatchType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import tools.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.readValue
 
 class JournalpostDtoDeserializationTest {
     private val objectMapper = jacksonObjectMapper()
@@ -33,8 +33,6 @@ class JournalpostDtoDeserializationTest {
         val avskrivning = archiveInstance.journalpost?.single()?.avskrivning
         assertThat(avskrivning?.avskrivningsmate).isEqualTo("TE")
         assertThat(avskrivning?.avskrivningsdato).isEqualTo("2026-08-24T09:12:48Z")
-        assertThat(avskrivning?.getAvskrivningsmate()).contains("TE")
-        assertThat(avskrivning?.getAvskrivningsdato()).contains("2026-08-24T09:12:48Z")
     }
 
     @Test
@@ -42,7 +40,6 @@ class JournalpostDtoDeserializationTest {
         val journalpostDto = objectMapper.readValue<JournalpostDto>("""{"tittel": "Journalpost"}""")
 
         assertThat(journalpostDto.avskrivning).isNull()
-        assertThat(journalpostDto.getAvskrivning()).isEmpty()
     }
 
     @Test

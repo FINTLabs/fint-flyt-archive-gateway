@@ -1,39 +1,16 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.Valid
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class PartDto(
-    @get:JvmName("getPartNavnOrNull")
     val partNavn: String? = null,
-    @get:JvmName("getPartRolleOrNull")
     val partRolle: String? = null,
-    @get:JvmName("getKontaktpersonOrNull")
     val kontaktperson: String? = null,
-    @get:JvmName("getOrganisasjonsnummerOrNull")
     val organisasjonsnummer: String? = null,
-    @get:JvmName("getFodselsnummerOrNull")
     val fodselsnummer: String? = null,
-    @get:JvmName("getAdresseOrNull")
     val adresse: @Valid AdresseDto? = null,
-    @get:JvmName("getKontaktinformasjonOrNull")
     val kontaktinformasjon: @Valid KontaktinformasjonDto? = null,
 ) {
-    fun getPartNavn(): Optional<String> = Optional.ofNullable(partNavn)
-
-    fun getPartRolle(): Optional<String> = Optional.ofNullable(partRolle)
-
-    fun getKontaktperson(): Optional<String> = Optional.ofNullable(kontaktperson)
-
-    fun getOrganisasjonsnummer(): Optional<String> = Optional.ofNullable(organisasjonsnummer)
-
-    fun getFodselsnummer(): Optional<String> = Optional.ofNullable(fodselsnummer)
-
-    fun getAdresse(): Optional<AdresseDto> = Optional.ofNullable(adresse)
-
-    fun getKontaktinformasjon(): Optional<KontaktinformasjonDto> = Optional.ofNullable(kontaktinformasjon)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

@@ -45,7 +45,8 @@ C4Context
   `/api/intern-klient/arkiv/saker`, with a token for `fint-flyt-authorization-oauth2-client`, the
   shared client for internal calls. This replaced the `arkiv-noark-sak` request/reply topics
   (FFS-2391, removed in FFS-2400).
-- **FINT Arkiv** is called with the FINT client of the org. Tokens come from NAM (not shown).
+- **FINT Arkiv** is called with the FINT client of the org. Tokens come from NAM (not shown) with the password
+  grant, which `PasswordGrantAuthorizedClientProvider` implements because Spring Security 7 has none.
 - **Slack** gets an alert when a dispatch call to the archive fails.
 
 ## C4 level 2: Containers
@@ -58,7 +59,7 @@ C4Container
 
     System_Ext(frontend, "fint-flyt-frontend", "Browser app.")
     System_Ext(gateways, "acos- and egrunnerverv-gateway", "Internal client API.")
-    Container(app, "archive-gateway", "Kotlin, Spring Boot 3, Java 25", "Dispatch to the archive, kodeverk cache, sak lookups.")
+    Container(app, "archive-gateway", "Kotlin, Spring Boot 4, Java 25", "Dispatch to the archive, kodeverk cache, sak lookups.")
     System_Ext(fint, "FINT Arkiv", "FINT API.")
     ContainerQueue_Ext(kafka, "Kafka", "Topics", "instance-mapped, instance-dispatched, instance-error, archive resources")
     Container_Ext(file, "file-service", "Spring Boot", "Documents of an instance.")
@@ -85,6 +86,8 @@ C4Container
 
 - The ingress only routes `/api/intern/arkiv`. The internal client API, Swagger UI, OpenAPI and
   Actuator are only reachable inside the cluster.
+- flyt-security-starter checks the tokens: FLYT users on `/api/intern/**`, the shared internal client on
+  `/api/intern-klient/**`. Swagger UI and OpenAPI are open (`novari.flyt.security.public-paths`).
 - The archive resources (kodeverk, arkivressurser and more) are also published on entity topics.
 
 ## C4 level 3: Components
@@ -142,9 +145,9 @@ C4Component
     UpdateLayoutConfig($c4ShapeInRow="2", $c4BoundaryInRow="1")
 ```
 
-- `InstanceMappedEventConsumerConfiguration` hands each record to `DispatchService` and publishes
-  the result with `InstanceDispatchedEventProducerService` or `InstanceErrorEventProducerService`.
-  Failed records are skipped without retry.
+- `InstanceMappedEventListener` (`@KafkaListener`, one record per poll, up to 30 minutes per record) hands each
+  record to `DispatchService` and publishes the result with `InstanceDispatchedEventProducerService` or
+  `InstanceErrorEventProducerService`. Failed records are skipped without retry.
 - Records dispatch is `RecordsProcessingService`, `RecordsDispatchService`, `RecordDispatchService`
   and `FilesDispatchService`.
 - `FintArchiveDispatchClient` posts to FINT, which answers `202 Accepted` with a location. The
@@ -160,7 +163,7 @@ C4Component
     System_Ext(gateways, "acos- and egrunnerverv-gateway", "Internal client API.")
     Component(codelist, "CodelistController", "Spring MVC", "Kodeverk under /api/intern/arkiv.")
     Component(caseApi, "Sak API", "Spring MVC", "CaseController and InternalClientCaseController.")
-    Component(caches, "Resource caches", "FintCache", "One cache per resource type.")
+    Component(caches, "Resource caches", "FlytCache", "One cache per resource type.")
     Component(caseService, "CaseService", "Service", "Sak by mappeId or archiveInstanceId.")
     Component(publishing, "Resource publishing", "Spring @Scheduled", "Pulls changed resources, fills the caches, publishes them.")
     Component(resourceClient, "FintArchiveResourceClient", "RestClient", "Reads from FINT.")
@@ -202,7 +205,8 @@ C4Component
 ```
 
 - `FintResourcePublishingConfiguration` pulls changed resources on a fixed delay and clears the
-  "last updated" timestamps once a day, so the next pull fetches everything again.
+  "last updated" timestamps once a day, so the next pull fetches everything again. It declares the entity topics
+  with cleanup policy `delete,compact`, so records older than five days are deleted.
 - `CaseController` returns the title of a sak to the frontend. `InternalClientCaseController`
   returns the whole sak to the gateways, or a sak with only the journalposter in an
   `archiveInstanceId` such as `2024/123-[1,2]`. See [Internal client API](../README.md#internal-client-api).

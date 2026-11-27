@@ -1,8 +1,5 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
-import java.util.Optional
-import kotlin.jvm.JvmName
-
 data class CaseSearchParametersDto(
     val arkivdel: Boolean = false,
     val administrativEnhet: Boolean = false,
@@ -11,15 +8,10 @@ data class CaseSearchParametersDto(
     val saksstatus: Boolean = false,
     val tittel: Boolean = false,
     val klassering: Boolean = false,
-    @get:JvmName("getKlasseringRekkefolgeOrNull")
     val klasseringRekkefolge: String? = null,
-    @get:JvmName("getKlasseringKlassifikasjonssystemOrNull")
     val klasseringKlassifikasjonssystem: Boolean? = null,
-    @get:JvmName("getKlasseringKlasseIdOrNull")
     val klasseringKlasseId: Boolean? = null,
 ) {
-    fun getKlasseringRekkefolge(): Optional<String> = Optional.ofNullable(klasseringRekkefolge)
-
     fun getKlasseringKlassifikasjonssystem(): Boolean = klasseringKlassifikasjonssystem ?: false
 
     fun getKlasseringKlasseId(): Boolean = klasseringKlasseId ?: false

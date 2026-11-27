@@ -1,22 +1,10 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
-import java.util.Optional
-import kotlin.jvm.JvmName
-
 data class KontaktinformasjonDto(
-    @get:JvmName("getEpostadresseOrNull")
     val epostadresse: String? = null,
-    @get:JvmName("getMobiltelefonnummerOrNull")
     val mobiltelefonnummer: String? = null,
-    @get:JvmName("getTelefonnummerOrNull")
     val telefonnummer: String? = null,
 ) {
-    fun getEpostadresse(): Optional<String> = Optional.ofNullable(epostadresse)
-
-    fun getTelefonnummer(): Optional<String> = Optional.ofNullable(telefonnummer)
-
-    fun getMobiltelefonnummer(): Optional<String> = Optional.ofNullable(mobiltelefonnummer)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

@@ -1,18 +1,10 @@
 package no.novari.flyt.archive.gateway.dispatch
 
 import org.springframework.stereotype.Service
-import java.util.Optional
 
 @Service
 class DispatchMessageFormattingService {
     fun createFunctionalWarningMessage(
-        objectDisplayName: String,
-        refDisplayName: String,
-        objectRefs: List<String>,
-    ): Optional<String> =
-        Optional.ofNullable(createFunctionalWarningMessageOrNull(objectDisplayName, refDisplayName, objectRefs))
-
-    fun createFunctionalWarningMessageOrNull(
         objectDisplayName: String,
         refDisplayName: String,
         objectRefs: List<String>,
@@ -41,13 +33,6 @@ class DispatchMessageFormattingService {
     }
 
     fun combineFunctionalWarningMessages(
-        archiveCaseId: String,
-        newCase: Boolean,
-        functionalWarningMessages: List<String>,
-    ): Optional<String> =
-        Optional.ofNullable(combineFunctionalWarningMessagesOrNull(archiveCaseId, newCase, functionalWarningMessages))
-
-    fun combineFunctionalWarningMessagesOrNull(
         archiveCaseId: String,
         newCase: Boolean,
         functionalWarningMessages: List<String>,

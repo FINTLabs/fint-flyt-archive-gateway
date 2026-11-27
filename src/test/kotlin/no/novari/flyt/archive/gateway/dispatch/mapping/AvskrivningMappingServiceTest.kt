@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
+import no.novari.flyt.cache.FlytCache
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -21,7 +21,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 class AvskrivningMappingServiceTest {
-    private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource> = mock()
+    private val journalpostTypeResourceCache: FlytCache<String, JournalpostTypeResource> = mock()
     private val fintArchiveResourceClient: FintArchiveResourceClient = mock()
     private val service = AvskrivningMappingService(journalpostTypeResourceCache, fintArchiveResourceClient)
     private val incomingType = "https://example.com/arkiv/kodeverk/journalposttype/systemid/42"

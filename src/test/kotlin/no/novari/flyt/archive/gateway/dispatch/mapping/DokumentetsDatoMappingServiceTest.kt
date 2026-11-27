@@ -1,11 +1,10 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 
 class DokumentetsDatoMappingServiceTest {
@@ -26,11 +25,9 @@ class DokumentetsDatoMappingServiceTest {
             }
 
         val json =
-            ObjectMapper()
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .writeValueAsString(journalpostResource)
+            JsonMapper().writeValueAsString(journalpostResource)
 
-        assertThat(json).contains("\"dokumentetsDato\":\"2026-08-24T12:00:00.000+00:00\"")
+        assertThat(json).contains("\"dokumentetsDato\":\"2026-08-24T12:00:00.000Z\"")
     }
 
     @Test

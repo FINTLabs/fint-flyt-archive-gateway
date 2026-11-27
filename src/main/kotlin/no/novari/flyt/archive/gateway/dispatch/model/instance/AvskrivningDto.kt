@@ -1,18 +1,9 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
-import java.util.Optional
-import kotlin.jvm.JvmName
-
 data class AvskrivningDto(
-    @get:JvmName("getAvskrivningsdatoOrNull")
     val avskrivningsdato: String? = null,
-    @get:JvmName("getAvskrivningsmateOrNull")
     val avskrivningsmate: String? = null,
 ) {
-    fun getAvskrivningsdato(): Optional<String> = Optional.ofNullable(avskrivningsdato)
-
-    fun getAvskrivningsmate(): Optional<String> = Optional.ofNullable(avskrivningsmate)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

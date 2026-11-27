@@ -1,9 +1,9 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource
+import no.novari.flyt.cache.FlytCache
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,11 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 class CodelistControllerTest {
-    private lateinit var arkivressursResourceCache: FintCache<String, ArkivressursResource>
+    private lateinit var arkivressursResourceCache: FlytCache<String, ArkivressursResource>
     private lateinit var arkivressursDisplayNameMapper: ArkivressursDisplayNameMapper
     private lateinit var codelistController: CodelistController
 
@@ -54,11 +53,11 @@ class CodelistControllerTest {
                 selfLink = "https://beta.felleskomponent.no/arkiv/noark/arkivressurs/systemid/18693",
                 systemId = "18693",
             )
-        whenever(arkivressursResourceCache.getAllDistinct()).thenReturn(listOf(arkivressurs))
+        whenever(arkivressursResourceCache.distinctValues()).thenReturn(listOf(arkivressurs))
         whenever(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressurs))
-            .thenReturn(Optional.of("EGIBAL"))
+            .thenReturn("EGIBAL")
         whenever(arkivressursDisplayNameMapper.findPersonNavn(arkivressurs))
-            .thenReturn(Optional.of("Egil Ballestad"))
+            .thenReturn("Egil Ballestad")
 
         val response = codelistController.getArkivressurs()
 
@@ -81,11 +80,11 @@ class CodelistControllerTest {
                 selfLink = "https://beta.felleskomponent.no/arkiv/noark/arkivressurs/systemid/18699",
                 systemId = "18699",
             )
-        whenever(arkivressursResourceCache.getAllDistinct()).thenReturn(listOf(arkivressurs))
+        whenever(arkivressursResourceCache.distinctValues()).thenReturn(listOf(arkivressurs))
         whenever(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressurs))
-            .thenReturn(Optional.empty())
+            .thenReturn(null)
         whenever(arkivressursDisplayNameMapper.findPersonNavn(arkivressurs))
-            .thenReturn(Optional.empty())
+            .thenReturn(null)
 
         val response = codelistController.getArkivressurs()
 

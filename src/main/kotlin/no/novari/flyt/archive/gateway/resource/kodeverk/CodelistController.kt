@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.novari.cache.FintCache
 import no.novari.fint.model.felles.basisklasser.Begrep
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.resource.FintLinks
@@ -29,7 +28,8 @@ import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource
 import no.novari.fint.model.resource.arkiv.noark.KlasseResource
 import no.novari.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource
 import no.novari.flyt.archive.gateway.links.ResourceLinkUtil
-import no.novari.flyt.webresourceserver.UrlPaths.INTERNAL_API
+import no.novari.flyt.cache.FlytCache
+import no.novari.flyt.security.UrlPaths.INTERNAL_API
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -40,24 +40,24 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("$INTERNAL_API/arkiv/kodeverk")
 @Tag(name = "Kodeverk", description = "Cachede arkivkodeverk og arkivressurser.")
 class CodelistController(
-    private val administrativEnhetResourceCache: FintCache<String, AdministrativEnhetResource>,
-    private val arkivdelResourceCache: FintCache<String, ArkivdelResource>,
-    private val arkivressursResourceCache: FintCache<String, ArkivressursResource>,
-    private val tilknyttetRegistreringSomResourceCache: FintCache<String, TilknyttetRegistreringSomResource>,
-    private val dokumentStatusResourceCache: FintCache<String, DokumentStatusResource>,
-    private val dokumentTypeResourceCache: FintCache<String, DokumentTypeResource>,
-    private val klassifikasjonssystemResourceCache: FintCache<String, KlassifikasjonssystemResource>,
-    private val partRolleResourceCache: FintCache<String, PartRolleResource>,
-    private val korrespondansepartTypeResourceCache: FintCache<String, KorrespondansepartTypeResource>,
-    private val saksstatusResourceCache: FintCache<String, SaksstatusResource>,
-    private val skjermingshjemmelResourceCache: FintCache<String, SkjermingshjemmelResource>,
-    private val tilgangsrestriksjonResourceCache: FintCache<String, TilgangsrestriksjonResource>,
-    private val journalStatusResourceCache: FintCache<String, JournalStatusResource>,
-    private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource>,
-    private val saksmappetypeResourceCache: FintCache<String, SaksmappetypeResource>,
-    private val variantformatResourceCache: FintCache<String, VariantformatResource>,
-    private val formatResourceCache: FintCache<String, FormatResource>,
-    private val tilgangsgruppeResourceCache: FintCache<String, TilgangsgruppeResource>,
+    private val administrativEnhetResourceCache: FlytCache<String, AdministrativEnhetResource>,
+    private val arkivdelResourceCache: FlytCache<String, ArkivdelResource>,
+    private val arkivressursResourceCache: FlytCache<String, ArkivressursResource>,
+    private val tilknyttetRegistreringSomResourceCache: FlytCache<String, TilknyttetRegistreringSomResource>,
+    private val dokumentStatusResourceCache: FlytCache<String, DokumentStatusResource>,
+    private val dokumentTypeResourceCache: FlytCache<String, DokumentTypeResource>,
+    private val klassifikasjonssystemResourceCache: FlytCache<String, KlassifikasjonssystemResource>,
+    private val partRolleResourceCache: FlytCache<String, PartRolleResource>,
+    private val korrespondansepartTypeResourceCache: FlytCache<String, KorrespondansepartTypeResource>,
+    private val saksstatusResourceCache: FlytCache<String, SaksstatusResource>,
+    private val skjermingshjemmelResourceCache: FlytCache<String, SkjermingshjemmelResource>,
+    private val tilgangsrestriksjonResourceCache: FlytCache<String, TilgangsrestriksjonResource>,
+    private val journalStatusResourceCache: FlytCache<String, JournalStatusResource>,
+    private val journalpostTypeResourceCache: FlytCache<String, JournalpostTypeResource>,
+    private val saksmappetypeResourceCache: FlytCache<String, SaksmappetypeResource>,
+    private val variantformatResourceCache: FlytCache<String, VariantformatResource>,
+    private val formatResourceCache: FlytCache<String, FormatResource>,
+    private val tilgangsgruppeResourceCache: FlytCache<String, TilgangsgruppeResource>,
     private val arkivressursDisplayNameMapper: ArkivressursDisplayNameMapper,
 ) {
     @GetMapping("administrativenhet")
@@ -65,7 +65,7 @@ class CodelistController(
     fun getAdministrativEnheter(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             administrativEnhetResourceCache
-                .getAllDistinct()
+                .distinctValues()
                 .map { administrativEnhetResource ->
                     mapToResourceReference(
                         administrativEnhetResource,
@@ -81,7 +81,7 @@ class CodelistController(
     fun getKlassifikasjonssystem(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             klassifikasjonssystemResourceCache
-                .getAllDistinct()
+                .distinctValues()
                 .map { klassifikasjonssystemResource ->
                     mapToResourceReference(
                         klassifikasjonssystemResource,
@@ -112,8 +112,7 @@ class CodelistController(
     ): ResponseEntity<Collection<ResourceReference>> {
         val klasseResources: List<KlasseResource> =
             klassifikasjonssystemResourceCache
-                .getOptional(klassifikasjonssystemLink)
-                .orElse(null)
+                .getOrNull(klassifikasjonssystemLink)
                 ?.klasse
                 ?.toList()
                 ?: emptyList()
@@ -139,7 +138,7 @@ class CodelistController(
     fun getArkivdel(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             arkivdelResourceCache
-                .getAllDistinct()
+                .distinctValues()
                 .map { arkivdelResource ->
                     mapToResourceReference(
                         arkivdelResource,
@@ -155,16 +154,14 @@ class CodelistController(
     fun getArkivressurs(): ResponseEntity<Collection<ResourceReference>> =
         ResponseEntity.ok(
             arkivressursResourceCache
-                .getAllDistinct()
+                .distinctValues()
                 .map { arkivressurs ->
                     val functionalId =
                         arkivressursDisplayNameMapper
                             .findPersonalressursBrukernavn(arkivressurs)
-                            .orElse(null)
                     val name =
                         arkivressursDisplayNameMapper
                             .findPersonNavn(arkivressurs)
-                            .orElse(null)
                     val technicalId = arkivressurs.systemId?.identifikatorverdi
                     val displayNameBuilder =
                         ResourceReferenceDisplayNameBuilder()
@@ -252,11 +249,11 @@ class CodelistController(
         getBegrepResourceReferences(tilgangsgruppeResourceCache)
 
     private fun <R> getBegrepResourceReferences(
-        resourceCache: FintCache<String, R>,
+        resourceCache: FlytCache<String, R>,
     ): ResponseEntity<Collection<ResourceReference>>
         where R : Begrep,
               R : FintLinks =
-        ResponseEntity.ok(resourceCache.getAllDistinct().map(this::mapToResourceReference))
+        ResponseEntity.ok(resourceCache.distinctValues().map(this::mapToResourceReference))
 
     private fun <R> mapToResourceReference(
         resource: R,

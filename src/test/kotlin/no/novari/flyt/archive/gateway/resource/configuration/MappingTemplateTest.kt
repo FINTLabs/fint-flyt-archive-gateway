@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import jakarta.validation.Validation.buildDefaultValidatorFactory
 import jakarta.validation.Validator
 import no.novari.flyt.archive.gateway.template.AdresseTemplateService
@@ -27,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import tools.jackson.databind.json.JsonMapper
 
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(
@@ -45,7 +45,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
         SkjermingTemplateService::class,
         PartTemplateService::class,
         ReferenceTemplateFactory::class,
-        ObjectMapper::class,
+        JsonMapper::class,
     ],
 )
 @TestPropertySource(
@@ -56,7 +56,7 @@ class MappingTemplateTest {
     lateinit var archiveTemplateService: ArchiveTemplateService
 
     @Autowired
-    lateinit var objectMapper: ObjectMapper
+    lateinit var objectMapper: JsonMapper
 
     private lateinit var validator: Validator
 

@@ -41,7 +41,7 @@ class RecordsProcessingServiceTest {
         whenever(recordsDispatchService.dispatch("testCaseId", listOf(journalpostDto)))
             .thenReturn(RecordsDispatchResult.declined("test error message", "test warning message"))
         whenever(
-            dispatchMessageFormattingService.combineFunctionalWarningMessagesOrNull(
+            dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
                 true,
                 listOf("test warning message"),
@@ -64,7 +64,7 @@ class RecordsProcessingServiceTest {
         whenever(recordsDispatchService.dispatch("testCaseId", listOf(journalpostDto)))
             .thenReturn(RecordsDispatchResult.failed("test error message", "test warning message"))
         whenever(
-            dispatchMessageFormattingService.combineFunctionalWarningMessagesOrNull(
+            dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
                 true,
                 listOf("test warning message"),

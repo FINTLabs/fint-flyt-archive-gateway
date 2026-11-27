@@ -2,30 +2,16 @@ package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.validation.constraints.NotNull
-import java.util.Optional
 import java.util.UUID
-import kotlin.jvm.JvmName
 
 data class DokumentobjektDto(
-    @get:JvmName("getVariantformatOrNull")
     val variantformat: String? = null,
-    @get:JvmName("getFilformatOrNull")
     val filformat: String? = null,
-    @get:JvmName("getFormatOrNull")
     val format: String? = null,
     @field:JsonProperty("fil")
     @field:NotNull
-    @get:JvmName("getFileIdOrNull")
     val fileId: UUID? = null,
 ) {
-    fun getVariantformat(): Optional<String> = Optional.ofNullable(variantformat)
-
-    fun getFilformat(): Optional<String> = Optional.ofNullable(filformat)
-
-    fun getFormat(): Optional<String> = Optional.ofNullable(format)
-
-    fun getFileId(): Optional<UUID> = Optional.ofNullable(fileId)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

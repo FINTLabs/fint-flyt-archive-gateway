@@ -1,23 +1,12 @@
 package no.novari.flyt.archive.gateway.dispatch.model.instance
 
 import jakarta.validation.constraints.NotNull
-import java.util.Optional
-import kotlin.jvm.JvmName
 
 data class AdresseDto(
-    @get:JvmName("getAdresselinjeOrNull")
     val adresselinje: Collection<@NotNull String>? = null,
-    @get:JvmName("getPostnummerOrNull")
     val postnummer: String? = null,
-    @get:JvmName("getPoststedOrNull")
     val poststed: String? = null,
 ) {
-    fun getAdresselinje(): Optional<Collection<String>> = Optional.ofNullable(adresselinje)
-
-    fun getPostnummer(): Optional<String> = Optional.ofNullable(postnummer)
-
-    fun getPoststed(): Optional<String> = Optional.ofNullable(poststed)
-
     companion object {
         @JvmStatic
         fun builder() = Builder()

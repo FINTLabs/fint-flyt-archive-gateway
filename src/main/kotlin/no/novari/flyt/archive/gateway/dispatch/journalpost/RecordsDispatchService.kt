@@ -81,7 +81,7 @@ class RecordsDispatchService(
     }
 
     private fun createFunctionalWarningMessages(idsOfSuccessfullyDispatchedRecords: List<Long>): String? =
-        dispatchMessageFormattingService.createFunctionalWarningMessageOrNull(
+        dispatchMessageFormattingService.createFunctionalWarningMessage(
             "journalpost",
             "id",
             idsOfSuccessfullyDispatchedRecords.map(Long::toString),

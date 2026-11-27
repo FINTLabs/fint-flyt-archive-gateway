@@ -1,6 +1,5 @@
 package no.novari.flyt.archive.gateway.resource.web
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.resource.arkiv.kodeverk.SaksstatusResource
 import no.novari.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource
@@ -13,6 +12,7 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SkjermingDto
 import no.novari.flyt.archive.gateway.resource.web.exceptions.KlasseOrderOutOfBoundsException
 import no.novari.flyt.archive.gateway.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException
+import no.novari.flyt.cache.FlytCache
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -26,19 +26,19 @@ import org.mockito.kotlin.whenever
 @ExtendWith(MockitoExtension::class)
 class CaseSearchParametersServiceTest {
     @Mock
-    private lateinit var arkivdelResourceCache: FintCache<String, ArkivdelResource>
+    private lateinit var arkivdelResourceCache: FlytCache<String, ArkivdelResource>
 
     @Mock
-    private lateinit var administrativEnhetResourceCache: FintCache<String, AdministrativEnhetResource>
+    private lateinit var administrativEnhetResourceCache: FlytCache<String, AdministrativEnhetResource>
 
     @Mock
-    private lateinit var tilgangsrestriksjonResourceCache: FintCache<String, TilgangsrestriksjonResource>
+    private lateinit var tilgangsrestriksjonResourceCache: FlytCache<String, TilgangsrestriksjonResource>
 
     @Mock
-    private lateinit var saksstatusResourceCache: FintCache<String, SaksstatusResource>
+    private lateinit var saksstatusResourceCache: FlytCache<String, SaksstatusResource>
 
     @Mock
-    private lateinit var klassifikasjonssystemResourceCache: FintCache<String, KlassifikasjonssystemResource>
+    private lateinit var klassifikasjonssystemResourceCache: FlytCache<String, KlassifikasjonssystemResource>
 
     private lateinit var caseSearchParametersService: CaseSearchParametersService
 

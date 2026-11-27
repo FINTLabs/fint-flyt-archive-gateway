@@ -1,24 +1,24 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import no.novari.cache.FintCache
+import no.novari.flyt.cache.FlytCache
 import java.util.function.Function
 
-data class ResourcePipelineCacheProperties<T>(
+data class ResourcePipelineCacheProperties<T : Any>(
     val createKeys: Function<T, List<String>>,
-    val cache: FintCache<String, T>,
+    val cache: FlytCache<String, T>,
 ) {
     companion object {
         @JvmStatic
-        fun <T> builder() = Builder<T>()
+        fun <T : Any> builder() = Builder<T>()
     }
 
-    class Builder<T> {
+    class Builder<T : Any> {
         private var createKeys: Function<T, List<String>>? = null
-        private var cache: FintCache<String, T>? = null
+        private var cache: FlytCache<String, T>? = null
 
         fun createKeys(createKeys: Function<T, List<String>>) = apply { this.createKeys = createKeys }
 
-        fun cache(cache: FintCache<String, T>) = apply { this.cache = cache }
+        fun cache(cache: FlytCache<String, T>) = apply { this.cache = cache }
 
         fun build() =
             ResourcePipelineCacheProperties(

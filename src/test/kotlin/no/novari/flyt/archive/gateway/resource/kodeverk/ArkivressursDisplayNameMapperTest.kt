@@ -1,13 +1,13 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk
 
-import no.novari.cache.FintCache
-import no.novari.cache.exceptions.NoSuchCacheEntryException
 import no.novari.fint.model.felles.kompleksedatatyper.Identifikator
 import no.novari.fint.model.felles.kompleksedatatyper.Personnavn
 import no.novari.fint.model.resource.Link
 import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResource
 import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource
 import no.novari.fint.model.resource.felles.PersonResource
+import no.novari.flyt.cache.FlytCache
+import no.novari.flyt.cache.exceptions.NoSuchCacheEntryException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -20,15 +20,14 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.verifyNoMoreInteractions
 import org.mockito.kotlin.whenever
-import java.util.Optional
 
 @ExtendWith(MockitoExtension::class)
 class ArkivressursDisplayNameMapperTest {
     @Mock
-    lateinit var personalressursResourceCache: FintCache<String, PersonalressursResource>
+    lateinit var personalressursResourceCache: FlytCache<String, PersonalressursResource>
 
     @Mock
-    lateinit var personResourceCache: FintCache<String, PersonResource>
+    lateinit var personResourceCache: FlytCache<String, PersonResource>
 
     private lateinit var arkivressursDisplayNameMapper: ArkivressursDisplayNameMapper
 
@@ -47,7 +46,7 @@ class ArkivressursDisplayNameMapperTest {
         val arkivressursResource = setupMocksForPersonnavn(personnavn)
 
         assertThat(arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource))
-            .contains("testFornavn testMellomnavn testEtternavn")
+            .isEqualTo("testFornavn testMellomnavn testEtternavn")
     }
 
     @Test
@@ -69,7 +68,7 @@ class ArkivressursDisplayNameMapperTest {
         whenever(personalressursResourceCache.get("a/b/c/testPersonalressursLink1"))
             .thenThrow(NoSuchCacheEntryException("a/b/c/testPersonalressursLink1"))
 
-        assertThat(arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource)).isEmpty
+        assertThat(arkivressursDisplayNameMapper.findPersonNavn(arkivressursResource)).isNull()
     }
 
     @Test
@@ -107,7 +106,7 @@ class ArkivressursDisplayNameMapperTest {
     fun `findPersonalressursBrukernavn given a matching personalressurs in the cache, returns the identifikator`() {
         val arkivressursResource = setupMocksForPersonBrukernavn()
 
-        assertThat(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource)).contains("12345")
+        assertThat(arkivressursDisplayNameMapper.findPersonalressursBrukernavn(arkivressursResource)).isEqualTo("12345")
     }
 
     private fun setupMocksForPersonnavn(personnavn: Personnavn?): ArkivressursResource {
@@ -130,8 +129,8 @@ class ArkivressursDisplayNameMapperTest {
         whenever(arkivressursResource.personalressurs).thenReturn(listOf(Link.with("a/b/c/testPersonalressursLink1")))
 
         val personalressursResource: PersonalressursResource = mock()
-        whenever(personalressursResourceCache.getOptional("a/b/c/testPersonalressursLink1"))
-            .thenReturn(Optional.of(personalressursResource))
+        whenever(personalressursResourceCache.getOrNull("a/b/c/testPersonalressursLink1"))
+            .thenReturn(personalressursResource)
 
         val identifikator = Identifikator()
         identifikator.identifikatorverdi = "12345"
