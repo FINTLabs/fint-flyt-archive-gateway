@@ -7,7 +7,6 @@ import no.novari.fint.model.arkiv.noark.AdministrativEnhet
 import no.novari.fint.model.arkiv.noark.Arkivressurs
 import no.novari.flyt.archive.gateway.template.model.ElementConfig
 import no.novari.flyt.archive.gateway.template.model.ObjectTemplate
-import no.novari.flyt.archive.gateway.template.model.Selectable
 import no.novari.flyt.archive.gateway.template.model.SelectableValueTemplate
 import no.novari.flyt.archive.gateway.template.model.UrlBuilder
 import no.novari.flyt.archive.gateway.template.model.ValueTemplate
@@ -19,6 +18,7 @@ class JournalpostTemplateService(
     private val dokumentbeskrivelseTemplateService: DokumentbeskrivelseTemplateService,
     private val skjermingTemplateService: SkjermingTemplateService,
     private val referenceTemplateFactory: ReferenceTemplateFactory,
+    private val avskrivningTemplateService: AvskrivningTemplateService,
 ) {
     fun createTemplate(): ObjectTemplate =
         ObjectTemplate
@@ -53,26 +53,6 @@ class JournalpostTemplateService(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalposttype").build()),
                     ).referenceTemplate(referenceTemplateFactory.create(JournalpostType::class))
                     .build(),
-            ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("avskrivningsmate")
-                    .displayName("Avskrivningsmåte")
-                    .description(
-                        "Hvordan journalposten avskrives. Kun aktuelt når journalposttype er I (Inngående brev).",
-                    ).build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectables(
-                        listOf(
-                            Selectable(displayName = "[BU] Besvart med brev", value = "BU"),
-                            Selectable(displayName = "[BE] Besvart med e-post", value = "BE"),
-                            Selectable(displayName = "[TLF] Besvart på telefon", value = "TLF"),
-                            Selectable(displayName = "[TE] Tatt til etterretning", value = "TE"),
-                            Selectable(displayName = "[TO] Tatt til orientering", value = "TO"),
-                        ),
-                    ).build(),
             ).addTemplate(
                 ElementConfig
                     .builder()
@@ -144,6 +124,18 @@ class JournalpostTemplateService(
                         listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsgruppe").build()),
                     ).referenceTemplate(referenceTemplateFactory.create(Tilgangsgruppe::class))
                     .build(),
+            ).addTemplate(
+                ElementConfig
+                    .builder()
+                    .key("avskrivning")
+                    .displayName("Avskrivning")
+                    .description(
+                        "Avskrivning av journalpost. Gjelder kun når journalposttype er I (Inngående brev). " +
+                            "For andre journalposttyper utelates hele avskrivningen ved utsending til arkivet. " +
+                            "Avskrivningsmåte må være fylt ut. Hvis avskrivningsdato er tom, brukes dagens dato " +
+                            "og klokkeslett ved utsending til arkivet.",
+                    ).build(),
+                avskrivningTemplateService.createTemplate(),
             ).addTemplate(
                 ElementConfig
                     .builder()

@@ -5,8 +5,13 @@ import no.novari.fint.model.resource.arkiv.noark.JournalpostResource
 import no.novari.flyt.archive.gateway.dispatch.file.FilesDispatchService
 import no.novari.flyt.archive.gateway.dispatch.file.result.FilesDispatchResult
 import no.novari.flyt.archive.gateway.dispatch.journalpost.result.RecordDispatchResult
+import no.novari.flyt.archive.gateway.dispatch.mapping.AvskrivningMappingService
 import no.novari.flyt.archive.gateway.dispatch.mapping.DokumentetsDatoMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidAvskrivningsdatoException
+import no.novari.flyt.archive.gateway.dispatch.mapping.InvalidJournalpostTypeException
 import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostMappingService
+import no.novari.flyt.archive.gateway.dispatch.mapping.JournalpostTypeLookupException
+import no.novari.flyt.archive.gateway.dispatch.model.instance.AvskrivningDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentbeskrivelseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.DokumentobjektDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
@@ -39,6 +44,9 @@ class RecordDispatchServiceTest {
 
     private lateinit var recordDispatchService: RecordDispatchService
 
+    @Mock
+    private lateinit var avskrivningMappingService: AvskrivningMappingService
+
     @BeforeEach
     fun setup() {
         recordDispatchService =
@@ -47,6 +55,7 @@ class RecordDispatchServiceTest {
                 filesDispatchService,
                 fintArchiveDispatchClient,
                 DokumentetsDatoMappingService(),
+                avskrivningMappingService,
             )
     }
 
@@ -154,6 +163,54 @@ class RecordDispatchServiceTest {
         verifyNoInteractions(filesDispatchService)
         verifyNoInteractions(journalpostMappingService)
         verifyNoInteractions(fintArchiveDispatchClient)
+    }
+
+    @Test
+    fun `declines invalid avskrivningsdato before files or journalpost are dispatched`() {
+        val dto =
+            JournalpostDto(
+                avskrivning = AvskrivningDto("invalid date", "TE"),
+                dokumentbeskrivelse = listOf(DokumentbeskrivelseDto(dokumentobjekt = listOf(DokumentobjektDto()))),
+            )
+        val error = InvalidAvskrivningsdatoException("invalid date")
+        whenever(avskrivningMappingService.toAvskrivning(dto)).thenThrow(error)
+
+        val result = recordDispatchService.dispatch("caseId", dto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
+    }
+
+    @Test
+    fun `declines unknown journalpost type before dispatching files or journalpost`() {
+        val dto =
+            JournalpostDto(
+                avskrivning = AvskrivningDto(avskrivningsmate = "TE"),
+                dokumentbeskrivelse = listOf(DokumentbeskrivelseDto(dokumentobjekt = listOf(DokumentobjektDto()))),
+            )
+        val error = InvalidJournalpostTypeException("I")
+        whenever(avskrivningMappingService.toAvskrivning(dto)).thenThrow(error)
+
+        val result = recordDispatchService.dispatch("caseId", dto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.declined(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
+    }
+
+    @Test
+    fun `returns technical lookup failure with explanation before dispatching files or journalpost`() {
+        val dto =
+            JournalpostDto(
+                avskrivning = AvskrivningDto(avskrivningsmate = "TE"),
+                dokumentbeskrivelse = listOf(DokumentbeskrivelseDto(dokumentobjekt = listOf(DokumentobjektDto()))),
+            )
+        val error = JournalpostTypeLookupException("incoming-type")
+        whenever(avskrivningMappingService.toAvskrivning(dto)).thenThrow(error)
+
+        val result = recordDispatchService.dispatch("caseId", dto)
+
+        assertThat(result).isEqualTo(RecordDispatchResult.failed(error.message.orEmpty()))
+        verifyNoInteractions(filesDispatchService, journalpostMappingService, fintArchiveDispatchClient)
     }
 
     @Test
