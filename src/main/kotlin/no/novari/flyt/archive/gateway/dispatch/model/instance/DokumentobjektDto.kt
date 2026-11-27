@@ -11,32 +11,4 @@ data class DokumentobjektDto(
     @field:JsonProperty("fil")
     @field:NotNull
     val fileId: UUID? = null,
-) {
-    companion object {
-        @JvmStatic
-        fun builder() = Builder()
-    }
-
-    class Builder {
-        private var variantformat: String? = null
-        private var filformat: String? = null
-        private var format: String? = null
-        private var fileId: UUID? = null
-
-        fun variantformat(variantformat: String?) = apply { this.variantformat = variantformat }
-
-        fun filformat(filformat: String?) = apply { this.filformat = filformat }
-
-        fun format(format: String?) = apply { this.format = format }
-
-        fun fileId(fileId: UUID?) = apply { this.fileId = fileId }
-
-        fun build() =
-            DokumentobjektDto(
-                variantformat = variantformat,
-                filformat = filformat,
-                format = format,
-                fileId = fileId,
-            )
-    }
-}
+)

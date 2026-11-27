@@ -30,20 +30,18 @@ class KlasseMappingServiceTest {
     @Test
     fun `given a valid input, maps to KlasseResources`() {
         val skjermingDto =
-            SkjermingDto
-                .builder()
-                .tilgangsrestriksjon("testTilgangsrestriksjon")
-                .skjermingshjemmel("testSkjermingshjemmel")
-                .build()
+            SkjermingDto(
+                tilgangsrestriksjon = "testTilgangsrestriksjon",
+                skjermingshjemmel = "testSkjermingshjemmel",
+            )
         val dto =
-            KlasseDto
-                .builder()
-                .klasseId("testId")
-                .skjerming(skjermingDto)
-                .tittel("testTitle")
-                .klassifikasjonssystem("testKlassifikasjonssystem")
-                .rekkefolge(1)
-                .build()
+            KlasseDto(
+                klasseId = "testId",
+                skjerming = skjermingDto,
+                tittel = "testTitle",
+                klassifikasjonssystem = "testKlassifikasjonssystem",
+                rekkefolge = 1,
+            )
 
         doReturn(SkjermingResource()).whenever(mockSkjermingMappingService).toSkjermingResource(any())
 

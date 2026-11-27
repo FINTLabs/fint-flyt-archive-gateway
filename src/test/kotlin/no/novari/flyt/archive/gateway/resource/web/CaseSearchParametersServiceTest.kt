@@ -63,8 +63,14 @@ class CaseSearchParametersServiceTest {
             }
         whenever(arkivdelResourceCache.get("arkivdelKey")).thenReturn(arkivdel)
 
-        val sakDto = SakDto.builder().arkivdel("arkivdelKey").build()
-        val caseSearchParametersDto = CaseSearchParametersDto.builder().arkivdel(true).build()
+        val sakDto =
+            SakDto(
+                arkivdel = "arkivdelKey",
+            )
+        val caseSearchParametersDto =
+            CaseSearchParametersDto(
+                arkivdel = true,
+            )
 
         val result = caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto)
 
@@ -87,17 +93,18 @@ class CaseSearchParametersServiceTest {
         whenever(tilgangsrestriksjonResourceCache.get("tilgangsKey")).thenReturn(tilgangsrestriksjonResource)
 
         val sakDto =
-            SakDto
-                .builder()
-                .administrativEnhet("adminEnhetKey")
-                .skjerming(SkjermingDto.builder().tilgangsrestriksjon("tilgangsKey").build())
-                .build()
+            SakDto(
+                administrativEnhet = "adminEnhetKey",
+                skjerming =
+                    SkjermingDto(
+                        tilgangsrestriksjon = "tilgangsKey",
+                    ),
+            )
         val caseSearchParametersDto =
-            CaseSearchParametersDto
-                .builder()
-                .administrativEnhet(true)
-                .tilgangsrestriksjon(true)
-                .build()
+            CaseSearchParametersDto(
+                administrativEnhet = true,
+                tilgangsrestriksjon = true,
+            )
 
         val result = caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto)
 
@@ -116,24 +123,21 @@ class CaseSearchParametersServiceTest {
         ).thenReturn(klassifikasjonssystemResource)
 
         val sakDto =
-            SakDto
-                .builder()
-                .klasse(
+            SakDto(
+                klasse =
                     listOf(
-                        KlasseDto
-                            .builder()
-                            .rekkefolge(1)
-                            .klassifikasjonssystem("klassifikasjonssystemKey")
-                            .build(),
+                        KlasseDto(
+                            rekkefolge = 1,
+                            klassifikasjonssystem = "klassifikasjonssystemKey",
+                        ),
                     ),
-                ).build()
+            )
         val caseSearchParametersDto =
-            CaseSearchParametersDto
-                .builder()
-                .klassering(true)
-                .klasseringRekkefolge("1")
-                .klasseringKlassifikasjonssystem(true)
-                .build()
+            CaseSearchParametersDto(
+                klassering = true,
+                klasseringRekkefolge = "1",
+                klasseringKlassifikasjonssystem = true,
+            )
 
         val result = caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto)
 
@@ -143,24 +147,21 @@ class CaseSearchParametersServiceTest {
     @Test
     fun `given klassering rekkefolge out of bounds, throws KlasseOrderOutOfBoundsException`() {
         val sakDto =
-            SakDto
-                .builder()
-                .klasse(
+            SakDto(
+                klasse =
                     listOf(
-                        KlasseDto
-                            .builder()
-                            .rekkefolge(0)
-                            .klasseId("klasseId")
-                            .build(),
+                        KlasseDto(
+                            rekkefolge = 0,
+                            klasseId = "klasseId",
+                        ),
                     ),
-                ).build()
+            )
         val caseSearchParametersDto =
-            CaseSearchParametersDto
-                .builder()
-                .klassering(true)
-                .klasseringRekkefolge("0")
-                .klasseringKlasseId(true)
-                .build()
+            CaseSearchParametersDto(
+                klassering = true,
+                klasseringRekkefolge = "0",
+                klasseringKlasseId = true,
+            )
 
         assertThatThrownBy { caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto) }
             .isInstanceOf(KlasseOrderOutOfBoundsException::class.java)
@@ -170,24 +171,21 @@ class CaseSearchParametersServiceTest {
     @Test
     fun `given a missing klassering order, throws SearchKlasseOrderNotFoundInCaseException`() {
         val sakDto =
-            SakDto
-                .builder()
-                .klasse(
+            SakDto(
+                klasse =
                     listOf(
-                        KlasseDto
-                            .builder()
-                            .rekkefolge(1)
-                            .klasseId("klasseId")
-                            .build(),
+                        KlasseDto(
+                            rekkefolge = 1,
+                            klasseId = "klasseId",
+                        ),
                     ),
-                ).build()
+            )
         val caseSearchParametersDto =
-            CaseSearchParametersDto
-                .builder()
-                .klassering(true)
-                .klasseringRekkefolge("2")
-                .klasseringKlasseId(true)
-                .build()
+            CaseSearchParametersDto(
+                klassering = true,
+                klasseringRekkefolge = "2",
+                klasseringKlasseId = true,
+            )
 
         assertThatThrownBy { caseSearchParametersService.createFilterQueryParamValue(sakDto, caseSearchParametersDto) }
             .isInstanceOf(SearchKlasseOrderNotFoundInCaseException::class.java)

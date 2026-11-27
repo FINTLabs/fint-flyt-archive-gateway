@@ -48,28 +48,36 @@ class JournalpostMappingServiceTest {
     @Test
     fun `maps to JournalpostResource`() {
         val skjermingDto =
-            SkjermingDto
-                .builder()
-                .tilgangsrestriksjon("Tilgangsrestriksjon")
-                .skjermingshjemmel("Skjermingshjemmel")
-                .build()
+            SkjermingDto(
+                tilgangsrestriksjon = "Tilgangsrestriksjon",
+                skjermingshjemmel = "Skjermingshjemmel",
+            )
 
         val dto =
-            JournalpostDto
-                .builder()
-                .tittel("Tittel")
-                .offentligTittel("Offentlig tittel")
-                .journalposttype("incoming-type")
-                .avskrivning(AvskrivningDto(avskrivningsdato = "2026-08-24T09:12:48Z", avskrivningsmate = "TE"))
-                .administrativEnhet("Administrativ enhet")
-                .saksbehandler("Saksbehandler")
-                .journalstatus("Journalstatus")
-                .dokumentetsDato("2026-08-28")
-                .tilgangsgruppe("Tilgangsgruppe")
-                .skjerming(skjermingDto)
-                .korrespondansepart(listOf(KorrespondansepartDto.builder().korrespondanseparttype("type").build()))
-                .dokumentbeskrivelse(listOf(DokumentbeskrivelseDto.builder().tittel("dok").build()))
-                .build()
+            JournalpostDto(
+                tittel = "Tittel",
+                offentligTittel = "Offentlig tittel",
+                journalposttype = "incoming-type",
+                avskrivning = AvskrivningDto(avskrivningsdato = "2026-08-24T09:12:48Z", avskrivningsmate = "TE"),
+                administrativEnhet = "Administrativ enhet",
+                saksbehandler = "Saksbehandler",
+                journalstatus = "Journalstatus",
+                dokumentetsDato = "2026-08-28",
+                tilgangsgruppe = "Tilgangsgruppe",
+                skjerming = skjermingDto,
+                korrespondansepart =
+                    listOf(
+                        KorrespondansepartDto(
+                            korrespondanseparttype = "type",
+                        ),
+                    ),
+                dokumentbeskrivelse =
+                    listOf(
+                        DokumentbeskrivelseDto(
+                            tittel = "dok",
+                        ),
+                    ),
+            )
 
         val mappedResource = journalpostMappingService.toJournalpostResource(dto, emptyMap())
 

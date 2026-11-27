@@ -21,11 +21,10 @@ class SkjermingMappingServiceTest {
     @Test
     fun `given a valid dto, maps to SkjermingResource`() {
         val skjermingDto =
-            SkjermingDto
-                .builder()
-                .tilgangsrestriksjon("Tilgangsrestriksjon")
-                .skjermingshjemmel("Skjermingshjemmel")
-                .build()
+            SkjermingDto(
+                tilgangsrestriksjon = "Tilgangsrestriksjon",
+                skjermingshjemmel = "Skjermingshjemmel",
+            )
 
         val result = skjermingMappingService.toSkjermingResource(skjermingDto)
 

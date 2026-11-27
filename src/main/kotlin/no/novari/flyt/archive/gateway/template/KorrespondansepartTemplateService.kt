@@ -19,85 +19,77 @@ class KorrespondansepartTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("korrespondanseparttype")
-                    .displayName("Korrespondanseparttype")
-                    .description("Type korrespondansepart")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ElementConfig(
+                    key = "korrespondanseparttype",
+                    displayName = "Korrespondanseparttype",
+                    description = "Type korrespondansepart",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder
-                                .builder()
-                                .urlTemplate(
-                                    "api/intern/arkiv/kodeverk/korrespondanseparttype",
-                                ).build(),
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/korrespondanseparttype",
+                            ),
                         ),
-                    ).referenceTemplate(referenceTemplateFactory.create(KorrespondansepartType::class))
-                    .build(),
+                    referenceTemplate = referenceTemplateFactory.create(KorrespondansepartType::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("organisasjonsnummer")
-                    .displayName("Organisasjonsnummer")
-                    .description("Organisasjonsnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "organisasjonsnummer",
+                    displayName = "Organisasjonsnummer",
+                    description = "Organisasjonsnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "fodselsnummer",
-                    ).displayName("Fødselsnummer")
-                    .description("Fødselsnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "fodselsnummer",
+                    displayName = "Fødselsnummer",
+                    description = "Fødselsnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "korrespondansepartNavn",
-                    ).displayName("Navn")
-                    .description("Navn på person eller organisasjon")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "korrespondansepartNavn",
+                    displayName = "Navn",
+                    description = "Navn på person eller organisasjon",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "kontaktperson",
-                    ).displayName("Kontaktperson")
-                    .description("Kontaktperson hos en organisasjon")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "kontaktperson",
+                    displayName = "Kontaktperson",
+                    description = "Kontaktperson hos en organisasjon",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("adresse")
-                    .displayName("Adresse")
-                    .description("Adresse")
-                    .build(),
+                ElementConfig(
+                    key = "adresse",
+                    displayName = "Adresse",
+                    description = "Adresse",
+                ),
                 adresseTemplateService.createTemplate(),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "kontaktinformasjon",
-                    ).displayName("Kontaktinformasjon")
-                    .description("Kontaktinformasjon")
-                    .build(),
+                ElementConfig(
+                    key = "kontaktinformasjon",
+                    displayName = "Kontaktinformasjon",
+                    description = "Kontaktinformasjon",
+                ),
                 kontaktinformasjonTemplateService.createTemplate(),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "skjerming",
-                    ).displayName("Skjerming")
-                    .description("Skjerming av korrespodansepart")
-                    .build(),
+                ElementConfig(
+                    key = "skjerming",
+                    displayName = "Skjerming",
+                    description = "Skjerming av korrespodansepart",
+                ),
                 skjermingTemplateService.createTemplate(),
             ).build()
 }

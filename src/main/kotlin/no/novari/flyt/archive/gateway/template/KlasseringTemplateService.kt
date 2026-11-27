@@ -17,70 +17,67 @@ class KlasseringTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("rekkefolge")
-                    .displayName("Rekkefølge")
-                    .description(
+                ElementConfig(
+                    key = "rekkefolge",
+                    displayName = "Rekkefølge",
+                    description =
                         """
                         Rekkefølge for klassifiseringer. 
                         Ved bruk av primær, sekundær og tertiærklasseringer, bruk følgende verdier:
                         1 for primær, 2 for sekundær, og 3 for tertiær.
                         """.trimIndent(),
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.STRING).build(),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klassifikasjonssystem")
-                    .displayName("Klassifikasjonssystem")
-                    .description("Beskriver den overordnede strukturen for mappene i en eller flere arkivdeler")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ElementConfig(
+                    key = "klassifikasjonssystem",
+                    displayName = "Klassifikasjonssystem",
+                    description = "Beskriver den overordnede strukturen for mappene i en eller flere arkivdeler",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/klassifikasjonssystem").build(),
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/klassifikasjonssystem",
+                            ),
                         ),
-                    ).referenceTemplate(referenceTemplateFactory.create(Klassifikasjonssystem::class))
-                    .build(),
+                    referenceTemplate = referenceTemplateFactory.create(Klassifikasjonssystem::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klasseId")
-                    .displayName("KlasseID")
-                    .description("Entydig identifikasjon av klassen innenfor klassifikasjonssystemet")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ElementConfig(
+                    key = "klasseId",
+                    displayName = "KlasseID",
+                    description = "Entydig identifikasjon av klassen innenfor klassifikasjonssystemet",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder
-                                .builder()
-                                .urlTemplate("api/intern/arkiv/kodeverk/klasse")
-                                .valueRefPerRequestParamKey(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/klasse",
+                                valueRefPerRequestParamKey =
                                     mapOf("klassifikasjonssystemLink" to "klassifikasjonssystem"),
-                                ).build(),
+                            ),
                         ),
-                    ).build(),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tittel")
-                    .displayName("Tittel")
-                    .description("Tittel eller navn på arkivenheten")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "tittel",
+                    displayName = "Tittel",
+                    description = "Tittel eller navn på arkivenheten",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "skjerming",
-                    ).displayName("Skjerming")
-                    .description("Skjerming av klasse")
-                    .build(),
+                ElementConfig(
+                    key = "skjerming",
+                    displayName = "Skjerming",
+                    description = "Skjerming av klasse",
+                ),
                 skjermingTemplateService.createTemplate(),
             ).build()
 }

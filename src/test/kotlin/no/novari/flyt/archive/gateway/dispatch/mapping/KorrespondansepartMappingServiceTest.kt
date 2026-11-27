@@ -32,17 +32,16 @@ class KorrespondansepartMappingServiceTest {
     @Test
     fun `maps to KorrespondansepartResource`() {
         val korrespondansepartDto =
-            KorrespondansepartDto
-                .builder()
-                .korrespondanseparttype("type")
-                .fodselsnummer("123456789")
-                .organisasjonsnummer("987654321")
-                .korrespondansepartNavn("name")
-                .kontaktperson("contactPerson")
-                .adresse(AdresseDto.builder().build())
-                .kontaktinformasjon(KontaktinformasjonDto.builder().build())
-                .skjerming(SkjermingDto.builder().build())
-                .build()
+            KorrespondansepartDto(
+                korrespondanseparttype = "type",
+                fodselsnummer = "123456789",
+                organisasjonsnummer = "987654321",
+                korrespondansepartNavn = "name",
+                kontaktperson = "contactPerson",
+                adresse = AdresseDto(),
+                kontaktinformasjon = KontaktinformasjonDto(),
+                skjerming = SkjermingDto(),
+            )
 
         val korrespondansepartResource =
             korrespondansepartMappingService

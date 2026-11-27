@@ -17,20 +17,4 @@ data class ValueTemplate(
         FILE,
         BOOLEAN,
     }
-
-    companion object {
-        @JvmStatic
-        fun builder() = Builder()
-    }
-
-    class Builder {
-        private var type: Type? = null
-        private var search: UrlBuilder? = null
-
-        fun type(type: Type?) = apply { this.type = type }
-
-        fun search(search: UrlBuilder?) = apply { this.search = search }
-
-        fun build() = ValueTemplate(type = type, search = search)
-    }
 }

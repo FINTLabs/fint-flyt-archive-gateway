@@ -32,28 +32,25 @@ class PartMappingServiceTest {
     @Test
     fun `maps to PartResource`() {
         val partDto =
-            PartDto
-                .builder()
-                .partNavn("Test Navn")
-                .partRolle("Test Rolle")
-                .kontaktperson("Test Person")
-                .fodselsnummer("123456789")
-                .organisasjonsnummer("987654321")
-                .adresse(
-                    AdresseDto
-                        .builder()
-                        .adresselinje(emptyList())
-                        .postnummer("1234")
-                        .poststed("Test Sted")
-                        .build(),
-                ).kontaktinformasjon(
-                    KontaktinformasjonDto
-                        .builder()
-                        .epostadresse("test@test.com")
-                        .telefonnummer("1234567890")
-                        .mobiltelefonnummer("0987654321")
-                        .build(),
-                ).build()
+            PartDto(
+                partNavn = "Test Navn",
+                partRolle = "Test Rolle",
+                kontaktperson = "Test Person",
+                fodselsnummer = "123456789",
+                organisasjonsnummer = "987654321",
+                adresse =
+                    AdresseDto(
+                        adresselinje = emptyList(),
+                        postnummer = "1234",
+                        poststed = "Test Sted",
+                    ),
+                kontaktinformasjon =
+                    KontaktinformasjonDto(
+                        epostadresse = "test@test.com",
+                        telefonnummer = "1234567890",
+                        mobiltelefonnummer = "0987654321",
+                    ),
+            )
 
         val kontaktinformasjon = Kontaktinformasjon()
         val adresseResource = AdresseResource()

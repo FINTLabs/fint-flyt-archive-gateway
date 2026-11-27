@@ -15,30 +15,19 @@ class FintLinksResourcePipelineFactory(
         cache: FlytCache<String, T>,
         resourceReferencePath: List<String>,
         publishOnKafka: Boolean,
-    ): ResourcePipeline<T> {
-        val resourcePipelineBuilder =
-            ResourcePipeline
-                .builder<T>()
-                .resourceClass(resourceClass)
-                .urlResourcePath(resourceReferencePath.joinToString("/"))
-                .cacheProperties(
-                    ResourcePipelineCacheProperties
-                        .builder<T>()
-                        .createKeys(ResourceLinkUtil::getSelfLinks)
-                        .cache(cache)
-                        .build(),
-                )
-
-        if (publishOnKafka) {
-            resourcePipelineBuilder.kafkaProperties(
-                ResourcePipelineKafkaProperties
-                    .builder<T>()
-                    .createKafkaKey(ResourceLinkUtil::getFirstSelfLink)
-                    .topic(topics.entity(resourceReferencePath.joinToString("-")))
-                    .build(),
-            )
-        }
-
-        return resourcePipelineBuilder.build()
-    }
+    ): ResourcePipeline<T> =
+        ResourcePipeline(
+            resourceClass = resourceClass,
+            urlResourcePath = resourceReferencePath.joinToString("/"),
+            cacheProperties = ResourcePipelineCacheProperties(ResourceLinkUtil::getSelfLinks, cache),
+            kafkaProperties =
+                if (publishOnKafka) {
+                    ResourcePipelineKafkaProperties(
+                        ResourceLinkUtil::getFirstSelfLink,
+                        topics.entity(resourceReferencePath.joinToString("-")),
+                    )
+                } else {
+                    null
+                },
+        )
 }

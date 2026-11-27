@@ -19,13 +19,12 @@ class DokumentObjektMappingServiceTest {
     fun `maps to DokumentobjektResource`() {
         val fileId = UUID.randomUUID()
         val dto =
-            DokumentobjektDto
-                .builder()
-                .variantformat("testVariantFormat")
-                .filformat("testFilFormat")
-                .format("testFormat")
-                .fileId(fileId)
-                .build()
+            DokumentobjektDto(
+                variantformat = "testVariantFormat",
+                filformat = "testFilFormat",
+                format = "testFormat",
+                fileId = fileId,
+            )
         val fileLink = Link("mockedLinkValue")
 
         val resource = mappingService.toDokumentobjektResource(dto, mapOf(fileId to fileLink))
@@ -39,8 +38,14 @@ class DokumentObjektMappingServiceTest {
     fun `maps a list of dtos to a list of DokumentobjektResources`() {
         val fileId1 = UUID.randomUUID()
         val fileId2 = UUID.randomUUID()
-        val dto1 = DokumentobjektDto.builder().fileId(fileId1).build()
-        val dto2 = DokumentobjektDto.builder().fileId(fileId2).build()
+        val dto1 =
+            DokumentobjektDto(
+                fileId = fileId1,
+            )
+        val dto2 =
+            DokumentobjektDto(
+                fileId = fileId2,
+            )
 
         val resources =
             mappingService.toDokumentobjektResource(

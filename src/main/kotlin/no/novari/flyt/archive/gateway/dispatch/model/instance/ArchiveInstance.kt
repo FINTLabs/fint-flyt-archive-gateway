@@ -24,39 +24,4 @@ data class ArchiveInstance(
         @NotNull @Valid
         JournalpostDto,
     >? = null,
-) {
-    companion object {
-        @JvmStatic
-        fun builder() = Builder()
-    }
-
-    class Builder {
-        private var type: CaseDispatchType? = null
-        private var caseSearchParameters: CaseSearchParametersDto? = null
-        private var newCase: SakDto? = null
-        private var caseId: String? = null
-        private var journalpost: List<JournalpostDto>? = null
-
-        fun type(type: CaseDispatchType?) = apply { this.type = type }
-
-        fun caseSearchParameters(caseSearchParameters: CaseSearchParametersDto?) =
-            apply {
-                this.caseSearchParameters = caseSearchParameters
-            }
-
-        fun newCase(newCase: SakDto?) = apply { this.newCase = newCase }
-
-        fun caseId(caseId: String?) = apply { this.caseId = caseId }
-
-        fun journalpost(journalpost: List<JournalpostDto>?) = apply { this.journalpost = journalpost }
-
-        fun build() =
-            ArchiveInstance(
-                type = type,
-                caseSearchParameters = caseSearchParameters,
-                newCase = newCase,
-                caseId = caseId,
-                journalpost = journalpost,
-            )
-    }
-}
+)

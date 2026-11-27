@@ -21,12 +21,11 @@ class KontaktinformasjonMappingServiceTest {
     @Test
     fun `given a valid input, maps to Kontaktinformasjon`() {
         val dto =
-            KontaktinformasjonDto
-                .builder()
-                .epostadresse("testEmail@test.com")
-                .telefonnummer("123456789")
-                .mobiltelefonnummer("987654321")
-                .build()
+            KontaktinformasjonDto(
+                epostadresse = "testEmail@test.com",
+                telefonnummer = "123456789",
+                mobiltelefonnummer = "987654321",
+            )
 
         val actualKontaktinformasjon = kontaktinformasjonMappingService.toKontaktinformasjon(dto)
 

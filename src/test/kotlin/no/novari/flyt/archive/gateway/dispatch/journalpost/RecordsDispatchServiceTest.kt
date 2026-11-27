@@ -32,8 +32,14 @@ class RecordsDispatchServiceTest {
 
     @Test
     fun `given accepted journalposts, returns an accepted result`() {
-        val journalpostDto1 = JournalpostDto.builder().tittel("jp1").build()
-        val journalpostDto2 = JournalpostDto.builder().tittel("jp2").build()
+        val journalpostDto1 =
+            JournalpostDto(
+                tittel = "jp1",
+            )
+        val journalpostDto2 =
+            JournalpostDto(
+                tittel = "jp2",
+            )
         whenever(recordDispatchService.dispatch("caseId", journalpostDto1))
             .thenReturn(RecordDispatchResult.accepted(1L))
         whenever(recordDispatchService.dispatch("caseId", journalpostDto2))
@@ -46,8 +52,14 @@ class RecordsDispatchServiceTest {
 
     @Test
     fun `given a declined last record, returns a declined result with warning message`() {
-        val journalpostDto1 = JournalpostDto.builder().tittel("jp1").build()
-        val journalpostDto2 = JournalpostDto.builder().tittel("jp2").build()
+        val journalpostDto1 =
+            JournalpostDto(
+                tittel = "jp1",
+            )
+        val journalpostDto2 =
+            JournalpostDto(
+                tittel = "jp2",
+            )
         whenever(recordDispatchService.dispatch("caseId", journalpostDto1))
             .thenReturn(RecordDispatchResult.accepted(1L))
         whenever(recordDispatchService.dispatch("caseId", journalpostDto2))

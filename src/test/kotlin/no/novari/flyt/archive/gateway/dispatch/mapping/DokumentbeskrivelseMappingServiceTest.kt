@@ -15,13 +15,12 @@ class DokumentbeskrivelseMappingServiceTest {
     @Test
     fun `maps to DokumentbeskrivelseResource`() {
         val dto =
-            DokumentbeskrivelseDto
-                .builder()
-                .tittel("testTittel")
-                .dokumentstatus("testDokumentstatus")
-                .dokumentType("testDokumenttype")
-                .tilknyttetRegistreringSom("testTilknyttetRegistreringSom")
-                .build()
+            DokumentbeskrivelseDto(
+                tittel = "testTittel",
+                dokumentstatus = "testDokumentstatus",
+                dokumentType = "testDokumenttype",
+                tilknyttetRegistreringSom = "testTilknyttetRegistreringSom",
+            )
 
         val resource = dokumentbeskrivelseMappingService.toDokumentbeskrivelseResource(dto, emptyMap())
 

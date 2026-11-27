@@ -24,142 +24,147 @@ class JournalpostTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tittel")
-                    .displayName("Tittel")
-                    .description("Tittel")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "tittel",
+                    displayName = "Tittel",
+                    description = "Tittel",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("offentligTittel")
-                    .displayName("Offentlig tittel")
-                    .description("Offentlig tittel. Husk å legge til eventuell skjerming.")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "offentligTittel",
+                    displayName = "Offentlig tittel",
+                    description = "Offentlig tittel. Husk å legge til eventuell skjerming.",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("journalposttype")
-                    .displayName("Journalposttype")
-                    .description("Navn på type journalpost. Tilsvarer \"Noark dokumenttype\" i Noark 4")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalposttype").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(JournalpostType::class))
-                    .build(),
-            ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("administrativEnhet")
-                    .displayName("Administrativ enhet")
-                    .description(
-                        "Navn på avdeling, kontor eller annen administrativ enhet som har \nansvaret for saksbehandlingen",
-                    ).build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ElementConfig(
+                    key = "journalposttype",
+                    displayName = "Journalposttype",
+                    description = "Navn på type journalpost. Tilsvarer \"Noark dokumenttype\" i Noark 4",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/administrativenhet").build(),
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/journalposttype",
+                            ),
                         ),
-                    ).referenceTemplate(referenceTemplateFactory.create(AdministrativEnhet::class))
-                    .build(),
+                    referenceTemplate = referenceTemplateFactory.create(JournalpostType::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "saksbehandler",
-                    ).displayName("Saksbehandler")
-                    .description("Navn på person som er saksbehandler")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/arkivressurs").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(Arkivressurs::class))
-                    .build(),
+                ElementConfig(
+                    key = "administrativEnhet",
+                    displayName = "Administrativ enhet",
+                    description =
+                        "Navn på avdeling, kontor eller annen administrativ enhet som har \nansvaret for " +
+                            "saksbehandlingen",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/administrativenhet",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(AdministrativEnhet::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "journalstatus",
-                    ).displayName("Journalstatus")
-                    .description("Status for journalposten")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/journalstatus").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(JournalStatus::class))
-                    .build(),
+                ElementConfig(
+                    key = "saksbehandler",
+                    displayName = "Saksbehandler",
+                    description = "Navn på person som er saksbehandler",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/arkivressurs",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(Arkivressurs::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("dokumentetsDato")
-                    .displayName("Dokumentets dato")
-                    .description(
-                        "Dato som er påført selve dokumentet. Må være på ISO 8601-format YYYY-MM-DD.",
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "journalstatus",
+                    displayName = "Journalstatus",
+                    description = "Status for journalposten",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/journalstatus",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(JournalStatus::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tilgangsgruppe")
-                    .displayName("Tilgangsgruppe")
-                    .description(
-                        "Tilgangsgruppe gir mulighet for å skjerme innhold internt for andre brukere. (OBS! Dette feltet gjelder kun for p360 arkivsystem)",
-                    ).build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsgruppe").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(Tilgangsgruppe::class))
-                    .build(),
+                ElementConfig(
+                    key = "dokumentetsDato",
+                    displayName = "Dokumentets dato",
+                    description = "Dato som er påført selve dokumentet. Må være på ISO 8601-format YYYY-MM-DD.",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("avskrivning")
-                    .displayName("Avskrivning")
-                    .description(
+                ElementConfig(
+                    key = "tilgangsgruppe",
+                    displayName = "Tilgangsgruppe",
+                    description =
+                        "Tilgangsgruppe gir mulighet for å skjerme innhold internt for andre brukere. (OBS! Dette " +
+                            "feltet gjelder kun for p360 arkivsystem)",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/tilgangsgruppe",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(Tilgangsgruppe::class),
+                ),
+            ).addTemplate(
+                ElementConfig(
+                    key = "avskrivning",
+                    displayName = "Avskrivning",
+                    description =
                         "Avskrivning av journalpost. Gjelder kun når journalposttype er I (Inngående brev). " +
                             "For andre journalposttyper utelates hele avskrivningen ved utsending til arkivet. " +
                             "Avskrivningsmåte må være fylt ut. Hvis avskrivningsdato er tom, brukes dagens dato " +
                             "og klokkeslett ved utsending til arkivet.",
-                    ).build(),
+                ),
                 avskrivningTemplateService.createTemplate(),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "skjerming",
-                    ).displayName("Skjerming")
-                    .description("Skjerming av registrering")
-                    .build(),
+                ElementConfig(
+                    key = "skjerming",
+                    displayName = "Skjerming",
+                    description = "Skjerming av registrering",
+                ),
                 skjermingTemplateService.createTemplate(),
             ).addCollectionTemplate(
-                ElementConfig
-                    .builder()
-                    .key("korrespondansepart")
-                    .displayName("Korrespondanseparter")
-                    .description("Mottaker eller sender av arkivdokumenter.")
-                    .build(),
+                ElementConfig(
+                    key = "korrespondansepart",
+                    displayName = "Korrespondanseparter",
+                    description = "Mottaker eller sender av arkivdokumenter.",
+                ),
                 korrespondansepartTemplateService.createTemplate(),
             ).addCollectionTemplate(
-                ElementConfig
-                    .builder()
-                    .key("dokumentbeskrivelse")
-                    .displayName("Dokumentbeskrivelser")
-                    .description("Dokumentbeskrivelsene til en registrering")
-                    .build(),
+                ElementConfig(
+                    key = "dokumentbeskrivelse",
+                    displayName = "Dokumentbeskrivelser",
+                    description = "Dokumentbeskrivelsene til en registrering",
+                ),
                 dokumentbeskrivelseTemplateService.createTemplate(),
             ).build()
 }

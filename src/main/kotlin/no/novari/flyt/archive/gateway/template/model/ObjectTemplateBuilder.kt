@@ -36,7 +36,9 @@ class ObjectTemplateBuilder {
         return addTemplate(
             valueCollectionTemplates,
             elementConfig,
-            CollectionTemplate.builder<ValueTemplate>().elementTemplate(elementTemplate).build(),
+            CollectionTemplate<ValueTemplate>(
+                elementTemplate = elementTemplate,
+            ),
         )
     }
 
@@ -47,7 +49,9 @@ class ObjectTemplateBuilder {
         return addTemplate(
             objectCollectionTemplates,
             elementConfig,
-            CollectionTemplate.builder<ObjectTemplate>().elementTemplate(elementTemplate).build(),
+            CollectionTemplate<ObjectTemplate>(
+                elementTemplate = elementTemplate,
+            ),
         )
     }
 
@@ -57,12 +61,11 @@ class ObjectTemplateBuilder {
         template: T,
     ): ObjectTemplateBuilder {
         collection +=
-            ElementTemplate
-                .builder<T>()
-                .order(nextOrderValue++)
-                .elementConfig(elementConfig)
-                .template(template)
-                .build()
+            ElementTemplate<T>(
+                order = nextOrderValue++,
+                elementConfig = elementConfig,
+                template = template,
+            )
         return this
     }
 

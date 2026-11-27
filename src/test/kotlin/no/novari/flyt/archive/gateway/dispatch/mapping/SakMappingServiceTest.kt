@@ -47,20 +47,19 @@ class SakMappingServiceTest {
         whenever(partMappingService.toPartResource(partDto)).thenReturn(partResource)
 
         val nySakDto =
-            SakDto
-                .builder()
-                .tittel("testTittel")
-                .offentligTittel("testOffentligTittel")
-                .saksmappetype("testSaksmappetype")
-                .saksstatus("testSaksstatus")
-                .tilgangsgruppe("testTilgangsgruppe")
-                .administrativEnhet("testAdministrativEnhet")
-                .saksansvarlig("testSaksansvarlig")
-                .arkivdel("testArkivdel")
-                .skjerming(skjermingDto)
-                .klasse(listOf(klasseDto))
-                .part(listOf(partDto))
-                .build()
+            SakDto(
+                tittel = "testTittel",
+                offentligTittel = "testOffentligTittel",
+                saksmappetype = "testSaksmappetype",
+                saksstatus = "testSaksstatus",
+                tilgangsgruppe = "testTilgangsgruppe",
+                administrativEnhet = "testAdministrativEnhet",
+                saksansvarlig = "testSaksansvarlig",
+                arkivdel = "testArkivdel",
+                skjerming = skjermingDto,
+                klasse = listOf(klasseDto),
+                part = listOf(partDto),
+            )
 
         val sakResource = sakMappingService.toSakResource(nySakDto)
 
