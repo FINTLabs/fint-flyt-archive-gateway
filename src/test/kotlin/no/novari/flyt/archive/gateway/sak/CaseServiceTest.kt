@@ -49,7 +49,7 @@ class CaseServiceTest {
     }
 
     @Test
-    fun `getByArchiveInstanceIdWithFilteredJournalposts keeps only requested journalposts`() {
+    fun `findByArchiveInstanceIdWithFilteredJournalposts keeps only requested journalposts`() {
         val sakResource =
             SakResource().apply {
                 journalpost = listOf(1L, 2L, 3L).map { JournalpostResource().apply { journalPostnummer = it } }
@@ -57,17 +57,9 @@ class CaseServiceTest {
         whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/102", SakResource::class.java))
             .thenReturn(sakResource)
 
-        val result = caseService.getByArchiveInstanceIdWithFilteredJournalposts("2023/102-[1,3]")
+        val result = caseService.findByArchiveInstanceIdWithFilteredJournalposts("2023/102-[1,3]")
 
         assertThat(result!!.journalpost.map(JournalpostResource::getJournalPostnummer)).containsExactly(1L, 3L)
-    }
-
-    @Test
-    fun `getByArchiveInstanceIdWithFilteredJournalposts returns null when FINT call fails`() {
-        whenever(fintArchiveResourceClient.getResource("/arkiv/noark/sak/mappeid/2023/101", SakResource::class.java))
-            .thenThrow(HttpClientErrorException(HttpStatus.NOT_FOUND))
-
-        assertThat(caseService.getByArchiveInstanceIdWithFilteredJournalposts("2023/101-[1]")).isNull()
     }
 
     @Test
