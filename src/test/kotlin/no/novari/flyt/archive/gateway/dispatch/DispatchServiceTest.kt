@@ -57,13 +57,12 @@ class DispatchServiceTest {
 
     @Test
     fun `given case type NEW with no journalpost and an accepted dispatch, returns an accepted result with case id`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.NEW)
-                .newCase(sakDto)
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.NEW,
+                newCase = sakDto,
+            )
         whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
 
         val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
@@ -74,13 +73,15 @@ class DispatchServiceTest {
     @Test
     fun `given case type NEW and an accepted dispatch, calls records processing service and returns its result`() {
         val journalpostDto = mock<JournalpostDto>()
-        val sakDto = SakDto.builder().journalpost(listOf(journalpostDto)).build()
+        val sakDto =
+            SakDto(
+                journalpost = listOf(journalpostDto),
+            )
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.NEW)
-                .newCase(sakDto)
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.NEW,
+                newCase = sakDto,
+            )
         whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
         whenever(recordsProcessingService.processRecords("testCaseId", true, listOf(journalpostDto)))
             .thenReturn(DispatchResult.accepted("testCaseId"))
@@ -94,12 +95,11 @@ class DispatchServiceTest {
     fun `given case type BY_ID, calls records processing service with newCase=false`() {
         val journalpostDto = mock<JournalpostDto>()
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.BY_ID)
-                .caseId("testCaseId")
-                .journalpost(listOf(journalpostDto))
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.BY_ID,
+                caseId = "testCaseId",
+                journalpost = listOf(journalpostDto),
+            )
         whenever(recordsProcessingService.processRecords("testCaseId", false, listOf(journalpostDto)))
             .thenReturn(DispatchResult.accepted("testCaseId"))
 
@@ -111,13 +111,15 @@ class DispatchServiceTest {
     @Test
     fun `given case type BY_SEARCH_OR_NEW with multiple matching cases, returns a declined result`() {
         val journalpostDto = mock<JournalpostDto>()
-        val sakDto = SakDto.builder().journalpost(listOf(journalpostDto)).build()
+        val sakDto =
+            SakDto(
+                journalpost = listOf(journalpostDto),
+            )
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.BY_SEARCH_OR_NEW)
-                .newCase(sakDto)
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.BY_SEARCH_OR_NEW,
+                newCase = sakDto,
+            )
         whenever(caseDispatchService.findCasesBySearch(archiveInstance))
             .thenReturn(CaseSearchResult.accepted(listOf("caseId1", "caseId2")))
 
@@ -128,13 +130,12 @@ class DispatchServiceTest {
 
     @Test
     fun `given case type BY_SEARCH_OR_NEW and no cases found, delegates to processNew`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.BY_SEARCH_OR_NEW)
-                .newCase(sakDto)
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.BY_SEARCH_OR_NEW,
+                newCase = sakDto,
+            )
         whenever(caseDispatchService.findCasesBySearch(archiveInstance))
             .thenReturn(CaseSearchResult.accepted(emptyList()))
         whenever(caseDispatchService.dispatch(sakDto)).thenReturn(CaseDispatchResult.accepted("testCaseId"))
@@ -147,16 +148,19 @@ class DispatchServiceTest {
     @Test
     fun `given invalid dokumentetsDato for new case, returns declined result before dispatching case`() {
         val sakDto =
-            SakDto
-                .builder()
-                .journalpost(listOf(JournalpostDto.builder().dokumentetsDato("not a date").build()))
-                .build()
+            SakDto(
+                journalpost =
+                    listOf(
+                        JournalpostDto(
+                            dokumentetsDato = "not a date",
+                        ),
+                    ),
+            )
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.NEW)
-                .newCase(sakDto)
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.NEW,
+                newCase = sakDto,
+            )
 
         val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
 
@@ -172,14 +176,16 @@ class DispatchServiceTest {
 
     @Test
     fun `given invalid dokumentetsDato for existing case, returns declined result before dispatching journalpost`() {
-        val journalpostDto = JournalpostDto.builder().dokumentetsDato("2026-08-24T09:12:48Z").build()
+        val journalpostDto =
+            JournalpostDto(
+                dokumentetsDato = "2026-08-24T09:12:48Z",
+            )
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .type(CaseDispatchType.BY_ID)
-                .caseId("testCaseId")
-                .journalpost(listOf(journalpostDto))
-                .build()
+            ArchiveInstance(
+                type = CaseDispatchType.BY_ID,
+                caseId = "testCaseId",
+                journalpost = listOf(journalpostDto),
+            )
 
         val result = dispatchService.process(instanceFlowHeaders, archiveInstance)
 

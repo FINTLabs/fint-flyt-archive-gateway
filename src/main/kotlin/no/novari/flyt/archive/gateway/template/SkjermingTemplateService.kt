@@ -16,38 +16,40 @@ class SkjermingTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tilgangsrestriksjon")
-                    .displayName("Tilgangsrestriksjon")
-                    .description(
+                ElementConfig(
+                    key = "tilgangsrestriksjon",
+                    displayName = "Tilgangsrestriksjon",
+                    description =
                         "Angivelse av at dokumentene som tilhører arkivenheten ikke er offentlig \n" +
                             "tilgjengelig i henhold til offentlighetsloven eller av en annen grunn",
-                    ).build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/tilgangsrestriksjon").build(),
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/tilgangsrestriksjon",
+                            ),
                         ),
-                    ).referenceTemplate(referenceTemplateFactory.create(Tilgangsrestriksjon::class))
-                    .build(),
+                    referenceTemplate = referenceTemplateFactory.create(Tilgangsrestriksjon::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("skjermingshjemmel")
-                    .displayName("Skjermingshjemmel")
-                    .description(
+                ElementConfig(
+                    key = "skjermingshjemmel",
+                    displayName = "Skjermingshjemmel",
+                    description =
                         "Henvisning til hjemmel (paragraf) i offentlighetsloven, sikkerhetsloven\n" +
                             "eller beskyttelsesinstruksen",
-                    ).build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/skjermingshjemmel").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(Skjermingshjemmel::class))
-                    .build(),
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/skjermingshjemmel",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(Skjermingshjemmel::class),
+                ),
             ).build()
 }

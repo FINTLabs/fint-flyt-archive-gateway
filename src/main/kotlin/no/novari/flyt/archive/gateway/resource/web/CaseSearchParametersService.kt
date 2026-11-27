@@ -1,7 +1,6 @@
 package no.novari.flyt.archive.gateway.resource.web
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.novari.cache.FintCache
 import no.novari.fint.model.resource.arkiv.kodeverk.SaksmappetypeResource
 import no.novari.fint.model.resource.arkiv.kodeverk.SaksstatusResource
 import no.novari.fint.model.resource.arkiv.kodeverk.TilgangsrestriksjonResource
@@ -13,16 +12,17 @@ import no.novari.flyt.archive.gateway.dispatch.model.instance.KlasseDto
 import no.novari.flyt.archive.gateway.dispatch.model.instance.SakDto
 import no.novari.flyt.archive.gateway.resource.web.exceptions.KlasseOrderOutOfBoundsException
 import no.novari.flyt.archive.gateway.resource.web.exceptions.SearchKlasseOrderNotFoundInCaseException
+import no.novari.flyt.cache.FlytCache
 import org.springframework.stereotype.Service
 
 @Service
 class CaseSearchParametersService(
-    private val arkivdelResourceCache: FintCache<String, ArkivdelResource>,
-    private val administrativEnhetResourceCache: FintCache<String, AdministrativEnhetResource>,
-    private val tilgangsrestriksjonResourceCache: FintCache<String, TilgangsrestriksjonResource>,
-    private val saksmappetypeResourceCache: FintCache<String, SaksmappetypeResource>,
-    private val saksstatusResourceCache: FintCache<String, SaksstatusResource>,
-    private val klassifikasjonssystemResourceCache: FintCache<String, KlassifikasjonssystemResource>,
+    private val arkivdelResourceCache: FlytCache<String, ArkivdelResource>,
+    private val administrativEnhetResourceCache: FlytCache<String, AdministrativEnhetResource>,
+    private val tilgangsrestriksjonResourceCache: FlytCache<String, TilgangsrestriksjonResource>,
+    private val saksmappetypeResourceCache: FlytCache<String, SaksmappetypeResource>,
+    private val saksstatusResourceCache: FlytCache<String, SaksstatusResource>,
+    private val klassifikasjonssystemResourceCache: FlytCache<String, KlassifikasjonssystemResource>,
 ) {
     fun createFilterQueryParamValue(
         sakDto: SakDto,

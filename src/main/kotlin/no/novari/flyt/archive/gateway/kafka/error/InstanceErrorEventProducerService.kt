@@ -2,100 +2,83 @@ package no.novari.flyt.archive.gateway.kafka.error
 
 import no.novari.flyt.archive.gateway.kafka.KafkaTopicProperties
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowProducerRecord
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplate
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplateFactory
+import no.novari.flyt.kafka.instanceflow.producing.send
 import no.novari.flyt.kafka.model.Error
 import no.novari.flyt.kafka.model.ErrorCollection
 import no.novari.flyt.kafka.model.InstanceErrorEvent
 import no.novari.flyt.kafka.model.InstanceErrorOrigin
-import no.novari.kafka.topic.ErrorEventTopicService
-import no.novari.kafka.topic.configuration.EventCleanupFrequency
-import no.novari.kafka.topic.configuration.EventTopicConfiguration
-import no.novari.kafka.topic.name.ErrorEventTopicNameParameters
-import no.novari.kafka.topic.name.TopicNamePrefixParameters
+import no.novari.kafka.starter.topic.EventCleanupFrequency
+import no.novari.kafka.starter.topic.EventTopicConfig
+import no.novari.kafka.starter.topic.EventTopicName
+import no.novari.kafka.starter.topic.KafkaTopics
+import org.apache.kafka.clients.admin.NewTopic
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
+
+@Configuration
+class InstanceErrorTopicConfiguration {
+    @Bean
+    fun instanceErrorTopic(topics: KafkaTopics): EventTopicName = topics.errorEvent("instance-error")
+
+    @Bean
+    fun instanceErrorTopicCreation(
+        topics: KafkaTopics,
+        instanceErrorTopic: EventTopicName,
+        kafkaTopicProperties: KafkaTopicProperties,
+    ): NewTopic =
+        topics.newTopic(
+            instanceErrorTopic,
+            EventTopicConfig(
+                retention = requireNotNull(kafkaTopicProperties.instanceProcessingEventsRetentionTime),
+                cleanupFrequency = EventCleanupFrequency.NORMAL,
+                partitions = 1,
+            ),
+        )
+}
 
 @Service
 class InstanceErrorEventProducerService(
-    instanceFlowTemplateFactory: InstanceFlowTemplateFactory,
-    errorEventTopicService: ErrorEventTopicService,
-    kafkaTopicProperties: KafkaTopicProperties,
+    private val kafkaTemplate: KafkaTemplate<String, InstanceErrorEvent>,
+    // By name: there are several EventTopicName beans.
+    @param:Qualifier("instanceErrorTopic")
+    private val instanceErrorTopic: EventTopicName,
 ) {
-    private val errorEventTopicNameParameters: ErrorEventTopicNameParameters =
-        ErrorEventTopicNameParameters
-            .builder()
-            .topicNamePrefixParameters(
-                TopicNamePrefixParameters
-                    .stepBuilder()
-                    .orgIdApplicationDefault()
-                    .domainContextApplicationDefault()
-                    .build(),
-            ).errorEventName("instance-error")
-            .build()
-    private val instanceFlowTemplate: InstanceFlowTemplate<InstanceErrorEvent> =
-        instanceFlowTemplateFactory.createTemplate(InstanceErrorEvent::class.java)
-
-    init {
-        errorEventTopicService.createOrModifyTopic(
-            errorEventTopicNameParameters,
-            EventTopicConfiguration
-                .stepBuilder()
-                .partitions(PARTITIONS)
-                .retentionTime(requireNotNull(kafkaTopicProperties.instanceProcessingEventsRetentionTime))
-                .cleanupFrequency(EventCleanupFrequency.NORMAL)
-                .build(),
-        )
-    }
-
     fun publishInstanceDispatchDeclinedErrorEvent(
         instanceFlowHeaders: InstanceFlowHeaders,
         errorMessage: String?,
     ) {
-        publish(
-            instanceFlowHeaders,
-            ErrorCollection(
-                Error
-                    .builder()
-                    .errorCode(ErrorCode.INSTANCE_DISPATCH_DECLINED_ERROR.getCode())
-                    .args(mapOf("errorMessage" to errorMessage))
-                    .build(),
-            ),
-        )
+        publish(instanceFlowHeaders, ErrorCode.INSTANCE_DISPATCH_DECLINED_ERROR, errorMessage)
     }
 
     fun publishGeneralSystemErrorEvent(
         instanceFlowHeaders: InstanceFlowHeaders,
         errorMessage: String?,
     ) {
-        val safeErrorMessage = if (!errorMessage.isNullOrEmpty()) errorMessage else "Unknown error occurred"
         publish(
             instanceFlowHeaders,
-            ErrorCollection(
-                Error
-                    .builder()
-                    .errorCode(ErrorCode.GENERAL_SYSTEM_ERROR.getCode())
-                    .args(mapOf("errorMessage" to safeErrorMessage))
-                    .build(),
-            ),
+            ErrorCode.GENERAL_SYSTEM_ERROR,
+            if (!errorMessage.isNullOrEmpty()) errorMessage else "Unknown error occurred",
         )
     }
 
     private fun publish(
         instanceFlowHeaders: InstanceFlowHeaders,
-        errors: ErrorCollection,
+        errorCode: ErrorCode,
+        errorMessage: String?,
     ) {
-        instanceFlowTemplate.send(
-            InstanceFlowProducerRecord
-                .builder<InstanceErrorEvent>()
-                .instanceFlowHeaders(instanceFlowHeaders)
-                .topicNameParameters(errorEventTopicNameParameters)
-                .value(InstanceErrorEvent(name = InstanceErrorOrigin.DISPATCHING, errors = errors))
-                .build(),
+        kafkaTemplate.send(
+            instanceErrorTopic,
+            instanceFlowHeaders,
+            InstanceErrorEvent(
+                name = InstanceErrorOrigin.DISPATCHING,
+                errors =
+                    ErrorCollection(
+                        Error(errorCode = errorCode.getCode(), args = mapOf("errorMessage" to errorMessage)),
+                    ),
+            ),
         )
-    }
-
-    companion object {
-        private const val PARTITIONS = 1
     }
 }

@@ -5,8 +5,6 @@ import no.novari.flyt.archive.gateway.resource.sak.CaseService
 import no.novari.flyt.archive.gateway.resource.sak.InternalClientCaseController
 import no.novari.flyt.archive.gateway.resource.sak.InternalClientCaseExceptionHandler
 import no.novari.flyt.archive.gateway.resource.sak.InvalidArchiveInstanceIdException
-import no.novari.flyt.webresourceserver.security.AuthorityMappingService
-import no.novari.flyt.webresourceserver.security.SecurityFilterChainFactoryService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -30,7 +28,7 @@ import org.springframework.web.client.RestClient
 import java.time.Instant
 
 /**
- * Runs the real security filter chain from flyt-web-resource-server against `/api/intern-klient`, over
+ * Runs the real security filter chain from flyt-security-starter against `/api/intern-klient`, over
  * real HTTP. MockMvc does not forward errors to `/error`, where that filter chain answers 401, so it
  * cannot catch an error status that turns into 401.
  * Only the token decoding is mocked; the subject of the decoded token is the OAuth client id.
@@ -41,8 +39,7 @@ import java.time.Instant
 )
 @TestPropertySource(
     properties = [
-        "novari.flyt.web-resource-server.security.api.internal-client.enabled=true",
-        "novari.flyt.web-resource-server.security.api.internal-client.authorized-client-ids=$INTERNAL_CLIENT_ID",
+        "novari.flyt.security.internal-client.authorized-client-ids=$INTERNAL_CLIENT_ID",
     ],
 )
 class InternalClientCaseControllerSecurityTest {
@@ -51,8 +48,6 @@ class InternalClientCaseControllerSecurityTest {
     @Import(
         InternalClientCaseController::class,
         InternalClientCaseExceptionHandler::class,
-        AuthorityMappingService::class,
-        SecurityFilterChainFactoryService::class,
     )
     class TestApplication
 
@@ -143,6 +138,7 @@ class InternalClientCaseControllerSecurityTest {
                 .withTokenValue("token")
                 .header("alg", "none")
                 .subject(clientId)
+                .audience(listOf(clientId))
                 .issuedAt(Instant.now())
                 .expiresAt(Instant.now().plusSeconds(60))
                 .build(),

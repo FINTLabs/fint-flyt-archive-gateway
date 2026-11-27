@@ -1,7 +1,7 @@
 package no.novari.flyt.archive.gateway.slack
 
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings
+import org.springframework.boot.http.client.HttpClientSettings
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.ClientHttpRequestFactory
@@ -17,7 +17,7 @@ class SlackConfig {
         ClientHttpRequestFactoryBuilder
             .jdk()
             .build(
-                ClientHttpRequestFactorySettings
+                HttpClientSettings
                     .defaults()
                     .withConnectTimeout(SLACK_CONNECT_TIMEOUT)
                     .withReadTimeout(SLACK_READ_TIMEOUT),

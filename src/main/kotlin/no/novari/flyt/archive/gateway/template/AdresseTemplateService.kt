@@ -11,30 +11,33 @@ class AdresseTemplateService {
         ObjectTemplate
             .builder()
             .addCollectionTemplate(
-                ElementConfig
-                    .builder()
-                    .key("adresselinje")
-                    .displayName("Adresselinjer")
-                    .description(
+                ElementConfig(
+                    key = "adresselinje",
+                    displayName = "Adresselinjer",
+                    description =
                         "Adresseinformasjon. Linjer representeres hver for seg, fra øverst til nederst. \n" +
                             "Dette kan være: Gateadresse, Postboksadresse, Bolignummer, C/O adresse, Attn, Mottak på vegne av andre.",
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("postnummer")
-                    .displayName("Postnummer")
-                    .description("Postnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "postnummer",
+                    displayName = "Postnummer",
+                    description = "Postnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("poststed")
-                    .displayName("Poststed")
-                    .description("Poststed")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "poststed",
+                    displayName = "Poststed",
+                    description = "Poststed",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).build()
 }

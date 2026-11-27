@@ -1,11 +1,11 @@
 package no.novari.flyt.archive.gateway.dispatch.mapping
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.arkiv.noark.Avskrivning
 import no.novari.fint.model.resource.arkiv.kodeverk.JournalpostTypeResource
 import no.novari.flyt.archive.gateway.dispatch.model.instance.JournalpostDto
 import no.novari.flyt.archive.gateway.links.ResourceLinkUtil
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
+import no.novari.flyt.cache.FlytCache
 import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -14,7 +14,7 @@ import java.util.Date
 
 @Service
 class AvskrivningMappingService(
-    private val journalpostTypeResourceCache: FintCache<String, JournalpostTypeResource>,
+    private val journalpostTypeResourceCache: FlytCache<String, JournalpostTypeResource>,
     private val fintArchiveResourceClient: FintArchiveResourceClient,
 ) {
     fun toAvskrivning(journalpostDto: JournalpostDto): Avskrivning? {

@@ -19,38 +19,4 @@ data class SelectableValueTemplate(
         SEARCH_SELECT,
         DROPDOWN,
     }
-
-    companion object {
-        @JvmStatic
-        fun builder() = Builder()
-    }
-
-    class Builder {
-        private var type: Type? = null
-        private var selectables: Collection<Selectable>? = null
-        private var selectablesSources: Collection<UrlBuilder>? = null
-        private var referenceTemplate: ReferenceTemplate? = null
-
-        fun type(type: Type?) = apply { this.type = type }
-
-        fun selectables(selectables: Collection<Selectable>?) = apply { this.selectables = selectables }
-
-        fun selectablesSources(selectablesSources: Collection<UrlBuilder>?) =
-            apply {
-                this.selectablesSources = selectablesSources
-            }
-
-        fun referenceTemplate(referenceTemplate: ReferenceTemplate?) =
-            apply {
-                this.referenceTemplate = referenceTemplate
-            }
-
-        fun build() =
-            SelectableValueTemplate(
-                type = type,
-                selectables = selectables,
-                selectablesSources = selectablesSources,
-                referenceTemplate = referenceTemplate,
-            )
-    }
 }

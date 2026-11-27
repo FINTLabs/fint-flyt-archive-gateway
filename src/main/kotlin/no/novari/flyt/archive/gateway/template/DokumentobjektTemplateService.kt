@@ -17,42 +17,46 @@ class DokumentobjektTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("variantformat")
-                    .displayName("Variantformat")
-                    .description("Angivelse av hvilken variant et dokument forekommer i")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/variantformat").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(Variantformat::class))
-                    .build(),
+                ElementConfig(
+                    key = "variantformat",
+                    displayName = "Variantformat",
+                    description = "Angivelse av hvilken variant et dokument forekommer i",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/variantformat",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(Variantformat::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "filformat",
-                    ).displayName("Filformat")
-                    .description("Dokumentets format")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/format").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(Format::class))
-                    .build(),
+                ElementConfig(
+                    key = "filformat",
+                    displayName = "Filformat",
+                    description = "Dokumentets format",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/format",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(Format::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("fil")
-                    .displayName("Fil")
-                    .description(
+                ElementConfig(
+                    key = "fil",
+                    displayName = "Fil",
+                    description =
                         "Referanse til filen som inneholder det elektroniske dokumentet som dokumentobjektet beskriver",
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.FILE).build(),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.FILE,
+                ),
             ).build()
 }

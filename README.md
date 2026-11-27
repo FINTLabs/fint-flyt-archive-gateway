@@ -1,189 +1,101 @@
 # FINT Flyt Archive Gateway
 
-Spring Boot (Kotlin + Web + Kafka) gateway that listens for mapped archive instances, dispatches cases and journal posts against FINT Arkiv adapters, exposes supporting archive metadata over HTTP, and republishes cacheable resources to downstream services.
+Dispatches mapped instances to the FINT archive, and serves archive kodeverk, templates and sak lookups to the
+frontend and other FLYT services. C4 diagrams are in [docs/architecture.md](docs/architecture.md).
 
-## Highlights
-
-- **Reactive dispatch pipeline** — `DispatchService` orchestrates validation and routing for new, by-id, and search-or-new archive instances, composing non-blocking case creation with subsequent record uploads.
-- **Archive metadata APIs** — Internal controllers expose lightweight endpoints for case lookups and dozens of kodeverk collections backed by the shared FINT caches.
-- **Instance-flow Kafka integration** — Dedicated consumer and producers handle `instance-mapped`, `instance-dispatched`, and dispatch-error events using the Flyt instance-flow templates.
-- **Resource publishing scheduler** — `FintResourcePublishingConfiguration` periodically pulls updated archive resources, caches them, and pushes snapshots onto entity topics.
-- **Operational guardrails** — OAuth2 resource server, configurable timeouts per downstream client, Prometheus/Actuator endpoints, and deterministic retry/backoff policies.
-
-## Architecture Overview
-
-C4 diagrams are in [docs/architecture.md](docs/architecture.md).
-
-| Component                                                      | Responsibility                                                                                                                                    |
-|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `DispatchService`                                              | Routes incoming `ArchiveInstance` payloads, coordinates case dispatch/search, and invokes `RecordsProcessingService` for journal posts and files. |
-| `InstanceMappedEventConsumerConfiguration`                     | Builds the instance-flow listener container, wires the dispatch service, and emits success/decline/error events via the producer services.        |
-| `FintResourcePublishingConfiguration`                          | Schedules cache resets, polls FINT Archive resources through configured pipelines, writes to caches, and publishes to Kafka entity topics.        |
-| `CaseController`/`CaseService`                                 | Serves `/api/intern/arkiv/saker/{year}/{number}/tittel` by looking up the case directly in FINT Archive.                                          |
-| `InternalClientCaseController`                                 | Serves `/api/intern-klient/arkiv/saker` for other Flyt services, see [Internal client API](#internal-client-api).                                 |
-| `CodelistController`                                           | Reads from the shared `FintCache` instances and renders multiple kodeverk collections and klassifikasjonssystem metadata as reference JSON.       |
-| `FintArchiveWebClientConfiguration` & `WebClientConfiguration` | Provide tuned WebClient beans (timeouts, connection pools) for archive adapters, Flyt file service, and resource pulls.                           |
+- **Dispatch:** a Kafka listener reads `instance-mapped` one record at a time. `DispatchService` creates or finds the
+  sak, then posts journalposter and files from file-service. The result goes to `instance-dispatched`, or to
+  `instance-error` when the archive declines or the dispatch fails. A failing record is logged and skipped.
+- **Resources:** `FintResourcePublishingConfiguration` pulls changed archive resources every 15 minutes, caches them
+  (`FlytCache`) and publishes most of them to entity topics, which acos-gateway reads. The last-updated timestamps are
+  reset once a day at a random time between 03:00 and 04:00, so the next pull fetches everything.
 
 ## HTTP API
 
-Base path: `/api/intern/arkiv`
+Base path: `/api/intern/arkiv`, for FLYT users.
 
-Swagger UI and the generated OpenAPI specification are available only through direct service access, such as a
-Kubernetes port-forward. Their paths sit outside the external ingress route for `/api/intern/arkiv`:
+| Method | Path                                                | Description                                                                                            | Response                                                                                                                                                                                                           |
+|--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GET`  | `/saker/{caseYear}/{caseNumber}/tittel`             | Fetches the case title for the given Noark `mappeId`.                                                  | `200 OK` with `{ "value": "<title>" }`; `404` if unknown.                                                                                                                                                          |
+| `GET`  | `/kodeverk/{type}`                                  | Returns cached kodeverk entries (administrativEnhet, arkivdel, dokumentstatus, journalposttype, etc.). | `200 OK` array of `ResourceReference { "id": "<selfLink>", "displayName": "[code] Name #systemId" }`; arkivressurs also exposes `functionalId`, `name`, and `technicalId`, using empty strings for missing values. |
+| `GET`  | `/kodeverk/klassifikasjonssystem`                   | Lists all klassifikasjonssystemer with their IDs and titles.                                           | `200 OK` array.                                                                                                                                                                                                    |
+| `GET`  | `/kodeverk/klasse?klassifikasjonssystemLink=<link>` | Lists classes that belong to a klassifikasjonssystem link.                                             | `200 OK` array; `404` if the system is missing.                                                                                                                                                                    |
+| `GET`  | `/template`                                         | The mapping template the frontend builds the archive configuration from.                               | `200 OK`                                                                                                                                                                                                           |
 
-- Swagger UI: `/swagger-ui.html`
-- OpenAPI JSON: `/v3/api-docs`
-- OpenAPI YAML: `/v3/api-docs.yaml`
+### Internal client API
 
-For the FINTLabs beta deployment, forward the service and include the deployment context path in the local URL:
+Base path: `/api/intern-klient/arkiv`, for other FLYT services (acos-gateway and egrunnerverv-gateway). Only tokens
+from `fint-flyt-authorization-oauth2-client` are accepted.
+
+| Method | Path                             | Description                                                                                       | Response                                                                                        |
+|--------|----------------------------------|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `GET`  | `/saker/{caseYear}/{caseNumber}` | Fetches the sak for the given Noark `mappeId`.                                                    | `200 OK` with `SakResource`; `404` if unknown; `5xx` if FINT fails.                             |
+| `GET`  | `/saker?archiveInstanceId=<id>`  | Fetches the sak with only the journalposter listed in the archive instance id (`2024/123-[1,2]`). | `200 OK` with `SakResource`; `400` if the id is invalid; `404` if unknown; `5xx` if FINT fails. |
+
+### Swagger
+
+Swagger UI (`/swagger-ui.html`) and OpenAPI (`/v3/api-docs`, `/v3/api-docs.yaml`) are open, but outside the ingress
+route, so they are only reached with a port-forward:
 
 ```shell
 kubectl -n fintlabs-no port-forward service/fint-flyt-archive-gateway 8080:8080
 ```
 
-Swagger UI is then available at `http://localhost:8080/beta/fintlabs-no/swagger-ui.html`, and OpenAPI JSON at
-`http://localhost:8080/beta/fintlabs-no/v3/api-docs`. The `arkiv` OpenAPI group only includes endpoints under
-`/api/intern/arkiv/**`.
-
-| Method | Path                                                | Description                                                                                            | Request body | Response                                                                                              |
-|--------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------|--------------|-------------------------------------------------------------------------------------------------------|
-| `GET`  | `/saker/{caseYear}/{caseNumber}/tittel`             | Fetches the case title for the given Noark `mappeId`.                                                  | –            | `200 OK` with `{ "value": "<title>" }`; `404` if unknown.                                             |
-| `GET`  | `/kodeverk/{type}`                                  | Returns cached kodeverk entries (administrativEnhet, arkivdel, dokumentstatus, journalposttype, etc.). | –            | `200 OK` array of `ResourceReference { "id": "<selfLink>", "displayName": "[code] Name #systemId" }`; arkivressurs also exposes `functionalId`, `name`, and `technicalId`, using empty strings for missing values. |
-| `GET`  | `/kodeverk/klassifikasjonssystem`                   | Lists all klassifikasjonssystemer with their IDs and titles.                                           | –            | `200 OK` array.                                                                                       |
-| `GET`  | `/kodeverk/klasse?klassifikasjonssystemLink=<link>` | Lists classes that belong to a klassifikasjonssystem link.                                             | –            | `200 OK` array; `404` if the system is missing.                                                       |
-
-Kodeverk endpoints share the same response contract; each list is distinct (administrativEnhet, arkivdel, arkivressurs, partrolle, korrespondanseparttype, tilknyttetregistreringsom, sakstatus, skjermingshjemmel, tilgangsrestriksjon, dokumentstatus, dokumenttype, journalstatus, journalposttype, saksmappetype, variantformat, format, tilgangsgruppe).
-
-### Internal client API
-
-Base path: `/api/intern-klient/arkiv`, OpenAPI group `intern-klient`. Only callers with a token for `fint-flyt-authorization-oauth2-client` are allowed. It is the shared client for
-internal calls between FLYT services, because namerator does not create new NAM clients. The secret is mapped with
-`env` to `fint.flyt.authorization.sso.client-id`, so it does not collide with `fint-flyt-file-oauth2-client`.
-
-| Method | Path                             | Description                                                                                        | Response                                                                                        |
-|--------|----------------------------------|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|
-| `GET`  | `/saker/{caseYear}/{caseNumber}` | Fetches the sak for the given Noark `mappeId`.                                                     | `200 OK` with `SakResource`; `404` if unknown; `5xx` if FINT fails.                             |
-| `GET`  | `/saker?archiveInstanceId=<id>`  | Fetches the sak with only the journalposter listed in the archive instance id (`2024/123-[1,2]`).  | `200 OK` with `SakResource`; `400` if the id is invalid; `404` if unknown; `5xx` if FINT fails. |
-
-## Kafka Integration
-
-- `InstanceMappedEventConsumerConfiguration.instanceMappedEventConsumer` listens to the `instance-mapped` event topic (partitioned by org/app defaults) and hands each record to `DispatchService`. Failed records are skipped with no retries via the shared `ErrorHandlerFactory`.
-- `InstanceDispatchedEventProducerService` provisions the `instance-dispatched` topic (retention derived from `KafkaTopicProperties`) and emits completion events after accepted dispatches. Keys should uniquely represent the archive instance for better ordering.
-- `InstanceDispatchingErrorProducerService` creates the `instance-dispatching-error` topic and publishes structured error collections for DECLINED or FAILED dispatches.
-- `FintResourcePublishingConfiguration` ensures entity topics exist for each pipeline and uses `ParameterizedTemplate` to push updated resources, caching them locally for HTTP lookups.
-
-## Scheduled Tasks
-
-The service relies on Spring Scheduling via `FintResourcePublishingConfiguration`:
-
-- Cron reset: once per day at a randomized time between `reset.from-time-of-day` and `reset.to-time-of-day`, cached last-updated timestamps are cleared so subsequent pulls fetch full deltas.
-- Fixed-delay pull: every `pull.fixed-delay` (default 15 minutes, after a 5-second initial delay) each `ResourcePipeline` polls FINT Archive for updates, populates caches, and republishes to Kafka.
-
-No other cron-style jobs exist; the dispatch path is fully event-driven.
-
-## Configuration
-
-Spring profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`, `flyt-web-resource-server`. Key properties:
-
-| Property                                                         | Description                                                                                             |
-|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `fint.application-id`                                            | Identifier reused for Kafka consumer groups and topic prefixes (default `fint-flyt-archive-gateway`).   |
-| `fint.org-id`                                                    | Current organization context; overrides live per overlay (local-staging defaults to `fintlabs.no`).     |
-| `novari.kafka.topic.instance-processing-events-retention-time`   | Retention (hours) applied to instance-processing topics when provisioning.                              |
-| `novari.flyt.archive.gateway.dispatch.fint-client.*`             | Timeout and polling settings for posting cases, records, and files to the archive adapter.              |
-| `novari.flyt.archive.gateway.resource.publishing.*`              | Window, offset, and pull cadence for resource caching and topic publishing.                             |
-| `novari.flyt.archive.gateway.resource.fint-client.*`             | Timeouts and retry strategy for resource lookups and case searches.                                     |
-| `novari.flyt.web-resource-server.security.api.internal.*`        | Enables internal API protection plus `authorized-org-id-role-pairs-json` for org/role allow-lists.      |
-| `novari.flyt.web-resource-server.security.api.internal-client.*` | Enables the internal client API; `authorized-client-ids` is `${fint.flyt.authorization.sso.client-id}`. |
-| `spring.kafka.bootstrap-servers`                                 | Kafka bootstrap list (e.g., `localhost:9092` in `application-local-staging.yaml`).                      |
-| `server.port`                                                    | HTTP port (8301 for local-staging).                                                                     |
-| `spring.security.oauth2.client.*`                                | Credentials for the fint archive adapter and Flyt file-service OAuth2 clients.                          |
-
-## Running Locally
-
-Prerequisites: Java 25+, Docker, and the Gradle wrapper.
-
-1. Start Kafka on `localhost:9092` with `docker compose up -d`. Add `--profile tools` to also start Kafdrop on http://localhost:19000. Kafka topics are empty on every start.
-2. Export the local profile:
-   ```shell
-   export SPRING_PROFILES_ACTIVE=local-staging
-   ```
-3. Provide required secrets via environment variables or a `.env` file (`fint.core.oauth2.*`, `fint.sso.*`, etc.).
-4. Build and run:
-   ```shell
-   ./gradlew clean build
-   ./gradlew bootRun
-   ```
-   `bootRun` now adds `--sun-misc-unsafe-memory-access=allow` to suppress the known Netty/JDK 24+ startup warning.
-5. Exercise the APIs:
-   ```shell
-   curl -H "Authorization: Bearer <token>" \
-        "http://localhost:8301/api/intern/arkiv/saker/2024/123/tittel"
-   curl -H "Authorization: Bearer <token>" \
-        "http://localhost:8301/api/intern/arkiv/kodeverk/dokumenttype"
-   ```
-
-Running unit tests only:
-```shell
-./gradlew test
-```
-
-## Deployment
-
-Manifests live under `kustomize/`:
-
-- `kustomize/base/` — shared FLAIS Application manifest plus configmaps/secrets referenced across environments.
-- `kustomize/templates/overlay.yaml.tpl` — source templates for per-org overlays.
-- `kustomize/overlays/<org>/<env>/` — generated overlays that pin org IDs, ingress rules, Kafka parameters, and secret references.
-- `script/render-overlay.sh` — helper to regenerate every `kustomize/overlays/**/kustomization.yaml` after changing templates.
-
-After editing templates or base manifests run:
-```shell
-./script/render-overlay.sh
-```
-and commit both template and regenerated overlay files.
+Then open `http://localhost:8080/beta/fintlabs-no/swagger-ui.html`.
 
 ## Security
 
-- OAuth2 resource server validates JWTs issued by `https://idp.felleskomponent.no` and enforces internal API org/role mappings via the Flyt resource server starter.
-- Outbound calls use two OAuth2 clients: password-grant credentials for the FINT archive adapter and client-credentials for the Flyt file service.
-- Kafka consumers/producers leverage org/application-scoped prefixes ensuring each tenant’s topics stay isolated.
-- Internal APIs live under `/api/intern/**` and require authorization according to the configured org-role pairs.
-- The internal client API lives under `/api/intern-klient/**` and only accepts tokens issued to `fint-flyt-authorization-oauth2-client`.
+[flyt-security-starter](https://github.com/FINTLabs/fint-flyt-security-starter) secures the API:
 
-## Observability & Operations
+- `/api/intern/**` takes FLYT user tokens with `aud` = `novari.flyt.security.user.audience`, from the namespace's
+  organization, `novari.flyt.security.tenant.additional-org-ids` (`frid-iks.no` in afk, bfk and ofk) or the operators
+  `vigo.no` and `novari.no`.
+- `/api/intern-klient/**` takes client tokens whose `sub` is `fint.flyt.authorization.sso.client-id`.
 
-- Actuator health/info/prometheus endpoints are enabled (see `application-flyt-logging.yaml`); scrape `/actuator/prometheus` for metrics.
-- Logging integrates with the shared Flyt logging profile and emits structured entries for dispatch outcomes and resource pulls.
-- Kafka listener and resource publishing logs indicate topic provisioning, cache sizes, and error conditions for easier incident triage.
+Outbound calls use NAM: the password grant for the FINT archive (`fint.core.oauth2.*`), and client credentials for
+file-service (`fint.sso.*`). Spring Security 7 has no password grant, so `PasswordGrantAuthorizedClientProvider`
+implements it.
 
-## Development Tips
+## Configuration
 
-- `RecordsProcessingService` streams journalpost records/files sequentially; keep payload sizes manageable and verify the file-service timeouts before tightening Kafka consumer settings.
-- Resource caches are populated by the scheduler. If you call kodeverk endpoints immediately after boot, trigger the pull (or wait for `pull.initial-delay`) to avoid empty lists.
-- Use the TODO markers in `InstanceDispatchedEventProducerService` and `InstanceDispatchingErrorProducerService` as a guide—supplying deterministic keys simplifies debugging and replay.
+Profiles included by default: `fint-client`, `fint-oauth2-idp`, `flyt-file-client`, `flyt-kafka`, `flyt-logging`,
+`flyt-security`.
 
-## Dependency Locking
+| Property                                                               | Description                                                                |
+|------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| `fint.application-id`                                                  | Kafka consumer group and application id (`fint-flyt-archive-gateway`).     |
+| `fint.org-id`, `novari.kafka.topic.org-id`                             | The namespace's organization and topic prefix, set per overlay.            |
+| `novari.flyt.archive.gateway.client.fint-archive.base-url`             | The FINT API, set per overlay (the archive simulator in fintlabs-no beta). |
+| `novari.flyt.archive.gateway.kafka.topic.instance-processing-events-*` | Retention of `instance-dispatched` and `instance-error`.                   |
+| `novari.flyt.archive.gateway.dispatch.fint-client.*`                   | Polling of the archive's created location after a post.                    |
+| `novari.flyt.archive.gateway.resource.fint-client.*`                   | Retries of sak searches.                                                   |
+| `novari.flyt.archive.gateway.resource.publishing.*`                    | Pull interval and the daily reset window.                                  |
+| `novari.flyt.archive.gateway.http-client.*`                            | Connect and read timeouts for the FINT archive and file-service.           |
+| `novari.flyt.security.*`                                               | See [Security](#security).                                                 |
 
-The build uses [Gradle dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html), so every build resolves exactly the same direct and transitive versions. The locked versions live in the committed `gradle.lockfile` files. A pull request therefore shows every transitive version change it causes. Gradle plugins are not locked, because Dependabot only updates `gradle.lockfile`; their versions are pinned in the `plugins` block instead.
+## Running locally
 
-**Automatic (Dependabot):** Dependabot updates the lockfiles in its own pull requests, so no manual step is needed. If two Dependabot pull requests conflict in a lockfile, Dependabot rebases the remaining one after the first is merged. If it does not, comment `@dependabot recreate` on the pull request.
+Start Kafka on `localhost:9092` with `docker compose up -d` (`--profile tools` adds Kafdrop on
+http://localhost:19000). Set `fint.core.oauth2.*`, `fint.sso.*` and `fint.flyt.authorization.sso.client-id`, then:
 
-**Manual:** Any change you make by hand that affects dependency resolution requires regenerating the lockfiles. That covers versions, `extra[...]` properties, constraints, and adding or removing a dependency:
-
-```bash
-./gradlew dependencies --write-locks
+```shell
+SPRING_PROFILES_ACTIVE=local-staging ./gradlew bootRun
 ```
 
-Commit the updated lockfiles together with the change. If you forget, the build fails both locally and in CI with an error saying the resolved version "is not part of the dependency lock state".
+The app listens on port 8301 and talks to the FINT beta API.
 
-## Contributing
+## Deployment
 
-1. Create a topic branch off `main` (e.g., `feature/<ticket>`).
-2. Implement changes plus unit/integration tests; run `./gradlew test` (and `./gradlew bootRun` locally if needed).
-3. If kustomize manifests change, re-run `./script/render-overlay.sh` and commit the outputs.
-4. Open a pull request with a summary of behavior changes and testing evidence.
+`kustomize/overlays/<org>/<env>/` are generated from `kustomize/templates/overlay.yaml.tpl` by
+`script/render-overlay.sh`. Run the script after changing the template or the script, and commit the overlays.
 
-———
+## Development
 
-FINT Flyt Archive Gateway is maintained by the FINT Flyt team. Reach out via the internal Slack channel or open an issue if you need enhancements or run into problems.
+```shell
+./gradlew check                       # tests and ktlint
+./gradlew dependencies --write-locks  # after changing dependencies
+```
+
+The build uses [dependency locking](https://docs.gradle.org/current/userguide/dependency_locking.html). Versions
+outside the Spring Boot BOM are in `gradle/libs.versions.toml`. Dependabot updates the lockfiles in its own pull
+requests; after a manual dependency change, run `--write-locks` and commit the lockfiles, or the build fails.

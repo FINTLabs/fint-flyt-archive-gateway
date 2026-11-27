@@ -1,7 +1,5 @@
 package no.novari.flyt.archive.gateway.resource.kodeverk
 
-import no.novari.cache.FintCache
-import no.novari.cache.FintCacheManager
 import no.novari.fint.model.resource.administrasjon.personal.PersonalressursResource
 import no.novari.fint.model.resource.arkiv.kodeverk.DokumentStatusResource
 import no.novari.fint.model.resource.arkiv.kodeverk.DokumentTypeResource
@@ -22,93 +20,88 @@ import no.novari.fint.model.resource.arkiv.noark.ArkivdelResource
 import no.novari.fint.model.resource.arkiv.noark.ArkivressursResource
 import no.novari.fint.model.resource.arkiv.noark.KlassifikasjonssystemResource
 import no.novari.fint.model.resource.felles.PersonResource
+import no.novari.flyt.cache.FlytCache
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.Locale
 
 @Configuration
-class ResourceCacheConfiguration(
-    private val fintCacheManager: FintCacheManager,
-) {
+class ResourceCacheConfiguration {
     @Bean
-    fun administrativEnhetResourceCache(): FintCache<String, AdministrativEnhetResource> =
+    fun administrativEnhetResourceCache(): FlytCache<String, AdministrativEnhetResource> =
         createCache(AdministrativEnhetResource::class.java)
 
     @Bean
-    fun arkivdelResourceCache(): FintCache<String, ArkivdelResource> = createCache(ArkivdelResource::class.java)
+    fun arkivdelResourceCache(): FlytCache<String, ArkivdelResource> = createCache(ArkivdelResource::class.java)
 
     @Bean
-    fun arkivressursResourceCache(): FintCache<String, ArkivressursResource> =
+    fun arkivressursResourceCache(): FlytCache<String, ArkivressursResource> =
         createCache(ArkivressursResource::class.java)
 
     @Bean
-    fun tilknyttetRegistreringSomResourceCache(): FintCache<String, TilknyttetRegistreringSomResource> =
+    fun tilknyttetRegistreringSomResourceCache(): FlytCache<String, TilknyttetRegistreringSomResource> =
         createCache(TilknyttetRegistreringSomResource::class.java)
 
     @Bean
-    fun dokumentStatusResourceCache(): FintCache<String, DokumentStatusResource> =
+    fun dokumentStatusResourceCache(): FlytCache<String, DokumentStatusResource> =
         createCache(DokumentStatusResource::class.java)
 
     @Bean
-    fun dokumentTypeResourceCache(): FintCache<String, DokumentTypeResource> =
+    fun dokumentTypeResourceCache(): FlytCache<String, DokumentTypeResource> =
         createCache(DokumentTypeResource::class.java)
 
     @Bean
-    fun klassifikasjonssystemResourceCache(): FintCache<String, KlassifikasjonssystemResource> =
+    fun klassifikasjonssystemResourceCache(): FlytCache<String, KlassifikasjonssystemResource> =
         createCache(KlassifikasjonssystemResource::class.java)
 
     @Bean
-    fun partRolleResourceCache(): FintCache<String, PartRolleResource> = createCache(PartRolleResource::class.java)
+    fun partRolleResourceCache(): FlytCache<String, PartRolleResource> = createCache(PartRolleResource::class.java)
 
     @Bean
-    fun korrespondansepartTypeResourceCache(): FintCache<String, KorrespondansepartTypeResource> =
+    fun korrespondansepartTypeResourceCache(): FlytCache<String, KorrespondansepartTypeResource> =
         createCache(KorrespondansepartTypeResource::class.java)
 
     @Bean
-    fun saksstatusResourceCache(): FintCache<String, SaksstatusResource> = createCache(SaksstatusResource::class.java)
+    fun saksstatusResourceCache(): FlytCache<String, SaksstatusResource> = createCache(SaksstatusResource::class.java)
 
     @Bean
-    fun skjermingshjemmelResourceCache(): FintCache<String, SkjermingshjemmelResource> =
+    fun skjermingshjemmelResourceCache(): FlytCache<String, SkjermingshjemmelResource> =
         createCache(SkjermingshjemmelResource::class.java)
 
     @Bean
-    fun tilgangsrestriksjonResourceCache(): FintCache<String, TilgangsrestriksjonResource> =
+    fun tilgangsrestriksjonResourceCache(): FlytCache<String, TilgangsrestriksjonResource> =
         createCache(TilgangsrestriksjonResource::class.java)
 
     @Bean
-    fun journalStatusResourceCache(): FintCache<String, JournalStatusResource> =
+    fun journalStatusResourceCache(): FlytCache<String, JournalStatusResource> =
         createCache(JournalStatusResource::class.java)
 
     @Bean
-    fun journalpostTypeResourceCache(): FintCache<String, JournalpostTypeResource> =
+    fun journalpostTypeResourceCache(): FlytCache<String, JournalpostTypeResource> =
         createCache(JournalpostTypeResource::class.java)
 
     @Bean
-    fun saksmappetypeResourceCache(): FintCache<String, SaksmappetypeResource> =
+    fun saksmappetypeResourceCache(): FlytCache<String, SaksmappetypeResource> =
         createCache(SaksmappetypeResource::class.java)
 
     @Bean
-    fun variantformatResourceCache(): FintCache<String, VariantformatResource> =
+    fun variantformatResourceCache(): FlytCache<String, VariantformatResource> =
         createCache(VariantformatResource::class.java)
 
     @Bean
-    fun formatResourceCache(): FintCache<String, FormatResource> = createCache(FormatResource::class.java)
+    fun formatResourceCache(): FlytCache<String, FormatResource> = createCache(FormatResource::class.java)
 
     @Bean
-    fun tilgangsgruppeResourceCache(): FintCache<String, TilgangsgruppeResource> =
+    fun tilgangsgruppeResourceCache(): FlytCache<String, TilgangsgruppeResource> =
         createCache(TilgangsgruppeResource::class.java)
 
     @Bean
-    fun personalressursResourceCache(): FintCache<String, PersonalressursResource> =
+    fun personalressursResourceCache(): FlytCache<String, PersonalressursResource> =
         createCache(PersonalressursResource::class.java)
 
     @Bean
-    fun personResourceCache(): FintCache<String, PersonResource> = createCache(PersonResource::class.java)
+    fun personResourceCache(): FlytCache<String, PersonResource> = createCache(PersonResource::class.java)
 
-    private fun <V> createCache(resourceClass: Class<V>): FintCache<String, V> =
-        fintCacheManager.createCache(
-            resourceClass.name.lowercase(Locale.ROOT),
-            String::class.java,
-            resourceClass,
-        )
+    private fun <V : Any> createCache(resourceClass: Class<V>): FlytCache<String, V> =
+        FlytCache(resourceClass.name.lowercase(Locale.ROOT))
 }

@@ -9,17 +9,4 @@ data class CollectionTemplate<T>(
     @field:NotNull
     @field:Valid
     val elementTemplate: T,
-) {
-    companion object {
-        @JvmStatic
-        fun <T> builder() = Builder<T>()
-    }
-
-    class Builder<T> {
-        private var elementTemplate: T? = null
-
-        fun elementTemplate(elementTemplate: T) = apply { this.elementTemplate = elementTemplate }
-
-        fun build() = CollectionTemplate(requireNotNull(elementTemplate) { "elementTemplate is required" })
-    }
-}
+)

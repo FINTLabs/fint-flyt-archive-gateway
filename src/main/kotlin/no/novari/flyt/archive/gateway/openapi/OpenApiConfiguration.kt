@@ -8,9 +8,6 @@ import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.annotation.Order
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 class OpenApiConfiguration {
@@ -46,19 +43,6 @@ class OpenApiConfiguration {
             .builder()
             .group("intern-klient")
             .pathsToMatch("/api/intern-klient/**")
-            .build()
-
-    @Bean
-    @Order(-1)
-    fun openApiSecurityFilterChain(http: HttpSecurity): SecurityFilterChain =
-        http
-            .securityMatcher(
-                "/swagger-ui.html",
-                "/swagger-ui/**",
-                "/v3/api-docs",
-                "/v3/api-docs/**",
-                "/v3/api-docs.yaml",
-            ).authorizeHttpRequests { requests -> requests.anyRequest().permitAll() }
             .build()
 
     private companion object {

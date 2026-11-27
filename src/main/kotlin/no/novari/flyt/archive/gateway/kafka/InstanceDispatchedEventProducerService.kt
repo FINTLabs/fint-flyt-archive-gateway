@@ -1,62 +1,47 @@
 package no.novari.flyt.archive.gateway.kafka
 
 import no.novari.flyt.kafka.instanceflow.headers.InstanceFlowHeaders
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowProducerRecord
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplate
-import no.novari.flyt.kafka.instanceflow.producing.InstanceFlowTemplateFactory
-import no.novari.kafka.topic.EventTopicService
-import no.novari.kafka.topic.configuration.EventCleanupFrequency
-import no.novari.kafka.topic.configuration.EventTopicConfiguration
-import no.novari.kafka.topic.name.EventTopicNameParameters
-import no.novari.kafka.topic.name.TopicNamePrefixParameters
+import no.novari.flyt.kafka.instanceflow.producing.send
+import no.novari.kafka.starter.topic.EventCleanupFrequency
+import no.novari.kafka.starter.topic.EventTopicConfig
+import no.novari.kafka.starter.topic.EventTopicName
+import no.novari.kafka.starter.topic.KafkaTopics
+import org.apache.kafka.clients.admin.NewTopic
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Service
+
+@Configuration
+class InstanceDispatchedTopicConfiguration {
+    @Bean
+    fun instanceDispatchedTopic(topics: KafkaTopics): EventTopicName = topics.event("instance-dispatched")
+
+    @Bean
+    fun instanceDispatchedTopicCreation(
+        topics: KafkaTopics,
+        instanceDispatchedTopic: EventTopicName,
+        kafkaTopicProperties: KafkaTopicProperties,
+    ): NewTopic =
+        topics.newTopic(
+            instanceDispatchedTopic,
+            EventTopicConfig(
+                retention = requireNotNull(kafkaTopicProperties.instanceProcessingEventsRetentionTime),
+                cleanupFrequency = EventCleanupFrequency.NORMAL,
+                partitions = 1,
+            ),
+        )
+}
 
 @Service
 class InstanceDispatchedEventProducerService(
-    instanceFlowTemplateFactory: InstanceFlowTemplateFactory,
-    eventTopicService: EventTopicService,
-    kafkaTopicProperties: KafkaTopicProperties,
+    private val kafkaTemplate: KafkaTemplate<String, Any>,
+    // By name: there are several EventTopicName beans.
+    @param:Qualifier("instanceDispatchedTopic")
+    private val instanceDispatchedTopic: EventTopicName,
 ) {
-    private val eventTopicNameParameters: EventTopicNameParameters =
-        EventTopicNameParameters
-            .builder()
-            .topicNamePrefixParameters(
-                TopicNamePrefixParameters
-                    .stepBuilder()
-                    .orgIdApplicationDefault()
-                    .domainContextApplicationDefault()
-                    .build(),
-            ).eventName("instance-dispatched")
-            .build()
-    private val instanceFlowTemplate: InstanceFlowTemplate<Any> =
-        instanceFlowTemplateFactory.createTemplate(
-            Any::class.java,
-        )
-
-    init {
-        eventTopicService.createOrModifyTopic(
-            eventTopicNameParameters,
-            EventTopicConfiguration
-                .stepBuilder()
-                .partitions(PARTITIONS)
-                .retentionTime(requireNotNull(kafkaTopicProperties.instanceProcessingEventsRetentionTime))
-                .cleanupFrequency(EventCleanupFrequency.NORMAL)
-                .build(),
-        )
-    }
-
     fun publish(instanceFlowHeaders: InstanceFlowHeaders) {
-        instanceFlowTemplate.send(
-            InstanceFlowProducerRecord
-                .builder<Any>()
-                .instanceFlowHeaders(instanceFlowHeaders)
-                .topicNameParameters(eventTopicNameParameters)
-                .value(null)
-                .build(),
-        )
-    }
-
-    companion object {
-        private const val PARTITIONS = 1
+        kafkaTemplate.send(instanceDispatchedTopic, instanceFlowHeaders, null)
     }
 }

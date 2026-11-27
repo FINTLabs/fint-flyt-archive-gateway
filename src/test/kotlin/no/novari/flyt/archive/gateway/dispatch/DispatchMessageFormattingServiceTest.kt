@@ -20,7 +20,7 @@ class DispatchMessageFormattingServiceTest {
                 "testRefDisplayName",
                 emptyList(),
             ),
-        ).isEmpty
+        ).isNull()
     }
 
     @Test
@@ -31,7 +31,7 @@ class DispatchMessageFormattingServiceTest {
                 "testRefDisplayName",
                 listOf("ref1"),
             ),
-        ).contains("testObjectDisplayName with testRefDisplayName='ref1'")
+        ).isEqualTo("testObjectDisplayName with testRefDisplayName='ref1'")
     }
 
     @Test
@@ -42,7 +42,7 @@ class DispatchMessageFormattingServiceTest {
                 "testRefDisplayName",
                 listOf("ref1", "ref2", "ref3"),
             ),
-        ).contains("testObjectDisplayNames with testRefDisplayNames=['ref1', 'ref2', 'ref3']")
+        ).isEqualTo("testObjectDisplayNames with testRefDisplayNames=['ref1', 'ref2', 'ref3']")
     }
 
     @Test
@@ -65,7 +65,7 @@ class DispatchMessageFormattingServiceTest {
                 true,
                 listOf("test warning message"),
             ),
-        ).contains("(!) Already successfully dispatched sak with id=testCaseId, test warning message (!)")
+        ).isEqualTo("(!) Already successfully dispatched sak with id=testCaseId, test warning message (!)")
     }
 
     @Test
@@ -76,7 +76,7 @@ class DispatchMessageFormattingServiceTest {
                 false,
                 listOf("test warning message"),
             ),
-        ).contains("(!) Already successfully dispatched test warning message (!)")
+        ).isEqualTo("(!) Already successfully dispatched test warning message (!)")
     }
 
     @Test
@@ -87,7 +87,7 @@ class DispatchMessageFormattingServiceTest {
                 true,
                 emptyList(),
             ),
-        ).contains("(!) Already successfully dispatched sak with id=testCaseId (!)")
+        ).isEqualTo("(!) Already successfully dispatched sak with id=testCaseId (!)")
     }
 
     @Test
@@ -98,6 +98,6 @@ class DispatchMessageFormattingServiceTest {
                 false,
                 emptyList(),
             ),
-        ).isEmpty
+        ).isNull()
     }
 }

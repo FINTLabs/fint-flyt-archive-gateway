@@ -56,7 +56,12 @@ class FileDispatchServiceTest {
         val fileId = getUuid()
         whenever(flytFileClient.getFile(fileId)).thenThrow(RuntimeException())
 
-        val result = fileDispatchService.dispatch(DokumentobjektDto.builder().fileId(fileId).build())
+        val result =
+            fileDispatchService.dispatch(
+                DokumentobjektDto(
+                    fileId = fileId,
+                ),
+            )
 
         assertThat(result).isEqualTo(FileDispatchResult.couldNotBeRetrieved(fileId))
     }
@@ -104,7 +109,10 @@ class FileDispatchServiceTest {
             fileId = fileId,
             file = mock(),
             archiveLink = mock(),
-            dokumentobjektDto = DokumentobjektDto.builder().fileId(fileId).build(),
+            dokumentobjektDto =
+                DokumentobjektDto(
+                    fileId = fileId,
+                ),
         )
     }
 

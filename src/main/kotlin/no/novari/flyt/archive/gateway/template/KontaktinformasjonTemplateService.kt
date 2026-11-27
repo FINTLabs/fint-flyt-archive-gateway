@@ -11,29 +11,31 @@ class KontaktinformasjonTemplateService {
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("epostadresse")
-                    .displayName("E-post")
-                    .description("E-postadresse")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "epostadresse",
+                    displayName = "E-post",
+                    description = "E-postadresse",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("mobiltelefonnummer")
-                    .displayName("Mobiltelefonnummer")
-                    .description("Mobiltelefonnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "mobiltelefonnummer",
+                    displayName = "Mobiltelefonnummer",
+                    description = "Mobiltelefonnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "telefonnummer",
-                    ).displayName("Telefonnummer")
-                    .description("Telefonnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "telefonnummer",
+                    displayName = "Telefonnummer",
+                    description = "Telefonnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).build()
 }

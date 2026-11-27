@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.ClientHttpRequestFactory
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
-import org.springframework.security.oauth2.client.OAuth2AuthorizationContext
-import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
@@ -38,20 +36,14 @@ class FintArchiveRestClientConfiguration {
                 clientRegistrationRepository,
                 authorizedClientService,
             )
-        // TODO: migrate off the deprecated password grant when FINT IdP supports a supported flow.
+        // Spring Security 7 has no password grant. Refresh as before, and a new password grant when that is not possible.
         authorizedClientManager.setAuthorizedClientProvider(
             OAuth2AuthorizedClientProviderBuilder
                 .builder()
-                .password()
+                .provider(PasswordGrantAuthorizedClientProvider(requireNotNull(username), requireNotNull(password)))
                 .refreshToken()
                 .build(),
         )
-        authorizedClientManager.setContextAttributesMapper { _: OAuth2AuthorizeRequest ->
-            mapOf(
-                OAuth2AuthorizationContext.USERNAME_ATTRIBUTE_NAME to requireNotNull(username),
-                OAuth2AuthorizationContext.PASSWORD_ATTRIBUTE_NAME to requireNotNull(password),
-            )
-        }
         return authorizedClientManager
     }
 

@@ -55,12 +55,8 @@ spring:
       - flyt-file-client
       - flyt-kafka
       - flyt-logging
-      - flyt-web-resource-server
+      - flyt-security
 
   output:
     ansi:
       enabled: always
-
-logging:
-  level:
-    no.novari.cache.ehcache.FintEhCacheEventLogger: WARN

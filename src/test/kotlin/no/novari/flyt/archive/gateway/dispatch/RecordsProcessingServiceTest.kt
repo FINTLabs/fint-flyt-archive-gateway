@@ -24,7 +24,7 @@ class RecordsProcessingServiceTest {
 
     @Test
     fun `given an accepted journalpost dispatch, returns an accepted result with case id and journalpost id`() {
-        val journalpostDto = JournalpostDto.builder().build()
+        val journalpostDto = JournalpostDto()
         whenever(recordsDispatchService.dispatch("testCaseId", listOf(journalpostDto)))
             .thenReturn(RecordsDispatchResult.accepted(listOf(1L)))
         whenever(dispatchMessageFormattingService.formatCaseIdAndJournalpostIds("testCaseId", listOf(1L)))
@@ -37,11 +37,11 @@ class RecordsProcessingServiceTest {
 
     @Test
     fun `given a new case and a declined journalpost dispatch, returns a declined result with error message`() {
-        val journalpostDto = JournalpostDto.builder().build()
+        val journalpostDto = JournalpostDto()
         whenever(recordsDispatchService.dispatch("testCaseId", listOf(journalpostDto)))
             .thenReturn(RecordsDispatchResult.declined("test error message", "test warning message"))
         whenever(
-            dispatchMessageFormattingService.combineFunctionalWarningMessagesOrNull(
+            dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
                 true,
                 listOf("test warning message"),
@@ -60,11 +60,11 @@ class RecordsProcessingServiceTest {
 
     @Test
     fun `given a new case and a failed journalpost dispatch, returns a failed result`() {
-        val journalpostDto = JournalpostDto.builder().build()
+        val journalpostDto = JournalpostDto()
         whenever(recordsDispatchService.dispatch("testCaseId", listOf(journalpostDto)))
             .thenReturn(RecordsDispatchResult.failed("test error message", "test warning message"))
         whenever(
-            dispatchMessageFormattingService.combineFunctionalWarningMessagesOrNull(
+            dispatchMessageFormattingService.combineFunctionalWarningMessages(
                 "testCaseId",
                 true,
                 listOf("test warning message"),

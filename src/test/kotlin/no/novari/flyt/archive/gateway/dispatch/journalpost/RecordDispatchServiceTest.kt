@@ -63,17 +63,19 @@ class RecordDispatchServiceTest {
     fun `given accepted files and an accepted postRecord, returns an accepted result`() {
         val fileId = UUID.randomUUID()
         val journalpostDto =
-            JournalpostDto
-                .builder()
-                .dokumentbeskrivelse(
+            JournalpostDto(
+                dokumentbeskrivelse =
                     listOf(
-                        DokumentbeskrivelseDto
-                            .builder()
-                            .dokumentobjekt(
-                                listOf(DokumentobjektDto.builder().fileId(fileId).build()),
-                            ).build(),
+                        DokumentbeskrivelseDto(
+                            dokumentobjekt =
+                                listOf(
+                                    DokumentobjektDto(
+                                        fileId = fileId,
+                                    ),
+                                ),
+                        ),
                     ),
-                ).build()
+            )
         val journalpostResource: JournalpostResource = mock()
         val resultJournalpostResource: JournalpostResource = mock()
         whenever(resultJournalpostResource.journalPostnummer).thenReturn(1L)
@@ -93,17 +95,19 @@ class RecordDispatchServiceTest {
     fun `given declined files, returns a declined result`() {
         val fileId = UUID.randomUUID()
         val journalpostDto =
-            JournalpostDto
-                .builder()
-                .dokumentbeskrivelse(
+            JournalpostDto(
+                dokumentbeskrivelse =
                     listOf(
-                        DokumentbeskrivelseDto
-                            .builder()
-                            .dokumentobjekt(
-                                listOf(DokumentobjektDto.builder().fileId(fileId).build()),
-                            ).build(),
+                        DokumentbeskrivelseDto(
+                            dokumentobjekt =
+                                listOf(
+                                    DokumentobjektDto(
+                                        fileId = fileId,
+                                    ),
+                                ),
+                        ),
                     ),
-                ).build()
+            )
         whenever(filesDispatchService.dispatch(journalpostDto.dokumentbeskrivelse!!.first().dokumentobjekt!!))
             .thenReturn(FilesDispatchResult.declined("bad file"))
 
@@ -116,10 +120,9 @@ class RecordDispatchServiceTest {
     @Test
     fun `given valid dokumentetsDato, passes journalpost resource to archive dispatch client`() {
         val journalpostDto =
-            JournalpostDto
-                .builder()
-                .dokumentetsDato("2026-08-24")
-                .build()
+            JournalpostDto(
+                dokumentetsDato = "2026-08-24",
+            )
         val journalpostResource: JournalpostResource = mock()
         val resultJournalpostResource: JournalpostResource = mock()
         whenever(resultJournalpostResource.journalPostnummer).thenReturn(1L)
@@ -139,18 +142,20 @@ class RecordDispatchServiceTest {
     fun `given invalid dokumentetsDato, returns declined result before dispatching files`() {
         val fileId = UUID.randomUUID()
         val journalpostDto =
-            JournalpostDto
-                .builder()
-                .dokumentetsDato("not a date")
-                .dokumentbeskrivelse(
+            JournalpostDto(
+                dokumentetsDato = "not a date",
+                dokumentbeskrivelse =
                     listOf(
-                        DokumentbeskrivelseDto
-                            .builder()
-                            .dokumentobjekt(
-                                listOf(DokumentobjektDto.builder().fileId(fileId).build()),
-                            ).build(),
+                        DokumentbeskrivelseDto(
+                            dokumentobjekt =
+                                listOf(
+                                    DokumentobjektDto(
+                                        fileId = fileId,
+                                    ),
+                                ),
+                        ),
                     ),
-                ).build()
+            )
 
         val result = recordDispatchService.dispatch("caseId", journalpostDto)
 
@@ -215,7 +220,7 @@ class RecordDispatchServiceTest {
 
     @Test
     fun `given a RestClientResponseException, returns a declined result`() {
-        val journalpostDto = JournalpostDto.builder().build()
+        val journalpostDto = JournalpostDto()
         val journalpostResource: JournalpostResource = mock()
         val error: HttpClientErrorException = mock()
         whenever(error.responseBodyAsString).thenReturn("test response body")
@@ -231,7 +236,7 @@ class RecordDispatchServiceTest {
 
     @Test
     fun `given a read timeout, returns a timed-out result`() {
-        val journalpostDto = JournalpostDto.builder().build()
+        val journalpostDto = JournalpostDto()
         val journalpostResource: JournalpostResource = mock()
         whenever(
             journalpostMappingService.toJournalpostResource(journalpostDto, emptyMap()),

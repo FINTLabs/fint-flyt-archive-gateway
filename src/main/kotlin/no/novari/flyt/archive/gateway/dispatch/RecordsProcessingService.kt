@@ -32,7 +32,7 @@ class RecordsProcessingService(
                 DispatchResult.declined(
                     "Journalpost was declined by the destination. " +
                         dispatchMessageFormattingService
-                            .combineFunctionalWarningMessagesOrNull(
+                            .combineFunctionalWarningMessages(
                                 archiveCaseId,
                                 newCase,
                                 functionalWarningMessages,
@@ -46,7 +46,7 @@ class RecordsProcessingService(
                 DispatchResult.failed(
                     "Journalpost dispatch failed." +
                         dispatchMessageFormattingService
-                            .combineFunctionalWarningMessagesOrNull(
+                            .combineFunctionalWarningMessages(
                                 archiveCaseId,
                                 newCase,
                                 functionalWarningMessages,

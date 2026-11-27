@@ -35,12 +35,6 @@ patches:
       - op: add
         path: "/spec/env/-"
         value:
-          name: "novari.flyt.web-resource-server.security.api.internal.authorized-org-id-role-pairs-json"
-          value: |
-$AUTHORIZED_ORG_ROLE_PAIRS
-      - op: add
-        path: "/spec/env/-"
-        value:
           name: "novari.kafka.topic.orgId"
           value: "$NOVARI_KAFKA_TOPIC_ORGID"
       - op: add

@@ -2,7 +2,7 @@ package no.novari.flyt.archive.gateway
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings
+import org.springframework.boot.http.client.HttpClientSettings
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.client.ClientHttpRequestFactory
@@ -19,7 +19,7 @@ class HttpClientConfiguration {
         ClientHttpRequestFactoryBuilder
             .jdk()
             .build(
-                ClientHttpRequestFactorySettings
+                HttpClientSettings
                     .defaults()
                     .withConnectTimeout(requireNotNull(connectTimeout))
                     .withReadTimeout(requireNotNull(defaultResponseTimeout)),

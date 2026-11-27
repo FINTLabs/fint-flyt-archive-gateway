@@ -1,53 +1,33 @@
 package no.novari.flyt.archive.gateway.resource.configuration
 
-import no.novari.cache.FintCache
 import no.novari.fint.model.resource.FintLinks
 import no.novari.flyt.archive.gateway.links.ResourceLinkUtil
-import no.novari.kafka.topic.name.EntityTopicNameParameters
-import no.novari.kafka.topic.name.TopicNamePrefixParameters
+import no.novari.flyt.cache.FlytCache
+import no.novari.kafka.starter.topic.KafkaTopics
 import org.springframework.stereotype.Service
 
 @Service
-class FintLinksResourcePipelineFactory {
+class FintLinksResourcePipelineFactory(
+    private val topics: KafkaTopics,
+) {
     fun <T : FintLinks> createResourcePipeLine(
         resourceClass: Class<T>,
-        cache: FintCache<String, T>,
+        cache: FlytCache<String, T>,
         resourceReferencePath: List<String>,
         publishOnKafka: Boolean,
-    ): ResourcePipeline<T> {
-        val resourcePipelineBuilder =
-            ResourcePipeline
-                .builder<T>()
-                .resourceClass(resourceClass)
-                .urlResourcePath(resourceReferencePath.joinToString("/"))
-                .cacheProperties(
-                    ResourcePipelineCacheProperties
-                        .builder<T>()
-                        .createKeys(ResourceLinkUtil::getSelfLinks)
-                        .cache(cache)
-                        .build(),
-                )
-
-        if (publishOnKafka) {
-            resourcePipelineBuilder.kafkaProperties(
-                ResourcePipelineKafkaProperties
-                    .builder<T>()
-                    .createKafkaKey(ResourceLinkUtil::getFirstSelfLink)
-                    .topicNameParameters(
-                        EntityTopicNameParameters
-                            .builder()
-                            .topicNamePrefixParameters(
-                                TopicNamePrefixParameters
-                                    .stepBuilder()
-                                    .orgIdApplicationDefault()
-                                    .domainContextApplicationDefault()
-                                    .build(),
-                            ).resourceName(resourceReferencePath.joinToString("-"))
-                            .build(),
-                    ).build(),
-            )
-        }
-
-        return resourcePipelineBuilder.build()
-    }
+    ): ResourcePipeline<T> =
+        ResourcePipeline(
+            resourceClass = resourceClass,
+            urlResourcePath = resourceReferencePath.joinToString("/"),
+            cacheProperties = ResourcePipelineCacheProperties(ResourceLinkUtil::getSelfLinks, cache),
+            kafkaProperties =
+                if (publishOnKafka) {
+                    ResourcePipelineKafkaProperties(
+                        ResourceLinkUtil::getFirstSelfLink,
+                        topics.entity(resourceReferencePath.joinToString("-")),
+                    )
+                } else {
+                    null
+                },
+        )
 }

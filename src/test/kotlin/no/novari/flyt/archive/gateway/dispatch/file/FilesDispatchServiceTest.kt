@@ -31,7 +31,10 @@ class FilesDispatchServiceTest {
     @Test
     fun `given accepted files, returns an accepted result`() {
         val fileId = UUID.randomUUID()
-        val dokumentobjektDto = DokumentobjektDto.builder().fileId(fileId).build()
+        val dokumentobjektDto =
+            DokumentobjektDto(
+                fileId = fileId,
+            )
         val link = Link.with("link")
         whenever(fileDispatchService.dispatch(dokumentobjektDto))
             .thenReturn(FileDispatchResult.accepted(fileId, link))
@@ -43,7 +46,10 @@ class FilesDispatchServiceTest {
 
     @Test
     fun `given a declined file, returns a declined result`() {
-        val dokumentobjektDto = DokumentobjektDto.builder().fileId(UUID.randomUUID()).build()
+        val dokumentobjektDto =
+            DokumentobjektDto(
+                fileId = UUID.randomUUID(),
+            )
         whenever(fileDispatchService.dispatch(dokumentobjektDto))
             .thenReturn(FileDispatchResult.declined(dokumentobjektDto.fileId!!, "test error message"))
 

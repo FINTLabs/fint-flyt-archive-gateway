@@ -10,20 +10,4 @@ data class Selectable(
     val displayName: String? = null,
     @field:NotNull
     val value: String? = null,
-) {
-    companion object {
-        @JvmStatic
-        fun builder() = Builder()
-    }
-
-    class Builder {
-        private var displayName: String? = null
-        private var value: String? = null
-
-        fun displayName(displayName: String?) = apply { this.displayName = displayName }
-
-        fun value(value: String?) = apply { this.value = value }
-
-        fun build() = Selectable(displayName = displayName, value = value)
-    }
-}
+)

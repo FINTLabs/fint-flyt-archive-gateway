@@ -18,70 +18,70 @@ class PartTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "partNavn",
-                    ).displayName("Navn")
-                    .description("Navn på virksomhet eller person")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "partNavn",
+                    displayName = "Navn",
+                    description = "Navn på virksomhet eller person",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("partRolle")
-                    .displayName("Rolle")
-                    .description("Partens rolle")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/partrolle").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(PartRolle::class))
-                    .build(),
+                ElementConfig(
+                    key = "partRolle",
+                    displayName = "Rolle",
+                    description = "Partens rolle",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/partrolle",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(PartRolle::class),
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "kontaktperson",
-                    ).displayName("Kontaktperson")
-                    .description("Kontaktperson hos en organisasjon")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "kontaktperson",
+                    displayName = "Kontaktperson",
+                    description = "Kontaktperson hos en organisasjon",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("organisasjonsnummer")
-                    .displayName("Organisasjonsnummer")
-                    .description("Organisasjonsnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "organisasjonsnummer",
+                    displayName = "Organisasjonsnummer",
+                    description = "Organisasjonsnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "fodselsnummer",
-                    ).displayName("Fødselsnummer")
-                    .description("Fødselsnummer")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "fodselsnummer",
+                    displayName = "Fødselsnummer",
+                    description = "Fødselsnummer",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("adresse")
-                    .displayName("Adresse")
-                    .description("Adresse")
-                    .build(),
+                ElementConfig(
+                    key = "adresse",
+                    displayName = "Adresse",
+                    description = "Adresse",
+                ),
                 adresseTemplateService.createTemplate(),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "kontaktinformasjon",
-                    ).displayName("Kontaktinformasjon")
-                    .description("Kontaktinformasjon")
-                    .build(),
+                ElementConfig(
+                    key = "kontaktinformasjon",
+                    displayName = "Kontaktinformasjon",
+                    description = "Kontaktinformasjon",
+                ),
                 kontaktinformasjonTemplateService.createTemplate(),
             ).build()
 }

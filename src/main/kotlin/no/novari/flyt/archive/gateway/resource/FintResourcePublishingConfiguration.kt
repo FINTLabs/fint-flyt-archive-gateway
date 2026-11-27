@@ -4,14 +4,15 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePipeline
 import no.novari.flyt.archive.gateway.resource.configuration.ResourcePublishingConfigurationProperties
 import no.novari.flyt.archive.gateway.resource.web.FintArchiveResourceClient
-import no.novari.kafka.producing.ParameterizedProducerRecord
-import no.novari.kafka.producing.ParameterizedTemplate
-import no.novari.kafka.producing.ParameterizedTemplateFactory
-import no.novari.kafka.topic.EntityTopicService
-import no.novari.kafka.topic.configuration.EntityCleanupFrequency
-import no.novari.kafka.topic.configuration.EntityTopicConfiguration
+import no.novari.kafka.starter.producer.send
+import no.novari.kafka.starter.topic.EntityCleanupFrequency
+import no.novari.kafka.starter.topic.EntityTopicConfig
+import no.novari.kafka.starter.topic.KafkaTopics
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.core.KafkaAdmin
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.scheduling.annotation.SchedulingConfigurer
 import org.springframework.scheduling.config.CronTask
 import org.springframework.scheduling.config.IntervalTask
@@ -29,45 +30,38 @@ class FintResourcePublishingConfiguration(
     @Value("\${fint.application-id}") applicationId: String,
     private val resourcePublishingConfigurationProperties: ResourcePublishingConfigurationProperties,
     resourcePipelines: List<ResourcePipeline<*>>,
-    private val entityTopicService: EntityTopicService,
-    parameterizedTemplateFactory: ParameterizedTemplateFactory,
+    private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val fintArchiveResourceClient: FintArchiveResourceClient,
 ) : SchedulingConfigurer {
     private val randomSeededByOrgAndApplicationId = Random(31L * orgId.hashCode() + applicationId.hashCode())
 
     @Suppress("UNCHECKED_CAST")
     private val resourcePipelines: List<ResourcePipeline<Any>> = resourcePipelines.map { it as ResourcePipeline<Any> }
-    private val parameterizedTemplate: ParameterizedTemplate<Any> =
-        parameterizedTemplateFactory.createTemplate(
-            Any::class.java,
-        )
     private val lastUpdatedTimestampForPulledResourcesPerResourcePath =
         ConcurrentHashMap<String, Long>(resourcePipelines.size)
 
-    init {
-        ensureTopics()
-    }
-
-    private fun ensureTopics() {
+    @Bean
+    fun resourceTopicCreation(topics: KafkaTopics): KafkaAdmin.NewTopics {
         val resourceTopicRetentionTime =
             Duration
                 .ofDays(1)
                 .plus(requireNotNull(resourcePublishingConfigurationProperties.reset?.resourceTopicRetentionTimeOffset))
-
-        resourcePipelines.forEach { resourcePipeline ->
-            resourcePipeline.kafkaProperties?.let { kafkaProperties ->
-                entityTopicService.createOrModifyTopic(
-                    kafkaProperties.topicNameParameters,
-                    EntityTopicConfiguration
-                        .stepBuilder()
-                        .partitions(PARTITIONS)
-                        .lastValueRetentionTime(resourceTopicRetentionTime)
-                        .nullValueRetentionTime(resourceTopicRetentionTime)
-                        .cleanupFrequency(EntityCleanupFrequency.NORMAL)
-                        .build(),
-                )
-            }
-        }
+        val config =
+            EntityTopicConfig(
+                nullValueRetention = resourceTopicRetentionTime,
+                // Keeps cleanup policy delete,compact, as lastValueRetentionTime did in fint-kafka 6.
+                lastValueRetention = resourceTopicRetentionTime,
+                cleanupFrequency = EntityCleanupFrequency.NORMAL,
+                partitions = 1,
+            )
+        return KafkaAdmin.NewTopics(
+            *resourcePipelines
+                .mapNotNull {
+                    it.kafkaProperties?.let { kafkaProperties ->
+                        topics.newTopic(kafkaProperties.topic, config)
+                    }
+                }.toTypedArray(),
+        )
     }
 
     override fun configureTasks(taskRegistrar: ScheduledTaskRegistrar) {
@@ -140,7 +134,7 @@ class FintResourcePublishingConfiguration(
             resourcePipeline.kafkaProperties?.let { kafkaProperties ->
                 log.atInfo {
                     message = "{} entities sent to {}"
-                    arguments = arrayOf(updatedResources.size, kafkaProperties.topicNameParameters)
+                    arguments = arrayOf(updatedResources.size, kafkaProperties.topic.name)
                 }
             }
         } catch (error: Exception) {
@@ -160,14 +154,7 @@ class FintResourcePublishingConfiguration(
         }
 
         resourcePipeline.kafkaProperties?.let { kafkaProperties ->
-            parameterizedTemplate.send(
-                ParameterizedProducerRecord
-                    .builder<Any>()
-                    .topicNameParameters(kafkaProperties.topicNameParameters)
-                    .key(kafkaProperties.createKafkaKey.apply(resource))
-                    .value(resource)
-                    .build(),
-            )
+            kafkaTemplate.send(kafkaProperties.topic, kafkaProperties.createKafkaKey.apply(resource), resource)
         }
     }
 
@@ -208,6 +195,5 @@ class FintResourcePublishingConfiguration(
 
     companion object {
         private val log = KotlinLogging.logger {}
-        private const val PARTITIONS = 1
     }
 }

@@ -45,7 +45,7 @@ class CaseDispatchServiceTest {
 
     @Test
     fun `given an accepted case, returns an accepted result with case id`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val sakResource: SakResource = mock()
         val sakResourceResult: SakResource = mock()
         val identifikator: Identifikator = mock()
@@ -61,7 +61,7 @@ class CaseDispatchServiceTest {
 
     @Test
     fun `given a RestClientResponseException from postCase, returns a declined result with error message`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val sakResource: SakResource = mock()
         val error: HttpClientErrorException = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
@@ -75,7 +75,7 @@ class CaseDispatchServiceTest {
 
     @Test
     fun `given a read timeout from postCase, returns a timed-out result`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val sakResource: SakResource = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
         whenever(fintArchiveDispatchClient.postCase(sakResource))
@@ -88,7 +88,7 @@ class CaseDispatchServiceTest {
 
     @Test
     fun `given a CreatedLocationPollTimeoutException from postCase, returns a timed-out result`() {
-        val sakDto = SakDto.builder().build()
+        val sakDto = SakDto()
         val sakResource: SakResource = mock()
         whenever(sakMappingService.toSakResource(sakDto)).thenReturn(sakResource)
         whenever(fintArchiveDispatchClient.postCase(sakResource))
@@ -102,11 +102,10 @@ class CaseDispatchServiceTest {
     @Test
     fun `findCasesBySearch creates a filter and calls the client`() {
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .newCase(SakDto.builder().build())
-                .caseSearchParameters(CaseSearchParametersDto.builder().build())
-                .build()
+            ArchiveInstance(
+                newCase = SakDto(),
+                caseSearchParameters = CaseSearchParametersDto(),
+            )
         whenever(
             caseSearchParametersService.createFilterQueryParamValue(
                 archiveInstance.newCase!!,
@@ -123,11 +122,10 @@ class CaseDispatchServiceTest {
     @Test
     fun `given a KlasseOrderOutOfBoundsException, returns a declined result with message`() {
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .newCase(SakDto.builder().build())
-                .caseSearchParameters(CaseSearchParametersDto.builder().build())
-                .build()
+            ArchiveInstance(
+                newCase = SakDto(),
+                caseSearchParameters = CaseSearchParametersDto(),
+            )
         whenever(
             caseSearchParametersService.createFilterQueryParamValue(
                 archiveInstance.newCase!!,
@@ -143,11 +141,10 @@ class CaseDispatchServiceTest {
     @Test
     fun `given a SearchKlasseOrderNotFoundInCaseException, returns a declined result with message`() {
         val archiveInstance =
-            ArchiveInstance
-                .builder()
-                .newCase(SakDto.builder().build())
-                .caseSearchParameters(CaseSearchParametersDto.builder().build())
-                .build()
+            ArchiveInstance(
+                newCase = SakDto(),
+                caseSearchParameters = CaseSearchParametersDto(),
+            )
         whenever(
             caseSearchParametersService.createFilterQueryParamValue(
                 archiveInstance.newCase!!,

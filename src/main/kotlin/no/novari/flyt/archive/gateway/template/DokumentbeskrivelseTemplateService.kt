@@ -20,77 +20,75 @@ class DokumentbeskrivelseTemplateService(
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tittel")
-                    .displayName("Tittel")
-                    .description("Tittel eller navn på arkivenheten")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.DYNAMIC_STRING).build(),
+                ElementConfig(
+                    key = "tittel",
+                    displayName = "Tittel",
+                    description = "Tittel eller navn på arkivenheten",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.DYNAMIC_STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("dokumentstatus")
-                    .displayName("Dokumentstatus")
-                    .description("Status til dokumentet")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/dokumentstatus").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(DokumentStatus::class))
-                    .build(),
-            ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("dokumentType")
-                    .displayName("Dokumenttype")
-                    .description("Navn på type dokument")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
-                        listOf(UrlBuilder.builder().urlTemplate("api/intern/arkiv/kodeverk/dokumenttype").build()),
-                    ).referenceTemplate(referenceTemplateFactory.create(DokumentType::class))
-                    .build(),
-            ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tilknyttetRegistreringSom")
-                    .displayName("Tilknyttet registrering som")
-                    .description("Angivelse av hvilken \"rolle\" dokumentet har i forhold til registreringen")
-                    .build(),
-                SelectableValueTemplate
-                    .builder()
-                    .type(SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT)
-                    .selectablesSources(
+                ElementConfig(
+                    key = "dokumentstatus",
+                    displayName = "Dokumentstatus",
+                    description = "Status til dokumentet",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
                         listOf(
-                            UrlBuilder
-                                .builder()
-                                .urlTemplate(
-                                    "api/intern/arkiv/kodeverk/tilknyttetregistreringsom",
-                                ).build(),
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/dokumentstatus",
+                            ),
                         ),
-                    ).referenceTemplate(referenceTemplateFactory.create(TilknyttetRegistreringSom::class))
-                    .build(),
+                    referenceTemplate = referenceTemplateFactory.create(DokumentStatus::class),
+                ),
+            ).addTemplate(
+                ElementConfig(
+                    key = "dokumentType",
+                    displayName = "Dokumenttype",
+                    description = "Navn på type dokument",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/dokumenttype",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(DokumentType::class),
+                ),
+            ).addTemplate(
+                ElementConfig(
+                    key = "tilknyttetRegistreringSom",
+                    displayName = "Tilknyttet registrering som",
+                    description = "Angivelse av hvilken \"rolle\" dokumentet har i forhold til registreringen",
+                ),
+                SelectableValueTemplate(
+                    type = SelectableValueTemplate.Type.DYNAMIC_STRING_OR_SEARCH_SELECT,
+                    selectablesSources =
+                        listOf(
+                            UrlBuilder(
+                                urlTemplate = "api/intern/arkiv/kodeverk/tilknyttetregistreringsom",
+                            ),
+                        ),
+                    referenceTemplate = referenceTemplateFactory.create(TilknyttetRegistreringSom::class),
+                ),
             ).addCollectionTemplate(
-                ElementConfig
-                    .builder()
-                    .key("dokumentobjekt")
-                    .displayName("Dokumentobjekter")
-                    .description("Dokumentobjekt tilhørende dokumentbeskrivelsen")
-                    .build(),
+                ElementConfig(
+                    key = "dokumentobjekt",
+                    displayName = "Dokumentobjekter",
+                    description = "Dokumentobjekt tilhørende dokumentbeskrivelsen",
+                ),
                 dokumentobjektTemplateService.createTemplate(),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "skjerming",
-                    ).displayName("Skjerming")
-                    .description("Skjerming av dokument")
-                    .build(),
+                ElementConfig(
+                    key = "skjerming",
+                    displayName = "Skjerming",
+                    description = "Skjerming av dokument",
+                ),
                 skjermingTemplateService.createTemplate(),
             ).build()
 }

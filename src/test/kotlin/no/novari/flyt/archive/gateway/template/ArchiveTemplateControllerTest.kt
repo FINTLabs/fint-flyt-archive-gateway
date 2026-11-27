@@ -27,11 +27,10 @@ class ArchiveTemplateControllerTest {
     @Test
     fun `getTemplate returns the archive template`() {
         val template =
-            MappingTemplate
-                .builder()
-                .displayName("Arkivering")
-                .rootObjectTemplate(ObjectTemplate.builder().build())
-                .build()
+            MappingTemplate(
+                displayName = "Arkivering",
+                rootObjectTemplate = ObjectTemplate.builder().build(),
+            )
         whenever(archiveTemplateService.createTemplate()).thenReturn(template)
 
         val response = archiveTemplateController.getTemplate()

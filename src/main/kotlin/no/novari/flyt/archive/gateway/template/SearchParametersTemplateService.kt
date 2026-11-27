@@ -13,144 +13,143 @@ class SearchParametersTemplateService {
         ObjectTemplate
             .builder()
             .addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("arkivdel")
-                    .displayName("Arkivdel")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "arkivdel",
+                    displayName = "Arkivdel",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "administrativEnhet",
-                    ).displayName("Administrativ enhet")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "administrativEnhet",
+                    displayName = "Administrativ enhet",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key(
-                        "tilgangsrestriksjon",
-                    ).displayName("Tilgangsrestriksjon")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "tilgangsrestriksjon",
+                    displayName = "Tilgangsrestriksjon",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("saksmappetype")
-                    .displayName("Saksmappetype")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "saksmappetype",
+                    displayName = "Saksmappetype",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("saksstatus")
-                    .displayName("Saksstatus")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "saksstatus",
+                    displayName = "Saksstatus",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("tittel")
-                    .displayName("Tittel")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "tittel",
+                    displayName = "Tittel",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klassering")
-                    .displayName("Klassering")
-                    .description("")
-                    .build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                ElementConfig(
+                    key = "klassering",
+                    displayName = "Klassering",
+                    description = "",
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klasseringRekkefolge")
-                    .displayName("Rekkefølge")
-                    .description("")
-                    .enableDependency(
-                        Dependency
-                            .builder()
-                            .hasAnyCombination(
+                ElementConfig(
+                    key = "klasseringRekkefolge",
+                    displayName = "Rekkefølge",
+                    description = "",
+                    enableDependency =
+                        Dependency(
+                            hasAnyCombination =
                                 listOf(
                                     listOf(
-                                        ValuePredicate
-                                            .builder()
-                                            .key("klassering")
-                                            .defined(true)
-                                            .value("true")
-                                            .build(),
+                                        ValuePredicate(
+                                            key = "klassering",
+                                            defined = true,
+                                            value = "true",
+                                        ),
                                     ),
                                 ),
-                            ).build(),
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.STRING).build(),
+                        ),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.STRING,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klasseringKlassifikasjonssystem")
-                    .displayName("Klassifikasjonssystem")
-                    .description("")
-                    .enableDependency(
-                        Dependency
-                            .builder()
-                            .hasAnyCombination(
+                ElementConfig(
+                    key = "klasseringKlassifikasjonssystem",
+                    displayName = "Klassifikasjonssystem",
+                    description = "",
+                    enableDependency =
+                        Dependency(
+                            hasAnyCombination =
                                 listOf(
                                     listOf(
-                                        ValuePredicate
-                                            .builder()
-                                            .key("klassering")
-                                            .defined(true)
-                                            .value("true")
-                                            .build(),
-                                        ValuePredicate
-                                            .builder()
-                                            .key(
-                                                "klasseringRekkefolge",
-                                            ).defined(true)
-                                            .notValue("")
-                                            .build(),
+                                        ValuePredicate(
+                                            key = "klassering",
+                                            defined = true,
+                                            value = "true",
+                                        ),
+                                        ValuePredicate(
+                                            key = "klasseringRekkefolge",
+                                            defined = true,
+                                            notValue = "",
+                                        ),
                                     ),
                                 ),
-                            ).build(),
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                        ),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).addTemplate(
-                ElementConfig
-                    .builder()
-                    .key("klasseringKlasseId")
-                    .displayName("KlasseID")
-                    .description("")
-                    .enableDependency(
-                        Dependency
-                            .builder()
-                            .hasAnyCombination(
+                ElementConfig(
+                    key = "klasseringKlasseId",
+                    displayName = "KlasseID",
+                    description = "",
+                    enableDependency =
+                        Dependency(
+                            hasAnyCombination =
                                 listOf(
                                     listOf(
-                                        ValuePredicate
-                                            .builder()
-                                            .key("klassering")
-                                            .defined(true)
-                                            .value("true")
-                                            .build(),
-                                        ValuePredicate
-                                            .builder()
-                                            .key("klasseringKlassifikasjonssystem")
-                                            .defined(true)
-                                            .notValue("")
-                                            .build(),
+                                        ValuePredicate(
+                                            key = "klassering",
+                                            defined = true,
+                                            value = "true",
+                                        ),
+                                        ValuePredicate(
+                                            key = "klasseringKlassifikasjonssystem",
+                                            defined = true,
+                                            notValue = "",
+                                        ),
                                     ),
                                 ),
-                            ).build(),
-                    ).build(),
-                ValueTemplate.builder().type(ValueTemplate.Type.BOOLEAN).build(),
+                        ),
+                ),
+                ValueTemplate(
+                    type = ValueTemplate.Type.BOOLEAN,
+                ),
             ).build()
 }

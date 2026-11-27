@@ -7,20 +7,6 @@ DEFAULT_TEMPLATE="$TEMPLATE_DIR/overlay.yaml.tpl"
 APPLICATION_NAME="fint-flyt-archive-gateway"
 FINT_CLIENT_NAME="fint-flyt-archive-fint-client"
 
-USER_ROLE="USER"
-DEVELOPER_ROLE="DEVELOPER"
-
-extra_user_orgs_for_namespace() {
-  local namespace="$1"
-  case "$namespace" in
-    afk-no|bfk-no|ofk-no)
-      printf 'frid-iks.no'
-      ;;
-    *)
-      printf ''
-      ;;
-  esac
-}
 
 app_instance_suffix() {
   local namespace="$1"
@@ -30,15 +16,6 @@ app_instance_suffix() {
       ;;
     *)
       printf '%s' "${namespace//-/_}"
-      ;;
-  esac
-}
-
-authorized_org_id() {
-  local namespace="$1"
-  case "$namespace" in
-    *)
-      printf '%s' "${namespace//-/.}"
       ;;
   esac
 }
@@ -64,6 +41,17 @@ render_extra_env_patches() {
   local namespace="$1"
   local env_path="$2"
 
+  # Users from frid-iks.no also have access in afk, bfk and ofk.
+  case "$namespace" in
+    afk-no|bfk-no|ofk-no)
+      printf '\n      - op: add\n'
+      printf '        path: "/spec/env/-"\n'
+      printf '        value:\n'
+      printf '          name: "novari.flyt.security.tenant.additional-org-ids"\n'
+      printf '          value: "frid-iks.no"'
+      ;;
+  esac
+
   if [[ "$namespace" == "vlfk-no" && "$env_path" == "beta" ]]; then
     printf '\n      - op: add\n'
     printf '        path: "/spec/env/-"\n'
@@ -86,29 +74,6 @@ render_extra_resources() {
   if [[ "$namespace" == "ra-no" ]]; then
     printf '\n  - authorization-client-onepassword.yaml'
   fi
-}
-
-render_authorized_role_pairs() {
-  local org_id="$1"
-  shift
-
-  local entries=("\"${org_id}\":[\"${USER_ROLE}\"]")
-  for extra_org in "$@"; do
-    entries+=("\"${extra_org}\":[\"${USER_ROLE}\"]")
-  done
-  entries+=("\"vigo.no\":[\"${DEVELOPER_ROLE}\", \"${USER_ROLE}\"]")
-  entries+=("\"novari.no\":[\"${DEVELOPER_ROLE}\", \"${USER_ROLE}\"]")
-
-  local total="${#entries[@]}"
-  printf '            {\n'
-  for idx in "${!entries[@]}"; do
-    local comma=","
-    if [[ "$idx" == "$((total - 1))" ]]; then
-      comma=""
-    fi
-    printf '              %s%s\n' "${entries[$idx]}" "$comma"
-  done
-  printf '            }\n'
 }
 
 choose_template() {
@@ -150,14 +115,6 @@ while IFS= read -r file; do
     onepassword_vault="aks-beta-vault"
   fi
 
-  declare -a additional_user_orgs=()
-  extra_orgs="$(extra_user_orgs_for_namespace "$namespace")"
-  if [[ -n "$extra_orgs" ]]; then
-    for extra_org in $extra_orgs; do
-      additional_user_orgs+=("$extra_org")
-    done
-  fi
-
   export APPLICATION_NAME
   export APPLICATION_PATCH_LABEL="fint-archive-gateway_${ns_suffix}"
   export NAMESPACE="$namespace"
@@ -174,12 +131,6 @@ while IFS= read -r file; do
   export METRICS_PATH="${path_prefix}/actuator/prometheus"
   export EXTRA_ENV_PATCHES="$(render_extra_env_patches "$namespace" "$env_path")"
   export EXTRA_RESOURCES="$(render_extra_resources "$namespace")"
-  if ((${#additional_user_orgs[@]})); then
-    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$(authorized_org_id "$namespace")" "${additional_user_orgs[@]}")"
-  else
-    AUTHORIZED_ORG_ROLE_PAIRS="$(render_authorized_role_pairs "$(authorized_org_id "$namespace")")"
-  fi
-  export AUTHORIZED_ORG_ROLE_PAIRS
   export FINT_CLIENT_NAME
   export FINT_CLIENT_INSTANCE_LABEL="${FINT_CLIENT_NAME}_${ns_suffix}"
   export NOVARI_KAFKA_TOPIC_ORGID="$namespace"
@@ -189,7 +140,7 @@ while IFS= read -r file; do
   mkdir -p "$target_dir"
 
   tmp="$(mktemp "$target_dir/.kustomization.yaml.XXXXXX")"
-  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $AUTHORIZED_ORG_ROLE_PAIRS $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES $EXTRA_RESOURCES' \
+  envsubst '$APPLICATION_NAME $APPLICATION_PATCH_LABEL $NAMESPACE $APP_INSTANCE_LABEL $ORG_ID $KAFKA_TOPIC $INGRESS_BASE_PATH $ARCHIVE_BASE_URL $ONEPASSWORD_ITEM_PATH $STARTUP_PATH $READINESS_PATH $LIVENESS_PATH $METRICS_PATH $FINT_CLIENT_NAME $FINT_CLIENT_INSTANCE_LABEL $NOVARI_KAFKA_TOPIC_ORGID $SERVLET_CONTEXT_PATH $EXTRA_ENV_PATCHES $EXTRA_RESOURCES' \
     < "$template" > "$tmp"
   mv "$tmp" "$target_dir/kustomization.yaml"
 done < <(
